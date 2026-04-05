@@ -423,3 +423,82 @@ The Financial Fragility Clock is a Minsky-regime-aware composite index dashboard
 4. THE Regime_Labeling SHALL use thresholds calibrated from the data itself (not arbitrary pre-specified values)
 5. THE Dashboard SHALL include a /methods route explaining the theoretical foundation and methodology
 6. THE Project SHALL document all assumptions and limitations in the README.md
+
+### Requirement 31: Dual-Model Architecture (Model A + Model B)
+
+**User Story:** As a researcher, I want two versions of the fragility clock with different data scopes, so that I can demonstrate both assignment compliance (Model A) and real-world applicability (Model B).
+
+#### Acceptance Criteria
+
+1. THE System SHALL implement Model A using the ISE dataset (536 obs, 2009-2011) with quantile-based regime labeling
+2. THE System SHALL implement Model B using extended data (2003-2025) from yfinance and FRED with macro-signal-enhanced regime labeling
+3. THE Dashboard SHALL provide a model toggle allowing users to switch between Model A and Model B visualizations
+4. WHEN Model A is selected, THE Dashboard SHALL display ISE-only data with quantile-based regimes
+5. WHEN Model B is selected, THE Dashboard SHALL display extended data with historically-verified Minsky regimes (2008 crisis, 2020 COVID, 2025 current)
+6. THE System SHALL maintain separate JSON outputs: model_a_features.json, model_a_outputs.json, model_b_features.json, model_b_outputs.json
+7. THE Report SHALL present Model A in Section 2 (Model Development) and Model B in Section 3 (Out-of-Sample Extension)
+
+### Requirement 32: Model B Data Pipeline - Extended Market Data
+
+**User Story:** As a data engineer, I want to fetch 20+ years of global market data, so that Model B can capture full Minsky cycles including pre-crisis build-up.
+
+#### Acceptance Criteria
+
+1. THE Model_B_Pipeline SHALL fetch daily data from yfinance for: SP500, DAX, FTSE, NIKKEI, BOVESPA, MSCI_EU, MSCI_EM, BIST100, SHANGHAI, HANG_SENG, KOSPI, ASX200, VIX
+2. THE Model_B_Pipeline SHALL fetch daily data from FRED API for: VIX (VIXCLS), 10Y-2Y yield spread (T10Y2Y), TED spread (TEDRATE), Fed Funds rate (FEDFUNDS), BAA-10Y credit spread (BAA10Y)
+3. THE Model_B_Pipeline SHALL align all data to daily frequency with forward-fill for macro indicators
+4. THE Model_B_Pipeline SHALL cover the period 2003-01-01 to 2025-12-31 (or latest available)
+5. THE Model_B_Pipeline SHALL handle missing data using forward-fill for gaps ≤ 5 days, flag longer gaps
+6. THE Model_B_Pipeline SHALL export cleaned data to model_b_cleaned_data.json
+
+### Requirement 33: Model B Feature Engineering - Macro-Enhanced Fragility
+
+**User Story:** As a quantitative analyst, I want macro signals integrated into fragility scoring, so that Model B can detect systemic risk patterns that pure correlation misses.
+
+#### Acceptance Criteria
+
+1. THE Model_B_Feature_Engineering SHALL compute all Model A features (rolling correlation, permutation entropy, rolling volatility)
+2. THE Model_B_Feature_Engineering SHALL compute eigenvalue ratio (dominant eigenvalue / sum of eigenvalues) as a concentration measure
+3. THE Model_B_Feature_Engineering SHALL compute volatility synchrony (mean of rolling volatilities across all indices)
+4. THE Model_B_Feature_Engineering SHALL include normalized macro signals: VIX, TED spread, yield spread, credit spread
+5. THE Model_B_Feature_Engineering SHALL compute fragility score using weighted formula: 0.25×corr + 0.20×PE_inv + 0.15×vol + 0.15×eigenvalue_ratio + 0.10×TED + 0.10×VIX + 0.05×yield_spread
+6. THE Model_B_Feature_Engineering SHALL export features to model_b_features.json
+
+### Requirement 34: Model B Regime Labeling - Historically-Verified Minsky Cycles
+
+**User Story:** As a financial historian, I want regime labels that align with known crisis periods, so that Model B demonstrates predictive validity.
+
+#### Acceptance Criteria
+
+1. THE Model_B_Regime_Labeling SHALL classify 2003-2006 as HEDGE (low correlation < 0.35, TED < 0.5%, VIX < 15)
+2. THE Model_B_Regime_Labeling SHALL classify 2007-early 2008 as SPECULATIVE (rising correlation 0.35-0.70, TED 1-2%, VIX 15-30)
+3. THE Model_B_Regime_Labeling SHALL classify Sep 2008-Mar 2009 as PONZI (correlation > 0.80, TED > 3%, VIX > 40)
+4. THE Model_B_Regime_Labeling SHALL classify Mar 2020 as PONZI (COVID crash with correlation > 0.85, VIX > 60)
+5. THE Model_B_Regime_Labeling SHALL use adaptive thresholds based on rolling historical percentiles for non-crisis periods
+6. THE Model_B_Regime_Labeling SHALL store regime labels with confidence scores in model_b_features.json
+
+### Requirement 35: Model B Model Training - Crisis Prediction Validation
+
+**User Story:** As a risk manager, I want Model B to demonstrate pre-crisis pattern detection, so that the fragility clock has forward-looking value.
+
+#### Acceptance Criteria
+
+1. THE Model_B_Training SHALL use walk-forward validation with expanding window (train on 2003-2007, test on 2008; train on 2003-2019, test on 2020)
+2. THE Model_B_Training SHALL train Random Forest with macro features included
+3. THE Model_B_Training SHALL compute regime-specific RMSE for HEDGE, SPECULATIVE, and PONZI periods
+4. THE Model_B_Training SHALL test whether fragility score peaks 3-6 months before Sep 2008 and Mar 2020 crashes
+5. THE Model_B_Training SHALL compute SHAP values showing macro signal importance during crisis periods
+6. THE Model_B_Training SHALL export results to model_b_outputs.json
+
+### Requirement 36: Dashboard Model Toggle and Comparison View
+
+**User Story:** As a dashboard user, I want to switch between Model A and Model B, so that I can compare assignment-compliant results with full-scale analysis.
+
+#### Acceptance Criteria
+
+1. THE Dashboard SHALL display a model toggle in the header: "Model A (ISE 2009-2011)" and "Model B (Global 2003-2025)"
+2. WHEN the toggle switches, THE Dashboard SHALL reload all components with the selected model's JSON data
+3. THE Dashboard SHALL display a comparison panel showing both models' fragility scores for the overlapping period (2009-2011)
+4. THE Dashboard SHALL annotate Model B timeline with historical events: Sep 2008 Lehman, May 2010 Flash Crash, Mar 2020 COVID, Apr 2025 Tariff Shock
+5. THE Dashboard SHALL display Model B's current fragility reading (as of latest data) with regime label
+6. THE Dashboard SHALL maintain separate date scrubbers for each model (Model A: 2009-2011, Model B: 2003-2025)

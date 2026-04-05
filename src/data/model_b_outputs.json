@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "model": "Model B",
+    "description": "Extended 2003-2025 global data with macro signals and crisis prediction validation",
+    "timestamp": "2026-04-05T20:06:03.517132",
+    "python_version": "3.12.3",
+    "libraries": {
+      "pandas": "3.0.2",
+      "numpy": "1.26.4",
+      "scikit-learn": "1.8.0",
+      "shap": "0.42.1"
+    }
+  },
+  "walk_forward_validation": {
+    "split_2008": {
+      "description": "2008 Financial Crisis",
+      "train_period": "2003-01-01 to 2007-12-31",
+      "test_period": "2008-01-01 to 2008-12-31",
+      "train_observations": 1228,
+      "test_observations": 261,
+      "metrics": {
+        "train_r2": 0.9993772267748454,
+        "train_rmse": 4.010307785190059,
+        "train_mae": 2.9669893685407813,
+        "test_r2": 0.27411299144226864,
+        "test_rmse": 162.87482549707482,
+        "test_mae": 140.453237762318
+      },
+      "regime_rmse": {
+        "HEDGE": 83.19963281293123,
+        "SPECULATIVE": 94.25165329689062,
+        "PONZI": 227.9094552518076
+      },
+      "feature_importance": {
+        "DAX": 0.5120667850519988,
+        "FTSE": 0.01745339048571121,
+        "NIKKEI": 0.01704772163904426,
+        "BOVESPA": 0.003193801578981992,
+        "EU": 0.13289842465485932,
+        "EM": 0.12239131168048244,
+        "BIST100": 0.045909924795712806,
+        "SHANGHAI": 0.005686687571114861,
+        "HANGSENG": 0.046937963634003745,
+        "KOSPI": 0.08984797957975509,
+        "ASX200": 0.003118705392082597,
+        "VIX": 0.0022139774098565487,
+        "mean_corr": 0.00022976441103211902,
+        "eigenvalue_ratio": 0.00028839463257659286,
+        "permutation_entropy": 0.0001816381466778766,
+        "rolling_volatility": 0.00029053830781795777,
+        "volatility_synchrony": 0.00023397950691519145,
+        "regime_encoded": 9.011521376736596e-06
+      }
+    },
+    "split_2020": {
+      "description": "COVID-19 Crash",
+      "train_period": "2003-01-01 to 2019-12-31",
+      "test_period": "2020-01-01 to 2020-12-31",
+      "train_observations": 4350,
+      "test_observations": 261,
+      "metrics": {
+        "train_r2": 0.9997768832835657,
+        "train_rmse": 9.011789298415984,
+        "train_mae": 6.216919467224229,
+        "test_r2": -1.320397413544296,
+        "test_rmse": 484.7049819698696,
+        "test_mae": 437.10385702591384
+      },
+      "regime_rmse": {
+        "HEDGE": 592.1629219992469,
+        "SPECULATIVE": 426.601192991029,
+        "PONZI": 430.6056792660567
+      },
+      "feature_importance": {
+        "DAX": 0.7902328665896486,
+        "FTSE": 0.06125368755063109,
+        "NIKKEI": 0.0024804894050424148,
+        "BOVESPA": 0.12521970745217534,
+        "EU": 0.0013462225782193591,
+        "EM": 0.0008231901314686583,
+        "BIST100": 0.0007334929976687311,
+        "SHANGHAI": 0.004786646281323265,
+        "HANGSENG": 0.00040877975149490104,
+        "KOSPI": 0.0006595044606109452,
+        "ASX200": 0.008362414564416764,
+        "VIX": 0.0023278609600757565,
+        "mean_corr": 0.00014763898290635235,
+        "eigenvalue_ratio": 0.0001304910220343889,
+        "permutation_entropy": 7.184163657398702e-05,
+        "rolling_volatility": 0.0003471929174578948,
+        "volatility_synchrony": 0.0006080695053221397,
+        "regime_encoded": 5.9903212929493406e-05
+      }
+    }
+  },
+  "crisis_prediction": {
+    "2008_crisis": {
+      "description": "Sep 2008 Financial Crisis (Lehman Brothers)",
+      "crisis_date": "2008-09-15T00:00:00",
+      "peak_date": "2008-03-17T00:00:00",
+      "peak_score": 41.20889759823378,
+      "lead_time_days": 182,
+      "lead_time_months": 6.066666666666666,
+      "peak_detected_3_6_months": false,
+      "baseline_mean": 34.00886732118489,
+      "elevation_pct": 21.171038156168862,
+      "false_positive_rate": 0.24806201550387597,
+      "crisis_mean_score": 43.27078740299126,
+      "crisis_max_score": 62.779839250663485
+    },
+    "2020_covid": {
+      "description": "Mar 2020 COVID-19 Crash",
+      "crisis_date": "2020-03-16T00:00:00",
+      "peak_date": "2019-11-18T00:00:00",
+      "peak_score": 45.15958163520561,
+      "lead_time_days": 119,
+      "lead_time_months": 3.966666666666667,
+      "peak_detected_3_6_months": true,
+      "baseline_mean": 38.30426689611204,
+      "elevation_pct": 17.897000242000193,
+      "false_positive_rate": 0.25384615384615383,
+      "crisis_mean_score": 70.21470014715514,
+      "crisis_max_score": 77.78878503322977
+    }
+  },
+  "shap": {
+    "crisis_periods": {
+      "pre_crisis_2007": {
+        "description": "Pre-2008 Crisis (2007 H2)",
+        "period": "2007-07-01 to 2007-12-31",
+        "observations": 131,
+        "mean_abs_shap": {
+          "DAX": 270.49248915723257,
+          "FTSE": 139.56682038433215,
+          "NIKKEI": 3.697177620223868,
+          "BOVESPA": 46.138500548453216,
+          "EU": 8.119595767436177,
+          "EM": 2.5196206340550162,
+          "BIST100": 2.0485442502805244,
+          "SHANGHAI": 1.2176041457266455,
+          "HANGSENG": 0.803291036150116,
+          "KOSPI": 2.42931711443548,
+          "ASX200": 13.486922279544192,
+          "VIX": 14.897200590359095,
+          "mean_corr": 0.2003394996110651,
+          "eigenvalue_ratio": 0.19127921140879767,
+          "permutation_entropy": 0.28015012007397994,
+          "rolling_volatility": 0.7897637791798873,
+          "volatility_synchrony": 0.824043890654445,
+          "regime_encoded": 0.29305449209218526
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 270.49248915723257
+          },
+          {
+            "feature": "FTSE",
+            "importance": 139.56682038433215
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 46.138500548453216
+          },
+          {
+            "feature": "VIX",
+            "importance": 14.897200590359095
+          },
+          {
+            "feature": "ASX200",
+            "importance": 13.486922279544192
+          }
+        ],
+        "dominant_macro_signal": "VIX"
+      },
+      "crisis_2008": {
+        "description": "2008 Financial Crisis",
+        "period": "2008-01-01 to 2008-12-31",
+        "observations": 261,
+        "mean_abs_shap": {
+          "DAX": 358.49944962426736,
+          "FTSE": 104.57139239596636,
+          "NIKKEI": 9.569491736904347,
+          "BOVESPA": 41.443673375081794,
+          "EU": 10.244685315644666,
+          "EM": 1.997991153275992,
+          "BIST100": 2.3216713780735216,
+          "SHANGHAI": 6.953541995381315,
+          "HANGSENG": 1.3581597941499919,
+          "KOSPI": 2.33004091581851,
+          "ASX200": 7.082031768536431,
+          "VIX": 20.316423122170956,
+          "mean_corr": 0.3567332603905293,
+          "eigenvalue_ratio": 0.38240737397799524,
+          "permutation_entropy": 0.21399183942184308,
+          "rolling_volatility": 0.8939581445859859,
+          "volatility_synchrony": 1.9645804819711032,
+          "regime_encoded": 0.32183363058611475
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 358.49944962426736
+          },
+          {
+            "feature": "FTSE",
+            "importance": 104.57139239596636
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 41.443673375081794
+          },
+          {
+            "feature": "VIX",
+            "importance": 20.316423122170956
+          },
+          {
+            "feature": "EU",
+            "importance": 10.244685315644666
+          }
+        ],
+        "dominant_macro_signal": "VIX"
+      },
+      "pre_crisis_2019": {
+        "description": "Pre-COVID Crisis (2019 Q4)",
+        "period": "2019-10-01 to 2019-12-31",
+        "observations": 66,
+        "mean_abs_shap": {
+          "DAX": 873.5422061304455,
+          "FTSE": 107.38246767084726,
+          "NIKKEI": 11.617458900403959,
+          "BOVESPA": 312.70459364244795,
+          "EU": 6.6465075592148475,
+          "EM": 2.914234415548499,
+          "BIST100": 4.346703812547327,
+          "SHANGHAI": 3.797793880430512,
+          "HANGSENG": 0.45713620354168477,
+          "KOSPI": 0.8163240508745896,
+          "ASX200": 100.16392781268644,
+          "VIX": 6.6372583096444,
+          "mean_corr": 0.6138044390626293,
+          "eigenvalue_ratio": 0.6705024509719094,
+          "permutation_entropy": 0.586848095770002,
+          "rolling_volatility": 1.9462977744205359,
+          "volatility_synchrony": 2.3743049147332984,
+          "regime_encoded": 0.0767415312876013
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 873.5422061304455
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 312.70459364244795
+          },
+          {
+            "feature": "FTSE",
+            "importance": 107.38246767084726
+          },
+          {
+            "feature": "ASX200",
+            "importance": 100.16392781268644
+          },
+          {
+            "feature": "NIKKEI",
+            "importance": 11.617458900403959
+          }
+        ],
+        "dominant_macro_signal": "VIX"
+      },
+      "crisis_2020": {
+        "description": "2020 COVID Crash",
+        "period": "2020-01-01 to 2020-12-31",
+        "observations": 261,
+        "mean_abs_shap": {
+          "DAX": 784.946158464858,
+          "FTSE": 44.87171553344682,
+          "NIKKEI": 26.92682100616192,
+          "BOVESPA": 303.5042704067062,
+          "EU": 8.123862537264085,
+          "EM": 4.086488187943249,
+          "BIST100": 4.02051854642045,
+          "SHANGHAI": 4.1985464809360735,
+          "HANGSENG": 0.5047781245578647,
+          "KOSPI": 2.0900298537756776,
+          "ASX200": 70.33498362174842,
+          "VIX": 21.85239649943898,
+          "mean_corr": 0.7692587295728575,
+          "eigenvalue_ratio": 0.8050323663235052,
+          "permutation_entropy": 0.9252710631356216,
+          "rolling_volatility": 2.416050269791293,
+          "volatility_synchrony": 4.400232422600126,
+          "regime_encoded": 0.33288597730266384
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 784.946158464858
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 303.5042704067062
+          },
+          {
+            "feature": "ASX200",
+            "importance": 70.33498362174842
+          },
+          {
+            "feature": "FTSE",
+            "importance": 44.87171553344682
+          },
+          {
+            "feature": "NIKKEI",
+            "importance": 26.92682100616192
+          }
+        ],
+        "dominant_macro_signal": "VIX"
+      }
+    },
+    "regime_comparison": {
+      "HEDGE": {
+        "observations": 1398,
+        "dominant_feature": "DAX",
+        "mean_abs_shap": {
+          "DAX": 574.9405244798076,
+          "FTSE": 86.22883787882289,
+          "NIKKEI": 13.463766009049985,
+          "BOVESPA": 164.99152060281617,
+          "EU": 7.1953029816069,
+          "EM": 3.7141351853395914,
+          "BIST100": 4.336451086690014,
+          "SHANGHAI": 11.79385326042289,
+          "HANGSENG": 1.6231445675500042,
+          "KOSPI": 3.146878536669132,
+          "ASX200": 44.74900722081699,
+          "VIX": 9.395151248824124,
+          "mean_corr": 0.5669070608460977,
+          "eigenvalue_ratio": 0.5061354055234447,
+          "permutation_entropy": 0.37634481759783844,
+          "rolling_volatility": 2.0150457477700523,
+          "volatility_synchrony": 2.223111639572011,
+          "regime_encoded": 0.08121635408291211
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 574.9405244798076
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 164.99152060281617
+          },
+          {
+            "feature": "FTSE",
+            "importance": 86.22883787882289
+          },
+          {
+            "feature": "ASX200",
+            "importance": 44.74900722081699
+          },
+          {
+            "feature": "NIKKEI",
+            "importance": 13.463766009049985
+          }
+        ]
+      },
+      "SPECULATIVE": {
+        "observations": 3661,
+        "dominant_feature": "DAX",
+        "mean_abs_shap": {
+          "DAX": 557.4227144031754,
+          "FTSE": 91.07496715302453,
+          "NIKKEI": 12.638992896016125,
+          "BOVESPA": 155.75906830169868,
+          "EU": 6.682439658998543,
+          "EM": 3.5400642546390824,
+          "BIST100": 4.420867782944492,
+          "SHANGHAI": 10.608268717824366,
+          "HANGSENG": 1.6360974493647626,
+          "KOSPI": 3.0899545173622265,
+          "ASX200": 41.18023526833384,
+          "VIX": 10.817649573347582,
+          "mean_corr": 0.5171275392419628,
+          "eigenvalue_ratio": 0.4602034484735707,
+          "permutation_entropy": 0.46019095313812736,
+          "rolling_volatility": 1.8844116844641745,
+          "volatility_synchrony": 2.269681838547159,
+          "regime_encoded": 0.11322514551891777
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 557.4227144031754
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 155.75906830169868
+          },
+          {
+            "feature": "FTSE",
+            "importance": 91.07496715302453
+          },
+          {
+            "feature": "ASX200",
+            "importance": 41.18023526833384
+          },
+          {
+            "feature": "NIKKEI",
+            "importance": 12.638992896016125
+          }
+        ]
+      },
+      "PONZI": {
+        "observations": 852,
+        "dominant_feature": "DAX",
+        "mean_abs_shap": {
+          "DAX": 550.6190658015797,
+          "FTSE": 105.0447091488153,
+          "NIKKEI": 16.81587939639423,
+          "BOVESPA": 154.33006929062134,
+          "EU": 6.851399111148565,
+          "EM": 2.9447605221152835,
+          "BIST100": 4.60428206661599,
+          "SHANGHAI": 8.570759273083972,
+          "HANGSENG": 1.1320380099592764,
+          "KOSPI": 3.4405722333974076,
+          "ASX200": 40.032808665181726,
+          "VIX": 19.81403192073537,
+          "mean_corr": 0.5370016440091777,
+          "eigenvalue_ratio": 0.5493249331336261,
+          "permutation_entropy": 0.4682620550487769,
+          "rolling_volatility": 1.3068022808340642,
+          "volatility_synchrony": 3.0972352854945275,
+          "regime_encoded": 1.3387073413562205
+        },
+        "top_5_features": [
+          {
+            "feature": "DAX",
+            "importance": 550.6190658015797
+          },
+          {
+            "feature": "BOVESPA",
+            "importance": 154.33006929062134
+          },
+          {
+            "feature": "FTSE",
+            "importance": 105.0447091488153
+          },
+          {
+            "feature": "ASX200",
+            "importance": 40.032808665181726
+          },
+          {
+            "feature": "VIX",
+            "importance": 19.81403192073537
+          }
+        ]
+      }
+    }
+  }
+}

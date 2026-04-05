@@ -1,0 +1,96 @@
+/* ── ModelToggle styles ─────────────────────────────────────────────────────── */
+/*
+ * Spec §7: "No rounded pill buttons — square with 2px radius max"
+ * Spec §7: Regime colours used only for data, not for UI chrome.
+ *           Use --accent (#1b4f72) as active state.
+ */
+
+.model-toggle-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+/* Segmented control container — editorial, not pill-shaped */
+.model-toggle {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.model-toggle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 20px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+  line-height: 1.25;
+  min-width: 110px;
+}
+
+/* Remove double-border on first button */
+.model-toggle-btn:first-child {
+  border-left: none;
+}
+
+.model-toggle-btn .toggle-model-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.18s ease;
+}
+
+.model-toggle-btn .toggle-model-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.7;
+  transition: color 0.18s ease;
+}
+
+/* Active state — deep teal fill, white text */
+.model-toggle-btn.active {
+  background-color: var(--accent);
+}
+
+.model-toggle-btn.active .toggle-model-label {
+  color: #ffffff;
+}
+
+.model-toggle-btn.active .toggle-model-sub {
+  color: rgba(255, 255, 255, 0.75);
+  opacity: 1;
+}
+
+.model-toggle-btn:hover:not(.active) {
+  background: #f0ece6;
+}
+
+.model-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Metadata row */
+.model-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.model-meta-divider {
+  opacity: 0.4;
+}

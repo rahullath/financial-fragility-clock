@@ -1,0 +1,352 @@
+"""
+Model B Pipeline Orchestration Script.
+
+Runs all Model B modules in sequence:
+  1. Fetch market data (yfinance)
+  2. Fetch macro data (FRED API — optional)
+  3. Preprocess and merge data
+  4. Feature engineering (correlations, PE, volatility, fragility score)
+  5. Regime labeling (historically-verified Minsky cycles)
+  6. Model training with walk-forward validation
+  7. Crisis prediction validation
+  8. SHAP analysis for crisis periods
+  9. Export all JSON artefacts to src/data/
+
+Usage (from repo root):
+    ./venv/bin/python python/model_b/export_json_b.py
+
+Or with a FRED API key for macro signals:
+    FRED_API_KEY=your_key ./venv/bin/python python/model_b/export_json_b.py
+
+Requirements: 22.1, 22.2, 22.5, 26.1, 26.3
+"""
+
+import os
+import sys
+import json
+import warnings
+from datetime import datetime
+from pathlib import Path
+
+# ── Ensure we can import sibling modules ──────────────────────────────────────
+SCRIPT_DIR = Path(__file__).parent.resolve()
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import pandas as pd
+import numpy as np
+
+# ── Path helpers ──────────────────────────────────────────────────────────────
+REPO_ROOT = SCRIPT_DIR.parent.parent
+DATA_DIR = REPO_ROOT / "src" / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+CLEANED_DATA_PATH = str(DATA_DIR / "model_b_cleaned_data.json")
+FEATURES_PATH = str(DATA_DIR / "model_b_features.json")
+OUTPUTS_PATH = str(DATA_DIR / "model_b_outputs.json")
+
+
+# ── Logging helpers ────────────────────────────────────────────────────────────
+def log(msg: str) -> None:
+    """Print a timestamped log line."""
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] {msg}")
+
+
+def section(title: str) -> None:
+    bar = "=" * 60
+    print(f"\n{bar}")
+    print(f"  {title}")
+    print(f"{bar}")
+
+
+# ── Stage helpers ──────────────────────────────────────────────────────────────
+def stage_fetch_and_preprocess(api_key: str | None) -> pd.DataFrame:
+    """Fetch market + macro data, merge, clean, and export cleaned JSON."""
+    from fetch_market_data import (
+        fetch_market_data,
+        handle_missing_data as handle_market_missing,
+        validate_data as validate_market,
+    )
+
+    section("STAGE 1 — Fetch & Preprocess")
+
+    # ── Market data ───────────────────────────────────────────────────────────
+    log("Fetching market data via yfinance …")
+    market_df = fetch_market_data(start_date="2003-01-01", end_date="2025-12-31")
+    market_df = handle_market_missing(market_df, max_gap=5)
+    validate_market(market_df)
+
+    # ── Macro data (optional) ─────────────────────────────────────────────────
+    macro_df = None
+    if api_key:
+        log("Fetching macro data via FRED API …")
+        try:
+            from fetch_macro_data import (
+                fetch_macro_data,
+                resample_to_daily,
+                handle_missing_data as handle_macro_missing,
+            )
+            raw_macro = fetch_macro_data(api_key=api_key,
+                                         start_date="2003-01-01",
+                                         end_date="2025-12-31")
+            macro_daily = resample_to_daily(raw_macro)
+            macro_df = handle_macro_missing(macro_daily)
+            log(f"FRED macro data loaded: {macro_df.shape}")
+        except Exception as exc:
+            warnings.warn(f"FRED API fetch failed: {exc}. Continuing without macro data.")
+            macro_df = None
+    else:
+        log("FRED_API_KEY not set — skipping macro data (macro signals will be absent).")
+
+    # ── Merge ─────────────────────────────────────────────────────────────────
+    from preprocessing_b import (
+        merge_market_and_macro,
+        handle_missing_values,
+        validate_data_completeness,
+        compute_descriptive_stats,
+        export_to_json,
+    )
+
+    if macro_df is not None:
+        merged_df = merge_market_and_macro(market_df, macro_df)
+    else:
+        log("Using market data only (no macro merge).")
+        merged_df = market_df.copy()
+
+    log("Handling missing values …")
+    clean_df = handle_missing_values(merged_df, max_gap=5)
+
+    log("Validating data completeness …")
+    is_valid = validate_data_completeness(clean_df)
+    if not is_valid:
+        warnings.warn("Data validation failed — continuing anyway.")
+
+    log("Computing descriptive statistics …")
+    stats = compute_descriptive_stats(clean_df)
+
+    log(f"Exporting cleaned data → {CLEANED_DATA_PATH}")
+    export_to_json(clean_df, stats, CLEANED_DATA_PATH)
+
+    log(f"Stage 1 complete: {len(clean_df)} observations × {len(clean_df.columns)} columns")
+    return clean_df
+
+
+def stage_feature_engineering(clean_df: pd.DataFrame) -> pd.DataFrame:
+    """Compute all features and export model_b_features.json."""
+    from feature_engineering_b import (
+        compute_rolling_correlation,
+        compute_permutation_entropy,
+        compute_rolling_volatility,
+        normalize_macro_signals,
+        compute_fragility_score_b,
+        export_features,
+    )
+
+    section("STAGE 2 — Feature Engineering")
+
+    log("Computing rolling correlations (60-day window, 13 indices) …")
+    corr_features = compute_rolling_correlation(clean_df, window=60)
+
+    # Use SP500 as the reference return series for PE and volatility
+    ref_col = "SP500" if "SP500" in clean_df.columns else clean_df.columns[0]
+    log(f"Computing permutation entropy on {ref_col} …")
+    pe_series = compute_permutation_entropy(clean_df[ref_col], m=3, delay=1, window=30)
+
+    log("Computing rolling volatility …")
+    rolling_vol = compute_rolling_volatility(clean_df[ref_col], window=30)
+
+    log("Normalizing macro signals …")
+    macro_normalized = normalize_macro_signals(clean_df)
+
+    log("Computing Model B fragility score …")
+    vix_norm = macro_normalized.get("VIX_norm")
+    ted_norm = macro_normalized.get("TED_SPREAD_norm")
+    yield_norm = macro_normalized.get("YIELD_SPREAD_norm")
+
+    fragility_score = compute_fragility_score_b(
+        corr_features["mean_corr"],
+        pe_series,
+        rolling_vol,
+        corr_features["eigenvalue_ratio"],
+        vix_norm=vix_norm,
+        ted_norm=ted_norm,
+        yield_spread_norm=yield_norm,
+    )
+
+    log("Combining all features into single DataFrame …")
+    features_df = corr_features.copy()
+    features_df["permutation_entropy"] = pe_series
+    features_df["rolling_volatility"] = rolling_vol
+    features_df["fragility_score"] = fragility_score
+
+    # Attach macro signal columns so regime labeler can use them
+    for col in clean_df.columns:
+        if col not in features_df.columns:
+            features_df[col] = clean_df[col]
+
+    # Attach normalized macro signals
+    for col in macro_normalized.columns:
+        features_df[col] = macro_normalized[col]
+
+    log(f"Exporting features ({features_df.shape}) → {FEATURES_PATH}")
+    export_features(features_df, FEATURES_PATH)
+
+    log(f"Stage 2 complete. Valid fragility scores: {fragility_score.notna().sum()}")
+    return features_df
+
+
+def stage_regime_labeling(features_df: pd.DataFrame) -> pd.DataFrame:
+    """Label Minsky regimes and update the features JSON in place."""
+    from regime_labeling_b import label_minsky_regimes
+
+    section("STAGE 3 — Regime Labeling")
+
+    log("Running historically-verified Minsky regime classifier …")
+    labeled_df = label_minsky_regimes(features_df, use_adaptive_thresholds=True)
+
+    # Print distribution
+    counts = labeled_df["regime"].value_counts()
+    for regime in ["HEDGE", "SPECULATIVE", "PONZI"]:
+        n = counts.get(regime, 0)
+        pct = 100 * n / len(labeled_df)
+        log(f"  {regime:12s}: {n:5d} ({pct:5.1f}%)")
+
+    # Merge regime columns back into the features JSON on disk
+    log(f"Updating {FEATURES_PATH} with regime labels …")
+    with open(FEATURES_PATH, "r") as f:
+        features_data = json.load(f)
+
+    for i, (date, row) in enumerate(labeled_df.iterrows()):
+        features_data["data"][i]["regime"] = row["regime"]
+        features_data["data"][i]["regime_confidence"] = (
+            float(row["regime_confidence"]) if not pd.isna(row["regime_confidence"]) else None
+        )
+
+    features_data["metadata"]["regime_labeling"] = {
+        "method": "historically_verified",
+        "crisis_periods": [
+            {"start": "2008-09-01", "end": "2009-03-31", "description": "2008 Financial Crisis"},
+            {"start": "2020-03-01", "end": "2020-03-31", "description": "COVID-19 Crash"},
+        ],
+        "adaptive_thresholds": True,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+    with open(FEATURES_PATH, "w") as f:
+        json.dump(features_data, f, indent=2)
+
+    log("Stage 3 complete.")
+    return labeled_df
+
+
+def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
+    """Walk-forward RF, crisis prediction, and SHAP analysis."""
+    from models_b import (
+        train_random_forest_walk_forward,
+        validate_crisis_prediction,
+        compute_shap_values_b,
+        export_model_outputs_b,
+    )
+
+    section("STAGE 4 — Model Training & Validation")
+
+    log("Running walk-forward validation (2003→2008, 2003→2020) …")
+    walk_forward_results = train_random_forest_walk_forward(labeled_df, target_col="SP500")
+
+    log("Running crisis prediction validation …")
+    crisis_results = validate_crisis_prediction(labeled_df)
+
+    log("Computing SHAP values for crisis periods …")
+    shap_results = compute_shap_values_b(labeled_df, target_col="SP500")
+
+    log(f"Exporting model outputs → {OUTPUTS_PATH}")
+    export_model_outputs_b(
+        walk_forward_results=walk_forward_results,
+        crisis_prediction_results=crisis_results,
+        shap_results=shap_results,
+        filepath=OUTPUTS_PATH,
+    )
+
+    log("Stage 4 complete.")
+    return walk_forward_results, crisis_results, shap_results
+
+
+def print_summary(walk_forward_results: dict, crisis_results: dict) -> None:
+    """Print an end-of-run summary."""
+    section("PIPELINE SUMMARY")
+
+    # Walk-forward
+    for split_name, split in walk_forward_results.items():
+        if "error" in split:
+            log(f"  {split_name}: SKIPPED ({split['error']})")
+        else:
+            log(
+                f"  {split_name} — test R²: {split['metrics']['test_r2']:.4f}  "
+                f"RMSE: {split['metrics']['test_rmse']:.6f}"
+            )
+
+    # Crisis prediction
+    successes = sum(
+        1 for r in crisis_results.values()
+        if isinstance(r, dict) and r.get("peak_detected_3_6_months", False)
+    )
+    total = sum(
+        1 for r in crisis_results.values()
+        if isinstance(r, dict) and "error" not in r
+    )
+    log(f"  Crisis predictions: {successes}/{total} detected in 3-6 month window")
+
+    # Output files
+    section("OUTPUT FILES")
+    for path in [CLEANED_DATA_PATH, FEATURES_PATH, OUTPUTS_PATH]:
+        p = Path(path)
+        if p.exists():
+            size_mb = p.stat().st_size / 1024 / 1024
+            log(f"  ✓ {p.name}  ({size_mb:.2f} MB)")
+        else:
+            log(f"  ✗ {p.name}  NOT CREATED")
+
+
+# ── Main entry point ──────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    section("MODEL B PIPELINE — FINANCIAL FRAGILITY CLOCK")
+    log(f"Python: {sys.version.split()[0]}")
+    log(f"Working directory: {Path.cwd()}")
+    log(f"Output directory:  {DATA_DIR}")
+
+    start_time = datetime.now()
+
+    # Resolve FRED API key
+    fred_api_key = os.environ.get("FRED_API_KEY")
+    if fred_api_key:
+        log("FRED_API_KEY detected — macro signals will be included.")
+    else:
+        log("FRED_API_KEY not set — macro signals will be ABSENT from this run.")
+
+    try:
+        # Stage 1 — fetch + preprocess
+        clean_df = stage_fetch_and_preprocess(fred_api_key)
+
+        # Stage 2 — feature engineering
+        features_df = stage_feature_engineering(clean_df)
+
+        # Stage 3 — regime labeling
+        labeled_df = stage_regime_labeling(features_df)
+
+        # Stage 4 — model training + SHAP
+        walk_forward_results, crisis_results, shap_results = stage_model_training(labeled_df)
+
+        # Summary
+        elapsed = (datetime.now() - start_time).total_seconds()
+        print_summary(walk_forward_results, crisis_results)
+        log(f"\nPipeline completed in {elapsed:.1f}s")
+
+    except FileNotFoundError as exc:
+        log(f"ERROR — file not found: {exc}")
+        log("Ensure raw data dependencies exist and that all modules are on the Python path.")
+        sys.exit(1)
+    except Exception as exc:
+        import traceback
+        log(f"ERROR — unexpected failure: {exc}")
+        traceback.print_exc()
+        sys.exit(1)

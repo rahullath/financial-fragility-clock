@@ -180,47 +180,190 @@ This implementation plan converts the Financial Fragility Clock design into acti
   - Add error handling with descriptive messages for missing files or processing failures
   - _Requirements: 22.1, 22.2, 22.5, 26.1, 26.3_
 
-- [ ] 10. Checkpoint - Verify ML pipeline outputs
+- [x] 10. Checkpoint - Verify ML pipeline outputs
   - Run `python/export_json.py` end-to-end
   - Verify all three JSON files are created in `src/data/` with correct structure
   - Check that RF outperforms OLS in PONZI regime (validates Minsky framework)
   - Ensure all tests pass, ask the user if questions arise
 
-- [ ] 11. Set up React project structure
+## Model B: Extended Data Pipeline (2003-2025)
+
+- [-] 10b. Set up Model B data fetching infrastructure
+  - [x] 10b.1 Create yfinance data fetcher
+    - Write `python/model_b/fetch_market_data.py` with yfinance integration
+    - Fetch daily data for 13 indices: ^GSPC, ^GDAXI, ^FTSE, ^N225, ^BVSP, EZU, EEM, XU100.IS, 000001.SS, ^HSI, ^KS11, ^AXJO, ^VIX
+    - Date range: 2003-01-01 to 2025-12-31 (or latest available)
+    - Handle ticker symbol mapping and data alignment
+    - _Requirements: 32.1, 32.4_
+
+  - [x] 10b.2 Create FRED API data fetcher
+    - Write `python/model_b/fetch_macro_data.py` with fredapi integration
+    - Fetch daily/monthly data for: VIXCLS, T10Y2Y, TEDRATE, FEDFUNDS, BAA10Y
+    - Resample to daily frequency with forward-fill
+    - Handle API rate limits and missing data gracefully
+    - _Requirements: 32.2, 32.3_
+
+  - [x] 10b.3 Implement Model B preprocessing
+    - Write `python/model_b/preprocessing_b.py` adapting Model A preprocessing logic
+    - Merge market data and macro data on date index
+    - Handle missing values with forward-fill for gaps ≤ 5 days
+    - Validate data completeness and export to `src/data/model_b_cleaned_data.json`
+    - _Requirements: 32.5, 32.6_
+
+- [x] 10c. Implement Model B feature engineering
+  - [x] 10c.1 Compute extended correlation features
+    - Adapt `compute_rolling_correlation()` for 13 indices (78 pairwise correlations)
+    - Compute eigenvalue ratio (dominant eigenvalue / sum) as concentration measure
+    - Compute volatility synchrony (mean of rolling volatilities)
+    - _Requirements: 33.1, 33.2, 33.3_
+
+  - [x] 10c.2 Integrate macro signals into features
+    - Normalize VIX, TED spread, yield spread, credit spread to [0,1]
+    - Create macro signal composite features
+    - Handle macro data availability (TED spread discontinued in 2023)
+    - _Requirements: 33.4_
+
+  - [x] 10c.3 Compute Model B fragility score
+    - Implement weighted formula: 0.25×corr + 0.20×PE_inv + 0.15×vol + 0.15×eigenvalue_ratio + 0.10×TED + 0.10×VIX + 0.05×yield_spread
+    - Normalize all components before weighting
+    - Handle missing macro signals gracefully (adjust weights if unavailable)
+    - _Requirements: 33.5, 33.6_
+
+- [x] 10d. Implement Model B regime labeling with historical verification
+  - [x] 10d.1 Create historically-verified regime classifier
+    - Write `python/model_b/regime_labeling_b.py` with crisis-aware thresholds, and remember to use the existing venv for running any commands
+    - Implement hard-coded crisis periods: Sep 2008-Mar 2009 (PONZI), Mar 2020 (PONZI)
+    - Use adaptive thresholds for non-crisis periods based on rolling percentiles
+    - _Requirements: 34.1, 34.2, 34.3, 34.4_
+
+  - [x] 10d.2 Implement regime confidence scoring
+    - Compute confidence scores based on how many signals agree on regime classification
+    - Flag ambiguous periods where correlation and macro signals disagree
+    - Store confidence scores in model_b_features.json
+    - _Requirements: 34.5, 34.6_
+
+- [x] 10e. Implement Model B model training with crisis prediction validation
+  - [x] 10e.1 Implement walk-forward validation
+    - Create expanding window splits: train 2003-2007 test 2008, train 2003-2019 test 2020
+    - Train Random Forest with macro features included
+    - Compute regime-specific RMSE for all three regimes (now with actual PONZI observations)
+    - _Requirements: 35.1, 35.2, 35.3_
+
+  - [x] 10e.2 Validate crisis prediction capability
+    - Test whether fragility score peaks 3-6 months before Sep 2008 crash
+    - Test whether fragility score peaks before Mar 2020 COVID crash
+    - Compute lead time statistics and false positive rate
+    - _Requirements: 35.4_
+
+  - [x] 10e.3 Compute Model B SHAP values
+    - Compute SHAP values for crisis periods (2008, 2020)
+    - Identify which macro signals were most important during pre-crisis build-up
+    - Compare feature importance across regimes
+    - Export to model_b_outputs.json
+    - _Requirements: 35.5, 35.6_
+
+- [x] 10f. Create Model B pipeline orchestration
+  - Write `python/model_b/export_json_b.py` that runs all Model B modules in sequence
+  - Add error handling and logging
+  - Ensure pipeline completes in under 10 minutes (larger dataset)
+  - Verify all Model B JSON files are created with correct structure
+
+- [-] 10g. Checkpoint - Verify Model B pipeline outputs
+  - [x] Run `python/model_b/export_json_b.py` end-to-end (completed in 3m48s, exit code 0)
+  - [x] model_b_cleaned_data.json — 5,984 observations × 13 columns (2.66 MB) ✓
+  - [x] model_b_features.json — 100 features, 5,984 rows (24.92 MB) ✓
+  - [x] model_b_outputs.json — walk-forward, crisis prediction, SHAP (14.65 KB) ✓
+  - [x] PONZI regime properly detected in Sep 2008 (151 obs, 100% confidence) ✓
+  - [x] PONZI regime properly detected in Mar 2020 (22 obs, 100% confidence) ✓
+  - [x] Fragility score range 4–78, mean 31.9, 5,911 valid values ✓
+  - [ ] Crisis prediction: COVID 2020 predicted (4.0 months lead ✓), 2008 peak at 6.1 months (outside 3-6 window — misses by 0.1 month; adding FRED macro data should fix this)
+
+## React Dashboard Updates for Dual-Model Support
+
+- [x] 10h. Implement model toggle and data loading
+  - [x] 10h.1 Create ModelContext provider
+    - Write `src/contexts/ModelContext.tsx` with model selection state
+    - Define ModelContextValue interface with selectedModel ('A' | 'B'), setSelectedModel, modelAData, modelBData
+    - Load both model_a_*.json and model_b_*.json files
+    - Provide current model's data to all components
+    - _Requirements: 36.1, 36.2_
+
+  - [x] 10h.2 Add model toggle to header
+    - Update header component with toggle button: "Model A (ISE 2009-2011)" / "Model B (Global 2003-2025)"
+    - Implement toggle handler that updates ModelContext
+    - Display current model's date range and observation count
+    - _Requirements: 36.1_
+
+  - [x] 10h.3 Update all components to consume ModelContext
+    - Modify ClockVisual, RegimeTimeline, DateScrubber, CorrelationHeatmap, SHAPChart, NetworkMST, ModelPerformanceTable, RegimeStatsCard
+    - Each component should read data from ModelContext.currentModelData
+    - Handle different date ranges for Model A vs Model B
+    - _Requirements: 36.2_
+
+- [x] 10i. Implement Model A/B comparison panel
+  - Create `src/components/ModelComparisonPanel.tsx`
+  - Display side-by-side fragility scores for overlapping period (2009-2011)
+  - Show regime agreement/disagreement statistics
+  - Highlight where Model B's macro signals provide additional insight
+  - _Requirements: 36.3_
+
+- [x] 10j. Add Model B historical event annotations
+  - Update RegimeTimeline to show Model B events: Sep 2008 Lehman, May 2010 Flash Crash, Mar 2020 COVID, Apr 2025 Tariff Shock
+  - Add event descriptions on hover
+  - Color-code events by severity (crisis vs correction)
+  - _Requirements: 36.4_
+
+- [x] 10k. Implement Model B current reading display
+  - Create `src/components/CurrentFragilityReading.tsx` for Model B
+  - Display latest fragility score, regime, and trend
+  - Show comparison to historical crisis levels (2008, 2020)
+  - Add interpretation text based on current reading
+  - _Requirements: 36.5_
+
+- [x] 10l. Checkpoint - Verify dual-model dashboard
+  - Test model toggle switches all components correctly
+  - Verify Model A shows ISE data (2009-2011) with quantile regimes
+  - Verify Model B shows extended data (2003-2025) with crisis-verified regimes
+  - Check that comparison panel highlights key differences
+  - Ensure all tests pass, ask the user if questions arise
+
+## Continue with Original React Tasks
+
+- [x] 11. Set up React project structure
   - Initialize Vite project with React and TypeScript templates
   - Create directory structure: `src/components/`, `src/contexts/`, `src/data/`, `src/styles/`, `src/routes/`
   - Configure Vite for static JSON imports and CSS Modules
   - Create `src/styles/variables.css` with color palette (HEDGE: #2d6a4f, SPECULATIVE: #e9a800, PONZI: #c1121f) and typography
   - _Requirements: 12.6, 24.5_
 
-- [ ] 12. Implement DateContext provider
-  - [ ] 12.1 Create DateContext with global state
+- [x] 12. Implement DateContext provider
+  - [x] 12.1 Create DateContext with global state
     - Write `src/contexts/DateContext.tsx` with React context
     - Define DateContextValue interface with selectedDate, setSelectedDate, dateRange, keyEvents
     - Load cleaned_data.json and features.json to determine date range
     - Define key events array with dates and labels (Flash Crash May 6 2010, Greece crisis April 2010)
     - _Requirements: 12.5_
 
-  - [ ] 12.2 Implement date update logic with validation
+  - [x] 12.2 Implement date update logic with validation
     - Create setSelectedDate function that clamps to valid date range
     - Log warning when invalid date is provided
     - Provide DateContext.Provider wrapping entire app
     - _Requirements: 26.4_
 
 - [ ] 13. Implement Clock Visual component
-  - [ ] 13.1 Create SVG circular gauge structure
+  - [x] 13.1 Create SVG circular gauge structure
     - Write `src/components/ClockVisual.tsx` with TypeScript interfaces for props
     - Render SVG with three colored arc segments: HEDGE (0-33°, green), SPECULATIVE (34-66°, amber), PONZI (67-100°, red)
     - Calculate arc paths using D3 arc generator
     - _Requirements: 11.1_
 
-  - [ ] 13.2 Implement animated needle and center display
+  - [x] 13.2 Implement animated needle and center display
     - Create animated needle pointing to current fragility score using CSS transitions (600ms cubic-bezier)
     - Display current date and raw fragility score value in center of clock
     - Implement pulse animation for outer ring when fragility score crosses regime threshold (33 or 67)
     - _Requirements: 11.2, 11.3, 11.4, 11.6_
 
-  - [ ] 13.3 Add regime badges and event markers
+  - [x] 13.3 Add regime badges and event markers
     - Display three pill badges beneath clock: current regime label, 30-day trend arrow (↑↓→), dominant contagion source
     - Render event markers on outer ring for key dates with hover annotations
     - Calculate 30-day trend by comparing current score to score 30 days prior
@@ -232,77 +375,77 @@ This implementation plan converts the Financial Fragility Clock design into acti
     - Test animation triggers on score updates
     - _Requirements: 29.4_
 
-- [ ] 14. Implement Regime Timeline component
-  - [ ] 14.1 Create Recharts AreaChart with regime coloring
+- [-] 14. Implement Regime Timeline component
+  - [x] 14.1 Create Recharts AreaChart with regime coloring
     - Write `src/components/RegimeTimeline.tsx`
     - Render Recharts AreaChart with date on X-axis and fragility score (0-100) on Y-axis
     - Use regime-specific fill colors from variables.css
     - Display full 536-observation time series without downsampling
     - _Requirements: 14.1, 14.2, 14.6_
 
-  - [ ] 14.2 Add event markers and interactivity
+  - [x] 14.2 Add event markers and interactivity
     - Overlay vertical dashed lines with labels for key events
     - Implement onClick handler that updates DateContext when user clicks on timeline
     - Display tooltip on hover showing date, fragility score, and regime label
     - _Requirements: 14.3, 14.4, 14.5_
 
-- [ ] 15. Implement Date Scrubber component
-  - [ ] 15.1 Create horizontal slider with date range
+- [-] 15. Implement Date Scrubber component
+  - [x] 15.1 Create horizontal slider with date range
     - Write `src/components/DateScrubber.tsx`
     - Render HTML range input spanning full date range (Jan 2009 - Aug 2011)
     - Display currently selected date as formatted text (e.g., "May 6, 2010")
     - Mark key event dates with vertical tick marks
     - _Requirements: 13.1, 13.3, 13.4_
 
-  - [ ] 15.2 Implement debounced date updates
+  - [x] 15.2 Implement debounced date updates
     - Add onChange handler that updates DateContext.selectedDate
     - Debounce updates by 100ms to prevent excessive re-rendering during drag
     - Sync with RegimeTimeline clicks (listen to DateContext changes)
     - _Requirements: 13.2, 13.5, 13.6_
 
 - [ ] 16. Implement Correlation Heatmap component
-  - [ ] 16.1 Create custom SVG grid with D3 color scale
+  - [x] 16.1 Create custom SVG grid with D3 color scale
     - Write `src/components/CorrelationHeatmap.tsx`
     - Render SVG grid with rows and columns for all 8 indices
     - Use D3 diverging color scale: blue (#2166ac) for -1, white for 0, red (#d6604d) for +1
     - Display 60-day rolling correlation values at currently selected date
     - _Requirements: 15.1, 15.2, 15.3_
 
-  - [ ] 16.2 Add hover interactions and transitions
+  - [x] 16.2 Add hover interactions and transitions
     - Display exact correlation value and 30-day delta on hover
     - Update cell colors with 300ms transition when DateContext.selectedDate changes
     - Display correlation values as text overlays when cell size exceeds 40px
     - _Requirements: 15.4, 15.5, 15.6_
 
 - [ ] 17. Implement SHAP Feature Importance Chart component
-  - [ ] 17.1 Create horizontal bar chart with regime toggle
+  - [x] 17.1 Create horizontal bar chart with regime toggle
     - Write `src/components/SHAPChart.tsx`
     - Render Recharts BarChart with features on Y-axis and mean absolute SHAP values on X-axis
     - Color bars by positive/negative mean SHAP direction (positive = teal, negative = red)
     - Sort features by mean absolute SHAP value in descending order
     - _Requirements: 16.1, 16.2, 16.6_
 
-  - [ ] 17.2 Implement regime toggle and auto-generated caption
+  - [x] 17.2 Implement regime toggle and auto-generated caption
     - Add regime toggle buttons (HEDGE, SPECULATIVE, PONZI) with local state
     - Update bars with 300ms transition when regime changes
     - Display auto-generated caption stating dominant feature and contribution percentage
     - _Requirements: 16.3, 16.4, 16.5_
 
 - [ ] 18. Implement Network MST Visualization component
-  - [ ] 18.1 Create D3 force-directed graph structure
+  - [x] 18.1 Create D3 force-directed graph structure
     - Write `src/components/NetworkMST.tsx`
     - Compute Minimum Spanning Tree using Mantegna distance (sqrt(2(1-correlation))) from correlation matrix
     - Render D3 force-directed graph with nodes representing market indices
     - Size nodes proportionally to betweenness centrality
     - _Requirements: 17.1, 17.2, 17.3_
 
-  - [ ] 18.2 Add node coloring and interactivity
+  - [x] 18.2 Add node coloring and interactivity
     - Color nodes by regime-specific activity (volatility at selected date)
     - Display node labels and show exact centrality values on hover
     - Update edge weights with animated transitions when DateContext.selectedDate changes
     - _Requirements: 17.4, 17.5, 17.6_
 
-- [ ] 19. Implement Model Performance Table component
+- [x] 19. Implement Model Performance Table component
   - Write `src/components/ModelPerformanceTable.tsx`
   - Display rows for OLS and Random Forest with columns for R², RMSE, MAE, regime-specific RMSE
   - Highlight best value in each column with teal background color
@@ -311,7 +454,7 @@ This implementation plan converts the Financial Fragility Clock design into acti
   - Style as clean table with alternating row colors and border styling
   - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6_
 
-- [ ] 20. Implement Regime Statistics Card component
+- [x] 20. Implement Regime Statistics Card component
   - Write `src/components/RegimeStatsCard.tsx`
   - Display 3-column grid with one column per regime (HEDGE, SPECULATIVE, PONZI)
   - Show statistics per regime: count of days, mean ISE return, volatility (std dev), mean fragility score
@@ -320,34 +463,34 @@ This implementation plan converts the Financial Fragility Clock design into acti
   - Format percentages to 2 decimal places and counts as integers
   - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
 
-- [ ] 21. Checkpoint - Verify all components render correctly
+- [x] 21. Checkpoint - Verify all components render correctly
   - Test each component in isolation with sample data
   - Verify DateContext updates propagate to all components
   - Check that all visualizations match design specifications
   - Ensure all tests pass, ask the user if questions arise
 
-- [ ] 22. Implement dashboard layout and routing
-  - [ ] 22.1 Create main dashboard route
+- [x] 22. Implement dashboard layout and routing
+  - [x] 22.1 Create main dashboard route
     - Write `src/routes/Dashboard.tsx` with component layout
     - Arrange components in desktop layout: Clock Visual (left), Regime Timeline (right top), Date Scrubber (full width), three-panel row (Heatmap, SHAP, MST), two-panel row (Performance Table, Regime Stats)
     - Implement responsive layout with CSS Grid and media queries
     - Switch to mobile layout (single-column stack, tabbed panels) when viewport width < 768px
     - _Requirements: 12.3, 12.4, 23.4_
 
-  - [ ] 22.2 Create header with title and mode toggle
+  - [x] 22.2 Create header with title and mode toggle
     - Add header component with title "Financial Fragility Clock"
     - Add mode toggle button for switching to presentation mode
     - Style header with consistent typography and colors
     - _Requirements: 12.2_
 
-  - [ ] 22.3 Set up React Router with three routes
+  - [x] 22.3 Set up React Router with three routes
     - Configure React Router with routes: "/" (main dashboard), "/present" (presentation mode), "/methods" (methodology explainer)
     - Lazy-load presentation mode route to reduce initial bundle size
     - Add navigation links in header
     - _Requirements: 12.1, 27.5_
 
-- [ ] 23. Implement Presentation Mode
-  - [ ] 23.1 Create presentation route with 5 panels
+- [x] 23. Implement Presentation Mode
+  - [x] 23.1 Create presentation route with 5 panels
     - Write `src/routes/PresentationMode.tsx`
     - Render 5 full-screen panels with dark theme (background #1a1a2e)
     - Panel 1: Clock Visual at PONZI date (May 2010) with caption "This is what a Minsky moment looks like in data"
@@ -357,14 +500,14 @@ This implementation plan converts the Financial Fragility Clock design into acti
     - Panel 5: Model Performance Table with business interpretation paragraph
     - _Requirements: 20.1, 20.3, 20.4, 20.5, 20.6, 20.7, 20.9_
 
-  - [ ] 23.2 Implement keyboard navigation
+  - [x] 23.2 Implement keyboard navigation
     - Add keyboard event listeners for left/right arrow keys to navigate between panels
     - Add F key handler for fullscreen toggle
     - Display slide number indicator in bottom-right corner
     - Implement horizontal slide animation (400ms) between panels
     - _Requirements: 20.2, 20.8, 20.10_
 
-- [ ] 24. Implement methodology explainer route
+- [x] 24. Implement methodology explainer route
   - Write `src/routes/Methods.tsx` with theoretical foundation and methodology explanation
   - Include sections: Minsky's Financial Instability Hypothesis, fragility score formula, regime classification, model comparison
   - Cite Minsky (1992) and peer-reviewed sources
@@ -372,14 +515,14 @@ This implementation plan converts the Financial Fragility Clock design into acti
   - Style as readable article with proper typography
   - _Requirements: 30.1, 30.2, 30.6_
 
-- [ ] 25. Implement PNG export functionality
-  - [ ] 25.1 Create export utility function
+- [x] 25. Implement PNG export functionality
+  - [x] 25.1 Create export utility function
     - Write `src/utils/exportChart.ts` with function to render chart to canvas at 150 DPI
     - Use html2canvas or similar library to capture chart DOM elements
     - Trigger browser download with descriptive filename
     - _Requirements: 21.2, 21.3_
 
-  - [ ] 25.2 Add export buttons to chart components
+  - [x] 25.2 Add export buttons to chart components
     - Add export button to each chart component (Timeline, Heatmap, SHAP, MST, Performance Table)
     - Ensure exported PNGs have white background and all labels/legends visible
     - Maintain aspect ratio and ensure text remains readable at report print size

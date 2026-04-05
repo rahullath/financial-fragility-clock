@@ -2,7 +2,25 @@
 
 ## Overview
 
-The Financial Fragility Clock is a static-site dashboard that visualizes financial market fragility using the Istanbul Stock Exchange (ISE) dataset through the lens of Minsky's Financial Instability Hypothesis. The system architecture follows a three-tier approach: Python-based ML pipeline for data processing and model training, static JSON artifacts for data storage, and a React-based dashboard for interactive visualization.
+The Financial Fragility Clock is a static-site dashboard that visualizes financial market fragility using a dual-model architecture: Model A (assignment-compliant ISE dataset) and Model B (extended 2003-2025 global data with macro signals). Both models apply Minsky's Financial Instability Hypothesis but with different data scopes to demonstrate both methodological validity (Model A) and real-world applicability (Model B).
+
+### Dual-Model Architecture
+
+**Model A: Assignment-Compliant (ISE 2009-2011)**
+- Purpose: Satisfy assignment requirements, demonstrate methodology on constrained dataset
+- Data: Istanbul Stock Exchange dataset (536 observations, 8 indices, Jan 2009 - Aug 2011)
+- Regime Labeling: Quantile-based thresholds calibrated from the data itself
+- Fragility Score: Rolling correlation + permutation entropy + volatility
+- Limitation: Post-crisis window with insufficient PONZI observations for validation
+- Report Section: Section 2 (Model Development)
+
+**Model B: Full-Scale Analysis (Global 2003-2025)**
+- Purpose: Demonstrate predictive validity with full Minsky cycles including pre-crisis build-up
+- Data: 13 global indices + 5 FRED macro indicators (5,700+ observations, 2003-2025)
+- Regime Labeling: Historically-verified crisis periods (Sep 2008, Mar 2020) + adaptive thresholds
+- Fragility Score: Extended formula with eigenvalue ratio, VIX, TED spread, yield curve
+- Validation: Captures pre-crisis elevation in 2007 and late 2019, validates Minsky framework
+- Report Section: Section 3 (Out-of-Sample Extension / Interpretation)
 
 ### Core Design Principles
 
@@ -30,24 +48,35 @@ The system processes 536 daily observations (Jan 2009 - Aug 2011) of 8 global ma
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     ML Pipeline (Python)                     │
+│                 Model A Pipeline (Python)                    │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │ Preprocessing│→ │   Feature    │→ │    Models    │      │
-│  │   Module     │  │ Engineering  │  │    Module    │      │
+│  │   (ISE CSV)  │  │ Engineering  │  │  (OLS + RF)  │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │         ↓                  ↓                  ↓              │
-│  cleaned_data.json   features.json   model_outputs.json     │
+│  model_a_cleaned.json model_a_features.json model_a_outputs.json
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                 Model B Pipeline (Python)                    │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │ yfinance +   │→ │   Feature    │→ │    Models    │      │
+│  │ FRED Fetch   │  │ Engineering  │  │  (OLS + RF)  │      │
+│  │ (2003-2025)  │  │ + Macro Sigs │  │ + Crisis Val │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│         ↓                  ↓                  ↓              │
+│  model_b_cleaned.json model_b_features.json model_b_outputs.json
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  React Dashboard (Frontend)                  │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │              Static JSON Imports                      │   │
+│  │         Model A + Model B JSON Imports               │   │
 │  └──────────────────────────────────────────────────────┘   │
 │         ↓                  ↓                  ↓              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ Date Context │→ │  Components  │→ │    Routes    │      │
-│  │   Provider   │  │  (7 charts)  │  │ (3 routes)   │      │
+│  │ Model Toggle │→ │  Components  │→ │    Routes    │      │
+│  │   Context    │  │  (7 charts)  │  │ (3 routes)   │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └─────────────────────────────────────────────────────────────┘
                               ↓

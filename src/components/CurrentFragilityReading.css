@@ -1,0 +1,124 @@
+.cfr-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  gap: 1.5rem;
+}
+
+.cfr-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.cfr-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.cfr-primary-reading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cfr-score-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.cfr-score-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cfr-score-value {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.cfr-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.cfr-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.cfr-trend {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.cfr-historical-comparisons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.cfr-hist-item {
+  background-color: var(--bg);
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.hist-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hist-value {
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ponzi);
+  margin-top: 0.25rem;
+}
+
+.cfr-interpretation {
+  background-color: rgba(45, 106, 79, 0.05);
+  border-left: 3px solid var(--hedge);
+  padding: 1rem;
+}
+
+.cfr-interpretation.speculative {
+  background-color: rgba(233, 168, 0, 0.05);
+  border-left-color: var(--speculative);
+}
+
+.cfr-interpretation.ponzi {
+  background-color: rgba(193, 18, 31, 0.05);
+  border-left-color: var(--ponzi);
+}
+
+.cfr-interpretation p {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}

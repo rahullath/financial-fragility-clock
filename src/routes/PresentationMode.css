@@ -1,0 +1,124 @@
+.presentation-route {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-dark, #1a1a2e);
+  color: #fff;
+  overflow: hidden;
+  position: relative;
+  font-family: var(--font-body);
+}
+
+.presentation-exit {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  z-index: 50;
+}
+
+.btn-exit {
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.btn-exit:hover {
+  color: white;
+  border-color: white;
+  background-color: rgba(255,255,255,0.1);
+}
+
+.presentation-track {
+  display: flex;
+  width: 500vw; /* 5 panels */
+  height: 100vh;
+  transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.present-panel {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  box-sizing: border-box;
+}
+
+.panel-content-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3rem;
+  max-width: 900px;
+}
+
+.panel-content-split {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.panel-caption {
+  flex: 1;
+}
+
+.panel-caption h2 {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: #fff;
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+}
+
+.panel-caption p {
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+}
+
+.panel-graphic {
+  flex: 1;
+  background: white; /* Give components white background since they are mostly designed for light mode */
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  width: 100%;
+}
+
+.large-clock {
+  transform: scale(1.2);
+  transform-origin: center center;
+  background: transparent;
+  box-shadow: none;
+}
+
+.large-clock text {
+  fill: #fff !important;
+}
+
+.large-clock line {
+  stroke: #fff !important;
+}
+
+.presentation-footer {
+  position: absolute;
+  bottom: 2rem;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 3rem;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.4);
+}
