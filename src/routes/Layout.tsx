@@ -49,7 +49,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       // Ignore when typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.ctrlKey && e.key === 'b') { e.preventDefault(); toggle(); }
-      if (e.key === 'p' || e.key === 'P') { window.location.href = '/present'; }
+      if ((e.key === 'p' || e.key === 'P') && !window.location.pathname.includes('present')) {
+        window.location.href = '/present';
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
