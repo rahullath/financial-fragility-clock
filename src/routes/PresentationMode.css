@@ -1,124 +1,259 @@
+/**
+ * PresentationMode.css
+ * Dark-native. Components render INTO the dark canvas, not on white cards.
+ * Spec §6: keyboard-navigable, 5 panels, no clutter.
+ */
+
+/* ── Force dark variables in presentation context ──────────────────────────── */
 .presentation-route {
+  --bg-card:      transparent;
+  --bg:           transparent;
+  --border:       rgba(255,255,255,0.1);
+  --text-primary: rgba(255,255,255,0.92);
+  --text-muted:   rgba(255,255,255,0.45);
+  --text-faint:   rgba(255,255,255,0.25);
+  --shadow-sm:    none;
+  --shadow-md:    none;
+
   width: 100vw;
   height: 100vh;
-  background-color: var(--bg-dark, #1a1a2e);
-  color: #fff;
+  background: var(--bg-dark, #0d0f18);
+  color: rgba(255,255,255,0.92);
   overflow: hidden;
   position: relative;
   font-family: var(--font-body);
 }
 
-.presentation-exit {
+/* Subtle background grid */
+.presentation-route::before {
+  content: '';
   position: absolute;
-  top: 2rem;
-  left: 2rem;
-  z-index: 50;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ── Exit button ────────────────────────────────────────────────────────────── */
+.presentation-exit {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  z-index: 100;
 }
 
 .btn-exit {
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.3);
   text-decoration: none;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  padding: 0.5rem 1rem;
-  border: 1px solid rgba(255,255,255,0.2);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: color 0.2s, border-color 0.2s;
+  display: block;
 }
 
 .btn-exit:hover {
-  color: white;
-  border-color: white;
-  background-color: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  border-color: rgba(255,255,255,0.3);
 }
 
+/* ── Slide track ────────────────────────────────────────────────────────────── */
 .presentation-track {
   display: flex;
-  width: 500vw; /* 5 panels */
+  width: 500vw;
   height: 100vh;
-  transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 450ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
 }
 
+/* ── Individual panels ──────────────────────────────────────────────────────── */
 .present-panel {
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4rem;
+  padding: 5rem 4rem 5rem;
   box-sizing: border-box;
+  position: relative;
 }
 
-.panel-content-centered {
-  display: flex;
+/* Layout variants */
+.panel-layout-center {
   flex-direction: column;
-  align-items: center;
+  gap: 2.5rem;
+  max-width: 800px;
+  margin: 0 auto;
   text-align: center;
-  gap: 3rem;
-  max-width: 900px;
+  width: 100%;
 }
 
-.panel-content-split {
-  display: flex;
+.panel-layout-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
   align-items: center;
-  justify-content: center;
-  gap: 4rem;
   max-width: 1200px;
+  margin: 0 auto;
   width: 100%;
 }
 
-.panel-caption {
-  flex: 1;
+.panel-layout-split.flip {
+  direction: rtl;
 }
 
-.panel-caption h2 {
+.panel-layout-split.flip > * {
+  direction: ltr;
+}
+
+/* ── Panel text ─────────────────────────────────────────────────────────────── */
+.panel-text h2 {
   font-family: var(--font-display);
-  font-size: 2.2rem;
-  color: #fff;
-  margin: 0 0 1rem 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 700;
+  color: #ffffff;
   line-height: 1.2;
+  margin-bottom: 1.25rem;
 }
 
-.panel-caption p {
-  font-size: 1.1rem;
-  color: rgba(255,255,255,0.8);
-  line-height: 1.6;
+.panel-text p {
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
 }
 
+.panel-text .panel-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* ── Graphic container ──────────────────────────────────────────────────────── */
 .panel-graphic {
-  flex: 1;
-  background: white; /* Give components white background since they are mostly designed for light mode */
-  padding: 1.5rem;
-  border-radius: 6px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   width: 100%;
+  /* No background, no border, no box-shadow — components render dark-natively */
 }
 
-.large-clock {
-  transform: scale(1.2);
-  transform-origin: center center;
-  background: transparent;
-  box-shadow: none;
+/* Clock panel is already dark — just scale it */
+.panel-graphic .clock-panel {
+  border-color: rgba(255,255,255,0.08);
 }
 
-.large-clock text {
-  fill: #fff !important;
+/* Charts etc: override card background so they sit on the dark canvas */
+.panel-graphic .regime-timeline,
+.panel-graphic .shap-chart,
+.panel-graphic .network-mst,
+.panel-graphic .perf-table-wrapper {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
 }
 
-.large-clock line {
-  stroke: #fff !important;
+/* Text colours inside charts when on dark background */
+.panel-graphic .panel-title,
+.panel-graphic .shap-title,
+.panel-graphic .mst-title,
+.panel-graphic .perf-table-title,
+.panel-graphic .heatmap-title {
+  color: rgba(255,255,255,0.45);
 }
 
+/* ── Slide number & hints ───────────────────────────────────────────────────── */
 .presentation-footer {
-  position: absolute;
-  bottom: 2rem;
+  position: fixed;
+  bottom: 1.75rem;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 0 3rem;
-  box-sizing: border-box;
+  padding: 0 2rem;
   font-family: var(--font-mono);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+/* ── Progress dots ──────────────────────────────────────────────────────────── */
+.presentation-dots {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.presentation-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.3s, transform 0.3s;
+}
+
+.presentation-dot.active {
+  background: rgba(255,255,255,0.7);
+  transform: scale(1.4);
+}
+
+/* ── Nav arrow buttons ──────────────────────────────────────────────────────── */
+.presentation-nav {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 50;
+}
+
+.btn-nav {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 4px;
+  background: transparent;
   color: rgba(255,255,255,0.4);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  font-family: var(--font-mono);
+}
+
+.btn-nav:hover:not(:disabled) {
+  color: rgba(255,255,255,0.9);
+  border-color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+}
+
+.btn-nav:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .panel-layout-split {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .present-panel {
+    padding: 4rem 1.5rem;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
 }

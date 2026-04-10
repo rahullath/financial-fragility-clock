@@ -16,9 +16,9 @@ import './SHAPChart.css';
 type Regime = 'HEDGE' | 'SPECULATIVE' | 'PONZI';
 
 const REGIME_COLORS: Record<Regime, string> = {
-  HEDGE: '#2d6a4f',
-  SPECULATIVE: '#e9a800',
-  PONZI: '#c1121f',
+  HEDGE: '#22c55e',
+  SPECULATIVE: '#f59e0b',
+  PONZI: '#ef4444',
 };
 
 interface ShapRow {

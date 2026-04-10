@@ -1,47 +1,60 @@
+/** NetworkMST.css — dark theme, matches actual class names */
+
 .network-mst {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  overflow: hidden;
 }
 
 .mst-title {
-  align-self: flex-start;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.network-mst svg {
-  max-width: 100%;
-  height: auto;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 0.5rem;
 }
 
 .mst-legend {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  margin-top: 0.35rem;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  flex-wrap: wrap;
-  justify-content: center;
+  font-size: 0.58rem;
+  color: var(--text-faint);
 }
 
 .mst-vol-bar {
-  width: 60px;
-  height: 5px;
-  border-radius: 3px;
-  background: linear-gradient(to right, #ffffd4, #fd8d3c, #800026);
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(to right, var(--hedge), var(--speculative), var(--ponzi));
+  border-radius: 2px;
 }
 
 .mst-legend-sep {
+  color: var(--text-faint);
   opacity: 0.4;
+}
+
+/* D3 SVG elements */
+.network-mst svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.network-mst text {
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Export button row */
+.network-mst > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
 }

@@ -1,0 +1,99 @@
+/**
+ * panels.patch.css — dark theme overrides
+ * Ensures all legacy component wrappers use the dark token system.
+ * Import after App.css.
+ */
+
+/* ── Force dark background on any remaining light-themed wrappers ─────────── */
+.corr-heatmap,
+.shap-chart,
+.network-mst,
+.regime-stats,
+.perf-table-wrapper,
+.date-scrubber,
+.regime-timeline,
+.cfr-card,
+.model-comparison-panel,
+.rs-card,
+.model-toggle-container,
+.clock-panel {
+  background: var(--bg-surface) !important;
+  border-color: var(--bg-border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Text overrides ─────────────────────────────────────────────────────────── */
+.corr-heatmap *,
+.shap-chart *,
+.network-mst *,
+.perf-table-wrapper *,
+.date-scrubber *,
+.regime-timeline *,
+.rs-card * {
+  color: inherit;
+}
+
+/* ── Export buttons inside panels ───────────────────────────────────────────── */
+.corr-heatmap button,
+.shap-chart button:not(.shap-regime-btn),
+.network-mst button,
+.perf-table-wrapper button,
+.regime-timeline button {
+  font-family: var(--font-mono) !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.08em !important;
+  color: var(--text-faint) !important;
+  background: transparent !important;
+  border: 1px solid var(--bg-border) !important;
+  border-radius: var(--radius) !important;
+  padding: 0.2rem 0.5rem !important;
+  cursor: pointer !important;
+  transition: color 0.15s, border-color 0.15s !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+}
+
+.corr-heatmap button:hover,
+.shap-chart button:not(.shap-regime-btn):hover,
+.network-mst button:hover,
+.perf-table-wrapper button:hover,
+.regime-timeline button:hover {
+  color: var(--text-secondary) !important;
+  border-color: var(--text-secondary) !important;
+}
+
+/* ── Recharts: dark chart chrome ────────────────────────────────────────────── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--bg-border) !important;
+}
+
+.recharts-text {
+  fill: var(--text-faint) !important;
+}
+
+/* ── D3 nodes/edges: ensure visibility on dark bg ───────────────────────────── */
+.network-mst text {
+  fill: var(--text-secondary) !important;
+}
+
+/* ── ModelComparisonPanel ────────────────────────────────────────────────────── */
+.mcp-stat-box {
+  background: var(--bg-elevated) !important;
+  border-color: var(--bg-border) !important;
+  border-radius: var(--radius) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── CurrentFragilityReading ─────────────────────────────────────────────────── */
+.cfr-hist-item,
+.cfr-interpretation {
+  background: var(--bg-elevated) !important;
+  border-radius: var(--radius) !important;
+}
+
+/* ── RegimeStatsCard ─────────────────────────────────────────────────────────── */
+.rs-card {
+  border-radius: var(--radius) !important;
+}

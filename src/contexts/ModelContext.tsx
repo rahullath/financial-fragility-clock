@@ -14,7 +14,7 @@ import modelAOutputs from '../data/model_outputs.json';
 
 // Model B — Global 2003-2025 (5984 obs)
 import modelBClean from '../data/model_b_cleaned_data.json';
-import modelBFeatures from '../data/model_b_features.json';
+import modelBFeatures from '../data/model_b_features_slim.json';
 import modelBOutputs from '../data/model_b_outputs.json';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

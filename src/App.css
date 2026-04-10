@@ -1,38 +1,68 @@
 /**
- * Main App Styles
- * Aesthetic: editorial financial instrument — Bloomberg with restraint.
- * Spec ref: spec.md §7 Visual Design
+ * App.css — Financial Fragility Clock · Spec v2
+ * Full dark token system.  Near-black background, cool-toned.
+ * Spec reference: §3 Colour Palette, §2 Aesthetic Direction
+ *
+ * NO light colours anywhere in this file except where explicitly noted.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Serif+4:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* ── Design tokens ───────────────────────────────────────────────────────── */
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --bg:           #faf8f4;
-  --bg-card:      #ffffff;
-  --bg-dark:      #1a1a2e;
-  --accent:       #1b4f72;
-  --accent-light: #2e86ab;
-  --hedge:        #2d6a4f;
-  --speculative:  #e9a800;
-  --ponzi:        #c1121f;
-  --text-primary: #1a1a1a;
-  --text-muted:   #6b7280;
-  --border:       #e5e0d8;
+  /* Backgrounds */
+  --bg:            #080b12;   /* near-black, cool-toned */
+  --bg-surface:    #0e1420;   /* card / panel surface */
+  --bg-elevated:   #141a28;   /* elevated elements, dropdowns */
+  --bg-border:     rgba(255, 255, 255, 0.07);
 
+  /* Text */
+  --text-primary:  #e8eaf0;   /* warm white */
+  --text-secondary:#8b92a8;   /* muted */
+  --text-faint:    #3d4357;   /* very muted, labels */
+
+  /* Accent — UI interactions only, never data */
+  --accent:        #4a9eff;
+  --accent-muted:  rgba(74, 158, 255, 0.12);
+
+  /* Regime — data signals */
+  --hedge:         #22c55e;
+  --speculative:   #f59e0b;
+  --ponzi:         #ef4444;
+
+  /* Similarity signal (same as regime for now, extended later) */
+  --similarity-low:     #22c55e;
+  --similarity-mid:     #f59e0b;
+  --similarity-high:    #ef4444;
+  --similarity-extreme: #ff2020;
+
+  /* Typography */
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body:    'Source Serif 4', Georgia, serif;
-  --font-mono:    'JetBrains Mono', monospace;
+  --font-mono:    'JetBrains Mono', 'Menlo', monospace;
 
-  --radius:       12px;
-  --shadow:       0 1px 4px rgba(0,0,0,0.06);
+  /* Geometry — sharp corners */
+  --radius: 3px;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+
+  /* Legacy aliases — keep components that reference these from breaking */
+  --bg-card:     var(--bg-surface);
+  --bg-inset:    var(--bg-elevated);
+  --border:      var(--bg-border);
+  --border-dark: var(--bg-border);
+  --text-muted:  var(--text-secondary);
 }
 
-/* ── Reset ───────────────────────────────────────────────────────────────── */
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
 }
 
 body {
@@ -41,29 +71,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg);
   color: var(--text-primary);
+  min-height: 100vh;
 }
 
-button {
-  font-family: inherit;
-  cursor: pointer;
-}
-
-/* ── App shell ─────────────────────────────────────────────────────────── */
+/* ── App shell ─────────────────────────────────────────────────────────────── */
 .app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────────── */
+/* ── Header — compact, sticky, dark ───────────────────────────────────────── */
 .app-header {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border);
-  padding: 1.1rem 2rem;
-  box-shadow: var(--shadow);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--bg-border);
+  padding: 0.6rem 1.5rem;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 200;
+  box-shadow: 0 1px 0 var(--bg-border), var(--shadow-sm);
 }
 
 .app-header-inner {
@@ -71,14 +97,14 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
 
 .app-title-block h1 {
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.01em;
@@ -86,127 +112,268 @@ button {
 }
 
 .app-title-block p {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 2px;
+  font-size: 0.65rem;
+  color: var(--text-faint);
+  margin-top: 1px;
   font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-/* ── Main ────────────────────────────────────────────────────────────────── */
+.app-header-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* ── Navigation links ──────────────────────────────────────────────────────── */
+nav {
+  display: flex;
+  gap: 0;
+}
+
+.nav-link {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--bg-border);
+  border-right: none;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.nav-link:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.nav-link:last-child {
+  border-right: 1px solid var(--bg-border);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.nav-link:hover {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: rgba(74, 158, 255, 0.3);
+}
+
+/* ── Advanced dropdown button ──────────────────────────────────────────────── */
+.adv-dropdown {
+  position: relative;
+}
+
+.btn-adv {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-adv:hover,
+.btn-adv[aria-expanded="true"] {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: rgba(74, 158, 255, 0.3);
+}
+
+.adv-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 280px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 1rem;
+  z-index: 300;
+}
+
+.adv-panel-section {
+  margin-bottom: 1rem;
+}
+
+.adv-panel-section:last-child {
+  margin-bottom: 0;
+}
+
+.adv-panel-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* ── Export button ─────────────────────────────────────────────────────────── */
+.btn-export {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.panel-card:hover .btn-export {
+  opacity: 1;
+}
+
+.btn-export:hover {
+  color: var(--text-secondary);
+  border-color: var(--text-secondary);
+}
+
+/* ── Card shell — used by all panels ──────────────────────────────────────── */
+.panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.panel-body {
+  padding: 0.9rem;
+}
+
+/* ── Main content ──────────────────────────────────────────────────────────── */
 .app-main {
   flex: 1;
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  padding: 1.5rem 1.5rem;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
-/* ── Dashboard rows ──────────────────────────────────────────────────────── */
+/* ── Dashboard grid rows ───────────────────────────────────────────────────── */
 .dash-row {
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
-/* Row 1: Clock (320px fixed) + Timeline (fills rest) */
+/* Row: Clock (400px max) + Timeline */
 .dash-row--top {
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 400px 1fr;
   align-items: start;
 }
 
-/* Row 2: Scrubber full width */
-.dash-row--scrubber {
+/* Full width */
+.dash-row--full {
   grid-template-columns: 1fr;
 }
 
-/* Row 3: Three equal panels */
+/* Three equal panels */
 .dash-row--trio {
   grid-template-columns: repeat(3, 1fr);
   align-items: start;
 }
 
-/* Row 4: Two panels — table wider than stats */
+/* Two panels */
 .dash-row--bottom {
   grid-template-columns: 1.2fr 1fr;
   align-items: start;
 }
 
 .dash-cell {
-  min-width: 0; /* prevent overflow in grid */
+  min-width: 0;
 }
 
-.dash-cell--clock {
-  display: flex;
-  justify-content: center;
-}
-
-.dash-cell--timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* ── Footer ──────────────────────────────────────────────────────────────── */
+/* ── Footer ────────────────────────────────────────────────────────────────── */
 .app-footer {
-  border-top: 1px solid var(--border);
-  padding: 0.75rem 2rem;
+  border-top: 1px solid var(--bg-border);
+  padding: 0.5rem 1.5rem;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  background: var(--bg-card);
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+  background: var(--bg-surface);
 }
 
-/* ── Loading state ───────────────────────────────────────────────────────── */
+/* ── Loading ───────────────────────────────────────────────────────────────── */
 .loading-msg {
   font-family: var(--font-mono);
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
   animation: pulse-opacity 1.5s ease-in-out infinite;
 }
 
 @keyframes pulse-opacity {
-  0%, 100% { opacity: 0.4; }
-  50%       { opacity: 1; }
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1;   }
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
   .dash-row--top {
     grid-template-columns: 1fr;
   }
-
   .dash-row--trio {
     grid-template-columns: 1fr 1fr;
-  }
-
-  .dash-cell--clock {
-    justify-content: flex-start;
   }
 }
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 0.9rem 1rem;
+    padding: 0.5rem 1rem;
   }
-
   .app-header-inner {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .app-main {
+    padding: 0.75rem;
     gap: 0.75rem;
   }
-
-  .app-main {
-    padding: 1rem;
-    gap: 1rem;
-  }
-
   .dash-row--top,
   .dash-row--trio,
   .dash-row--bottom {
     grid-template-columns: 1fr;
+  }
+  nav {
+    display: none;
   }
 }

@@ -1,20 +1,26 @@
+/** ModelPerformanceTable.css — dark theme, matches actual class names */
+
 .perf-table-wrapper {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.perf-table-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
 }
 
 .perf-table-title {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
 }
 
 .perf-table-scroll {
@@ -25,59 +31,56 @@
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-}
-
-.perf-table th {
-  background: var(--bg);
-  color: var(--text-muted);
-  font-weight: 600;
-  text-align: right;
-  padding: 0.4rem 0.7rem;
-  border-bottom: 2px solid var(--border);
-  white-space: nowrap;
   font-size: 0.72rem;
 }
 
-.perf-table th:first-child {
-  text-align: left;
-}
-
-.perf-table td {
+.perf-table th {
   text-align: right;
-  padding: 0.45rem 0.7rem;
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border);
-}
-
-.perf-table td:first-child {
-  text-align: left;
-}
-
-.perf-table .alt-row td {
-  background: var(--bg);
-}
-
-.perf-table .model-name {
-  font-weight: 600;
-  color: var(--accent);
+  padding: 0.3rem 0.5rem;
+  color: var(--text-faint);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--bg-border);
   white-space: nowrap;
 }
 
-.perf-table .best-cell {
-  background: rgba(27, 79, 114, 0.12);
-  color: var(--accent);
-  font-weight: 700;
-  border-radius: 3px;
+.perf-table th:first-child { text-align: left; }
+
+.perf-table td {
+  text-align: right;
+  padding: 0.35rem 0.5rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
 }
 
+.model-name {
+  text-align: left !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+}
+
+.alt-row td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.perf-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Best-value highlight */
+.best-cell {
+  color: var(--hedge) !important;
+}
+
+/* Ponzi validation callout */
 .ponzi-callout {
-  background: linear-gradient(135deg, rgba(45,106,79,0.12), rgba(45,106,79,0.06));
-  border: 1px solid var(--hedge);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  border-left: 2px solid var(--ponzi);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--hedge);
-  font-weight: 600;
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  background: rgba(239, 68, 68, 0.06);
+  border-radius: var(--radius);
 }

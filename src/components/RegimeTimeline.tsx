@@ -18,15 +18,15 @@ import './RegimeTimeline.css';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const REGIME_COLORS: Record<string, string> = {
-  HEDGE: '#2d6a4f',
-  SPECULATIVE: '#e9a800',
-  PONZI: '#c1121f',
+  HEDGE: '#22c55e',
+  SPECULATIVE: '#f59e0b',
+  PONZI: '#ef4444',
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  crisis: '#c1121f',
-  correction: '#e9a800',
-  note: '#2e86ab',
+  crisis: '#ef4444',
+  correction: '#f59e0b',
+  note: '#4a9eff',
 };
 
 function formatAxisDate(isoStr: string) {

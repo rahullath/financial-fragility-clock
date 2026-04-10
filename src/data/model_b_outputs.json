@@ -9,7 +9,57 @@
       "numpy": "1.26.4",
       "scikit-learn": "1.8.0",
       "shap": "0.42.1"
-    }
+    },
+    "crisis_windows": [
+      {
+        "id": "gfc_2008",
+        "label": "GFC 2008",
+        "start": "2008-09-01",
+        "end": "2009-03-31",
+        "models": [
+          "B"
+        ]
+      },
+      {
+        "id": "dotcom_2000",
+        "label": "Dot-com Collapse",
+        "start": "2000-03-01",
+        "end": "2002-10-31",
+        "models": [
+          "B"
+        ]
+      },
+      {
+        "id": "covid_2020",
+        "label": "COVID 2020",
+        "start": "2020-02-01",
+        "end": "2020-04-30",
+        "models": [
+          "B"
+        ]
+      },
+      {
+        "id": "flash_2010",
+        "label": "Flash Crash 2010",
+        "start": "2010-04-01",
+        "end": "2010-07-31",
+        "models": [
+          "A",
+          "B"
+        ]
+      },
+      {
+        "id": "eu_debt_2010",
+        "label": "EU Debt Crisis",
+        "start": "2010-04-01",
+        "end": "2011-12-31",
+        "models": [
+          "A",
+          "B"
+        ]
+      }
+    ],
+    "phase2_at": "2026-04-10T02:22:41.197275"
   },
   "walk_forward_validation": {
     "split_2008": {
