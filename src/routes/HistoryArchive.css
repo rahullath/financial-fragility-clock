@@ -1,0 +1,56 @@
+/** HistoryArchive.css */
+
+.history-archive {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.history-timeline-wrap {
+  min-height: 300px;
+}
+
+.history-anno-count {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+.history-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+}
+
+.history-event {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  border-left: 2px solid var(--bg-border);
+}
+
+.history-event--crisis {
+  border-left-color: var(--ponzi);
+}
+
+.history-event--correction {
+  border-left-color: var(--speculative);
+}
+
+.history-event-date {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  letter-spacing: 0.06em;
+}
+
+.history-event-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}

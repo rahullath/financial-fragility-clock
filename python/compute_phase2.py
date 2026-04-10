@@ -263,72 +263,112 @@ def compute_crisis_similarity(df: pd.DataFrame, model: str,
 
 # ── Crash Probability Classifier ─────────────────────────────────────────────
 
-def compute_crash_probability(df: pd.DataFrame, model: str) -> pd.Series:
+def compute_regime_transition_probability(df: pd.DataFrame, model: str) -> pd.Series:
     """
-    Walk-forward RF classifier: P(crash in next HORIZON trading days).
+    Walk-forward RF classifier: P(regime enters PONZI within HORIZON trading days).
 
-    Label:  1 if max forward drawdown in HORIZON days > THRESHOLD, else 0.
-    Features: mean_corr, rolling_volatility, permutation_entropy, fragility_score.
+    This is the Minsky-correct label: the clock measures time until the next
+    Minsky regime collapse (HEDGE/SPECULATIVE → PONZI transition), NOT a
+    self-referential fragility-score surge.
 
-    Walk-forward: train on first 70%, then slide 3-month windows, producing
-    calibrated probability estimates for all dates after the warm-up.
+    Label logic:
+      1  if PONZI appears in any of the next HORIZON regime values
+      0  if no PONZI in the next HORIZON values
+      NaN if the current date is already PONZI (in crisis) or insufficient data
+
+    Features: mean_corr, rolling_volatility, permutation_entropy, fragility_score,
+               + regime_encoded (current Minsky state)
     """
-    feat_cols = ["mean_corr", "rolling_volatility", "permutation_entropy", "fragility_score"]
-    available = [c for c in feat_cols if c in df.columns]
-    if len(available) < 2:
-        print(f"  Not enough feature columns for crash classifier (have: {available})")
-        return pd.Series(np.nan, index=df.index)
-
-    # ── Build reference return series ──────────────────────────────────────
-    # Use fragility_score as a proxy for index level (for drawdown calculation)
-    # If raw price series existed we'd prefer it, but fragility is available.
-    # We actually need returns to compute drawdowns. Use fragility_score pct change.
-    ref_series = df["fragility_score"].ffill()
-
-    # ── Label construction ────────────────────────────────────────────────
-    print(f"  Building crash labels (HORIZON={HORIZON}d, THRESHOLD={THRESHOLD:.0%}) …")
-    # Label t=1 when fragility score SURGES more than THRESHOLD above current
-    # within the next HORIZON trading days — a pre-crash risk signal.
-    labels = np.full(len(df), np.nan)
-    frag = ref_series.values.astype(float)
-    for i in range(len(df) - HORIZON):
-        cur = frag[i]
-        if np.isnan(cur) or cur <= 0:
-            continue
-        future = frag[i + 1: i + 1 + HORIZON]
-        valid_future = future[~np.isnan(future)]
-        if len(valid_future) < HORIZON // 2:
-            continue
-        max_future = float(np.max(valid_future))
-        labels[i] = 1 if (max_future - cur) / max(cur, 1e-6) > THRESHOLD else 0
-
-    label_series = pd.Series(labels, index=df.index)
-    n_crash = int((label_series == 1).sum())
-    n_safe  = int((label_series == 0).sum())
-    print(f"  Labels: {n_crash} crash ({100*n_crash/max(n_crash+n_safe,1):.1f}%), "
-          f"{n_safe} safe")
-
-    if n_crash < 10:
-        print(f"  WARN: Very few crash labels ({n_crash}). "
-              f"Classifier won't be reliable. Writing null.")
+    if 'regime' not in df.columns:
+        print(f"  No 'regime' column in Model {model} data — skipping transition classifier")
         return pd.Series(None, index=df.index)
 
-    # ── Walk-forward calibrated classifier ───────────────────────────────
+    feat_cols = ["mean_corr", "rolling_volatility", "permutation_entropy",
+                 "fragility_score", "regime_encoded"]
+    # Encode regime
+    regime_map = {'HEDGE': 0, 'SPECULATIVE': 1, 'PONZI': 2}
+    df = df.copy()
+    df['regime_encoded'] = df['regime'].map(regime_map).fillna(1)
+
+    available = [c for c in feat_cols if c in df.columns]
+    if len(available) < 2:
+        print(f"  Not enough features ({available}) — skipping")
+        return pd.Series(None, index=df.index)
+
+    for col in available:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    # ── Label: will regime be PONZI within HORIZON days? ────────────────────
+    print(f"  Building regime-transition labels (HORIZON={HORIZON}d) …")
+    regime_vals = df['regime'].values
+    labels = np.full(len(df), np.nan)
+
+    for i in range(len(df) - HORIZON):
+        current = regime_vals[i]
+        # Skip if already in Ponzi — no transition to detect
+        if current == 'PONZI':
+            continue
+        future = regime_vals[i + 1: i + 1 + HORIZON]
+        future_valid = [r for r in future if isinstance(r, str) and r in regime_map]
+        if len(future_valid) < HORIZON // 2:
+            continue
+        labels[i] = 1 if 'PONZI' in future_valid else 0
+
+    label_series = pd.Series(labels, index=df.index)
+    n_transition = int((label_series == 1).sum())
+    n_stable     = int((label_series == 0).sum())
+    n_total      = n_transition + n_stable
+    print(f"  Labels: {n_transition} transition ({100*n_transition/max(n_total,1):.1f}%), "
+          f"{n_stable} stable — {n_total} total labelled")
+
+    if n_transition < 5:
+        # ── Fallback: no PONZI transitions — use high-fragility percentile ──
+        # For datasets like Model A (2009-2011 ISE) where all data is SPECULATIVE,
+        # we define label=1 as "fragility score enters top 15th percentile
+        # within the next HORIZON days" — a regime-adjacent crisis signal.
+        print(f"  Fallback: using top-15% fragility threshold as crisis-adjacent label …")
+        frag = df['fragility_score'].ffill()
+        threshold_pct = float(frag.quantile(0.85))
+        print(f"  85th percentile fragility: {threshold_pct:.2f}")
+        frag_vals = frag.values.astype(float)
+        labels_fb = np.full(len(df), np.nan)
+        for i in range(len(df) - HORIZON):
+            cur = frag_vals[i]
+            if np.isnan(cur):
+                continue
+            # If already above threshold, skip (already in stress)
+            if cur >= threshold_pct:
+                continue
+            future = frag_vals[i + 1: i + 1 + HORIZON]
+            valid_f = future[~np.isnan(future)]
+            if len(valid_f) < HORIZON // 2:
+                continue
+            labels_fb[i] = 1 if float(np.max(valid_f)) >= threshold_pct else 0
+
+        label_series = pd.Series(labels_fb, index=df.index)
+        n_t = int((label_series == 1).sum())
+        n_s = int((label_series == 0).sum())
+        print(f"  Fallback labels: {n_t} high-stress ({100*n_t/max(n_t+n_s,1):.1f}%), "
+              f"{n_s} stable")
+        if n_t < 5:
+            print(f"  WARN: Still not enough signal ({n_t}) — writing null.")
+            return pd.Series(None, index=df.index)
+
+
+    # ── Walk-forward calibrated classifier ─────────────────────────────────
     valid_mask = label_series.notna() & df[available].notna().all(axis=1)
     X_all = df.loc[valid_mask, available]
     y_all = label_series[valid_mask]
 
-    # Minimum training size before we start predicting
-    min_train = int(len(X_all) * 0.4)
-    if min_train < 50:
-        print("  Not enough data for walk-forward. Falling back to full-train.")
-        min_train = min(50, len(X_all) - 1)
+    if len(X_all) < 60:
+        print(f"  Not enough valid rows ({len(X_all)}) for walk-forward")
+        return pd.Series(None, index=df.index)
 
     prob_out = pd.Series(np.nan, index=df.index)
-    tscv = TimeSeriesSplit(n_splits=5, test_size=max(20, len(X_all) // 10))
+    tscv = TimeSeriesSplit(n_splits=5, test_size=max(15, len(X_all) // 10))
 
-    print(f"  Walk-forward calibrated RF (5 folds) …")
-    all_preds: list[tuple[pd.Index, np.ndarray]] = []
+    print(f"  Walk-forward calibrated RF ({len(X_all)} labelled rows, 5 folds) …")
+    all_preds: list[tuple] = []
 
     for fold_i, (train_idx, test_idx) in enumerate(tscv.split(X_all)):
         X_tr = X_all.iloc[train_idx]
@@ -336,13 +376,13 @@ def compute_crash_probability(df: pd.DataFrame, model: str) -> pd.Series:
         X_te = X_all.iloc[test_idx]
 
         if len(y_tr.unique()) < 2:
-            print(f"    Fold {fold_i}: skipped (only one class in training set)")
+            print(f"    Fold {fold_i}: skipped (only one class)")
             continue
 
         base_clf = RandomForestClassifier(
             n_estimators=300,
-            max_depth=6,
-            min_samples_split=15,
+            max_depth=5,
+            min_samples_split=10,
             random_state=42,
             n_jobs=-1,
             class_weight="balanced",
@@ -353,14 +393,13 @@ def compute_crash_probability(df: pd.DataFrame, model: str) -> pd.Series:
             probs = calibrated.predict_proba(X_te)[:, 1]
             all_preds.append((X_all.index[test_idx], probs))
             print(f"    Fold {fold_i}: train={len(X_tr)}, test={len(X_te)}, "
-                  f"prob range [{probs.min():.2f}, {probs.max():.2f}]")
+                  f"P(transition) range [{probs.min():.2f}, {probs.max():.2f}]")
         except Exception as e:
-            print(f"    Fold {fold_i}: FAILED {e}")
+            print(f"    Fold {fold_i}: FAILED — {e}")
             continue
 
-    # ── Aggregate predictions ───────────────────────────────────────────
-    # Where multiple folds predict a date, take the mean.
-    accum: dict[pd.Timestamp, list[float]] = {}
+    # Aggregate (mean over folds)
+    accum: dict = {}
     for idx_arr, probs_arr in all_preds:
         for date, prob in zip(idx_arr, probs_arr):
             accum.setdefault(date, []).append(float(prob))
@@ -369,11 +408,10 @@ def compute_crash_probability(df: pd.DataFrame, model: str) -> pd.Series:
         prob_out[date] = round(float(np.mean(prob_list)), 4)
 
     n_filled = prob_out.notna().sum()
-    print(f"  Crash probability filled for {n_filled}/{len(df)} dates")
-    mean_prob = prob_out.dropna().mean()
-    print(f"  Mean crash probability: {mean_prob:.3f}")
-
+    print(f"  Transition probability filled for {n_filled}/{len(df)} dates")
+    print(f"  Mean P(→PONZI): {prob_out.dropna().mean():.3f}")
     return prob_out
+
 
 
 # ── Patch JSON ────────────────────────────────────────────────────────────────
@@ -455,9 +493,9 @@ def run_model(model: str) -> None:
             print(f"  Composite range: [{comp.min():.1f}, {comp.max():.1f}], "
                   f"mean={comp.mean():.1f}")
 
-    # ── Crash probability ─────────────────────────────────────────────────
-    print("\n[2/2] RF crash probability classifier …")
-    crash_prob = compute_crash_probability(df, model)
+    # ── Regime transition probability (Minsky-correct) ───────────────────────
+    print("\n[2/2] RF regime-transition probability (P → PONZI) …")
+    crash_prob = compute_regime_transition_probability(df, model)
 
     # ── Write back ────────────────────────────────────────────────────────
     print(f"\nWriting results …")

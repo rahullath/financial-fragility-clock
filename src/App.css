@@ -1,52 +1,65 @@
 /**
- * App.css — Financial Fragility Clock · Spec v2
- * Full dark token system.  Near-black background, cool-toned.
- * Spec reference: §3 Colour Palette, §2 Aesthetic Direction
- *
- * NO light colours anywhere in this file except where explicitly noted.
+ * App.css — Financial Fragility Clock · Spec v3
+ * Mission control / SOC dashboard aesthetic.
+ * Amber gold accent, Instrument Serif for hero numbers.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ── Fragility-driven CSS custom property (set by DoomsdayClock.tsx) ────────── */
+/* document.documentElement.style.setProperty('--fragility-score', score) */
+:root {
+  --fragility-score: 50; /* default mid */
+}
 
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
 :root {
   /* Backgrounds */
-  --bg:            #080b12;   /* near-black, cool-toned */
-  --bg-surface:    #0e1420;   /* card / panel surface */
-  --bg-elevated:   #141a28;   /* elevated elements, dropdowns */
+  --bg:            #0a0b0e;   /* near-black, blue undertone */
+  --bg-surface:    #111318;   /* card / panel surface */
+  --bg-elevated:   #191c24;   /* elevated elements, dropdowns */
   --bg-border:     rgba(255, 255, 255, 0.07);
 
   /* Text */
-  --text-primary:  #e8eaf0;   /* warm white */
-  --text-secondary:#8b92a8;   /* muted */
-  --text-faint:    #3d4357;   /* very muted, labels */
+  --text-primary:  #e8eaf0;
+  --text-secondary:#8b92a8;
+  --text-faint:    #3d4357;
 
-  /* Accent — UI interactions only, never data */
-  --accent:        #4a9eff;
-  --accent-muted:  rgba(74, 158, 255, 0.12);
+  /* Accent — amber gold, the primary UI interaction colour */
+  --accent:        #e8a045;
+  --accent-muted:  rgba(232, 160, 69, 0.10);
+  --accent-dim:    rgba(232, 160, 69, 0.25);
 
-  /* Regime — data signals */
-  --hedge:         #22c55e;
-  --speculative:   #f59e0b;
-  --ponzi:         #ef4444;
+  /* Fragility palette — data signals by threshold */
+  --color-stable:    #16a34a;    /* 0–30  */
+  --color-elevated:  #d97706;    /* 30–60 */
+  --color-critical:  #dc2626;    /* 60–80 */
+  --color-systemic:  #7f1d1d;    /* 80–100 */
 
-  /* Similarity signal (same as regime for now, extended later) */
-  --similarity-low:     #22c55e;
-  --similarity-mid:     #f59e0b;
-  --similarity-high:    #ef4444;
-  --similarity-extreme: #ff2020;
+  /* Regime — Minsky labels */
+  --hedge:        #22c55e;
+  --speculative:  #f59e0b;
+  --ponzi:        #ef4444;
+
+  /* Charts */
+  --data-blue:    #3b82f6;
+  --data-teal:    #14b8a6;
 
   /* Typography */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body:    'Source Serif 4', Georgia, serif;
-  --font-mono:    'JetBrains Mono', 'Menlo', monospace;
+  --font-display: 'Instrument Serif', Georgia, serif;  /* clock hero, big numbers */
+  --font-body:    'Inter', system-ui, sans-serif;       /* everything else */
+  --font-mono:    'JetBrains Mono', 'Menlo', monospace; /* labels, axes, code */
 
-  /* Geometry — sharp corners */
+  /* Geometry */
   --radius: 3px;
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
 
-  /* Legacy aliases — keep components that reference these from breaking */
+  /* Sidebar */
+  --sidebar-w-collapsed: 52px;
+  --sidebar-w-expanded:  210px;
+
+  /* Legacy aliases — keep old components from breaking */
   --bg-card:     var(--bg-surface);
   --bg-inset:    var(--bg-elevated);
   --border:      var(--bg-border);
@@ -61,128 +74,165 @@
   box-sizing: border-box;
 }
 
-html {
-  color-scheme: dark;
-}
+html { color-scheme: dark; }
 
 body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg);
+  background: var(--bg);
   color: var(--text-primary);
   min-height: 100vh;
+  /* All numeric data aligns perfectly as values change */
+  font-variant-numeric: tabular-nums;
 }
 
-/* ── App shell ─────────────────────────────────────────────────────────────── */
-.app {
+/* ── Custom scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+
+/* ── App shell with sidebar layout ────────────────────────────────────────── */
+.app-shell {
+  display: flex;
   min-height: 100vh;
+}
+
+/* Main area shifts based on sidebar state */
+.app-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  transition: margin-left 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* ── Header — compact, sticky, dark ───────────────────────────────────────── */
-.app-header {
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--bg-border);
-  padding: 0.6rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: 0 1px 0 var(--bg-border), var(--shadow-sm);
-}
-
-.app-header-inner {
+/* ── Page content wrapper ──────────────────────────────────────────────────── */
+.page-main {
+  flex: 1;
+  padding: 1rem 1.25rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+/* ── Card shell ────────────────────────────────────────────────────────────── */
+.panel-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+}
+
+.panel-header {
+  display: flex;
   justify-content: space-between;
-  gap: 1.5rem;
-  max-width: 1600px;
+  align-items: center;
+  padding: 0.55rem 0.85rem;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+}
+
+.panel-body {
+  padding: 0.85rem;
+}
+
+/* ── Export button (appears on panel hover) ────────────────────────────────── */
+.btn-export {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  background: transparent;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  padding: 0.18rem 0.45rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+.panel-card:hover .btn-export { opacity: 1; }
+.btn-export:hover {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ── Dashboard grid rows ───────────────────────────────────────────────────── */
+.dash-row         { display: grid; gap: 1rem; }
+.dash-row--full   { grid-template-columns: 1fr; }
+.dash-row--top    { grid-template-columns: 380px 1fr; align-items: start; }
+.dash-row--trio   { grid-template-columns: repeat(3, 1fr); align-items: start; }
+.dash-row--bottom { grid-template-columns: 1.2fr 1fr; align-items: start; }
+.dash-cell        { min-width: 0; }
+
+/* ── Clock landing specific ─────────────────────────────────────────────────── */
+.clock-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
 
-.app-title-block h1 {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+.clock-landing-hero {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
 
-.app-title-block p {
-  font-size: 0.65rem;
-  color: var(--text-faint);
-  margin-top: 1px;
-  font-family: var(--font-mono);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+/* ── Fragility-driven clock glow animation ─────────────────────────────────── */
+/* DoomsdayClock sets --fragility-score on :root */
+@keyframes clock-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.01); }
 }
 
-.app-header-controls {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
+.clock-glow-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  pointer-events: none;
+  /* glow radius and opacity driven by --fragility-score */
+  box-shadow: 0 0 calc(var(--fragility-score, 50) * 0.5px)
+              rgba(220, 85, 0, calc(var(--fragility-score, 50) / 200));
+  /* pulse speed: 4s at score=0, 1.5s at score=100 */
+  animation: clock-pulse calc(4s - var(--fragility-score, 50) * 0.025s) ease-in-out infinite;
 }
 
-/* ── Navigation links ──────────────────────────────────────────────────────── */
-nav {
-  display: flex;
-  gap: 0;
-}
-
-.nav-link {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  text-decoration: none;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--bg-border);
-  border-right: none;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-}
-
-.nav-link:first-child {
-  border-radius: var(--radius) 0 0 var(--radius);
-}
-
-.nav-link:last-child {
-  border-right: 1px solid var(--bg-border);
-  border-radius: 0 var(--radius) var(--radius) 0;
-}
-
-.nav-link:hover {
-  color: var(--accent);
-  background: var(--accent-muted);
-  border-color: rgba(74, 158, 255, 0.3);
-}
-
-/* ── Advanced dropdown button ──────────────────────────────────────────────── */
-.adv-dropdown {
-  position: relative;
-}
+/* ── Advanced dropdown ─────────────────────────────────────────────────────── */
+.adv-dropdown { position: relative; }
 
 .btn-adv {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   letter-spacing: 0.06em;
   color: var(--text-secondary);
   background: transparent;
   border: 1px solid var(--bg-border);
   border-radius: var(--radius);
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.7rem;
   cursor: pointer;
   transition: color 0.15s, background 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
-
 .btn-adv:hover,
 .btn-adv[aria-expanded="true"] {
   color: var(--accent);
   background: var(--accent-muted);
-  border-color: rgba(74, 158, 255, 0.3);
+  border-color: var(--accent-dim);
 }
 
 .adv-panel {
@@ -197,133 +247,16 @@ nav {
   padding: 1rem;
   z-index: 300;
 }
-
-.adv-panel-section {
-  margin-bottom: 1rem;
-}
-
-.adv-panel-section:last-child {
-  margin-bottom: 0;
-}
-
+.adv-panel-section      { margin-bottom: 1rem; }
+.adv-panel-section:last-child { margin-bottom: 0; }
 .adv-panel-label {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-faint);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   display: block;
-}
-
-/* ── Export button ─────────────────────────────────────────────────────────── */
-.btn-export {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
-  background: transparent;
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-  padding: 0.2rem 0.5rem;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.panel-card:hover .btn-export {
-  opacity: 1;
-}
-
-.btn-export:hover {
-  color: var(--text-secondary);
-  border-color: var(--text-secondary);
-}
-
-/* ── Card shell — used by all panels ──────────────────────────────────────── */
-.panel-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.6rem 0.9rem;
-  border-bottom: 1px solid var(--bg-border);
-}
-
-.panel-title {
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-}
-
-.panel-body {
-  padding: 0.9rem;
-}
-
-/* ── Main content ──────────────────────────────────────────────────────────── */
-.app-main {
-  flex: 1;
-  max-width: 1600px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* ── Dashboard grid rows ───────────────────────────────────────────────────── */
-.dash-row {
-  display: grid;
-  gap: 1rem;
-}
-
-/* Row: Clock (400px max) + Timeline */
-.dash-row--top {
-  grid-template-columns: 400px 1fr;
-  align-items: start;
-}
-
-/* Full width */
-.dash-row--full {
-  grid-template-columns: 1fr;
-}
-
-/* Three equal panels */
-.dash-row--trio {
-  grid-template-columns: repeat(3, 1fr);
-  align-items: start;
-}
-
-/* Two panels */
-.dash-row--bottom {
-  grid-template-columns: 1.2fr 1fr;
-  align-items: start;
-}
-
-.dash-cell {
-  min-width: 0;
-}
-
-/* ── Footer ────────────────────────────────────────────────────────────────── */
-.app-footer {
-  border-top: 1px solid var(--bg-border);
-  padding: 0.5rem 1.5rem;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--text-faint);
-  letter-spacing: 0.06em;
-  background: var(--bg-surface);
 }
 
 /* ── Loading ───────────────────────────────────────────────────────────────── */
@@ -334,46 +267,36 @@ nav {
   letter-spacing: 0.06em;
   animation: pulse-opacity 1.5s ease-in-out infinite;
 }
-
 @keyframes pulse-opacity {
   0%, 100% { opacity: 0.3; }
   50%       { opacity: 1;   }
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+/* ── Skeleton shimmer — for loading states ─────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    var(--bg-surface) 25%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
 
 /* ── Responsive ────────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-  .dash-row--top {
-    grid-template-columns: 1fr;
-  }
-  .dash-row--trio {
-    grid-template-columns: 1fr 1fr;
-  }
+  .dash-row--top,
+  .clock-landing-hero { grid-template-columns: 1fr; }
+  .dash-row--trio      { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 768px) {
-  .app-header {
-    padding: 0.5rem 1rem;
-  }
-  .app-header-inner {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .app-main {
-    padding: 0.75rem;
-    gap: 0.75rem;
-  }
+  .page-main { padding: 0.75rem; gap: 0.75rem; }
   .dash-row--top,
   .dash-row--trio,
-  .dash-row--bottom {
-    grid-template-columns: 1fr;
-  }
-  nav {
-    display: none;
-  }
+  .dash-row--bottom { grid-template-columns: 1fr; }
 }

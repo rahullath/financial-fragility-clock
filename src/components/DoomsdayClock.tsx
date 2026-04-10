@@ -17,6 +17,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { toNum } from '../utils/dataUtils';
+import { findAnalogue } from '../data/historicalAnalogues';
 import './DoomsdayClock.css';
 
 // ── Types + constants ──────────────────────────────────────────────────────────
@@ -101,16 +102,21 @@ const DoomsdayClock: React.FC = () => {
   const safeRegime: Regime = regime in REGIME_CFG ? regime : 'SPECULATIVE';
   const regimeColor = REGIME_CFG[safeRegime].color;
   const timeDisplay = minutesToMidnight(score);
+  const analogue = findAnalogue(score);
 
   // ── Animated needle angle ──────────────────────────────────────────────────
   const targetAngle = scoreToAngle(score);
   const [displayAngle, setDisplayAngle] = useState(targetAngle);
 
   useEffect(() => {
-    // requestAnimationFrame gives CSS transition time to notice the new value
     const id = requestAnimationFrame(() => setDisplayAngle(targetAngle));
     return () => cancelAnimationFrame(id);
   }, [targetAngle]);
+
+  // ── Drive CSS custom property so App.css animations react to score ──────
+  useEffect(() => {
+    document.documentElement.style.setProperty('--fragility-score', String(Math.round(score)));
+  }, [score]);
 
   // ── Build SVG elements ────────────────────────────────────────────────────
 
@@ -143,6 +149,8 @@ const DoomsdayClock: React.FC = () => {
 
   return (
     <div className="doomsday-clock" aria-label={`Doomsday clock: ${timeDisplay} to midnight, fragility ${score.toFixed(1)}, ${safeRegime} regime`}>
+      {/* Breathing glow ring — speed + size driven by --fragility-score CSS var */}
+      <div className="clock-glow-ring" aria-hidden="true" />
       {/* ── Clock SVG ──────────────────────────────────────────────────── */}
       <svg viewBox={`0 0 ${W} ${H}`} className="doomsday-svg" role="img">
         <defs>
@@ -332,8 +340,22 @@ const DoomsdayClock: React.FC = () => {
 
       {/* ── Regime label below clock ────────────────────────────────────── */}
       <div className="doomsday-regime" style={{ color: regimeColor }}>
-        {REGIME_CFG[safeRegime].label}
+        {REGIME_CFG[safeRegime].label} FINANCE REGIME
       </div>
+
+      {/* ── Historical analogue panel ─────────────────────────────────────── */}
+      {analogue && (
+        <div className="doomsday-analogue" style={{ borderColor: regimeColor + '40' }}>
+          <div className="doomsday-analogue-period">
+            <span className="doomsday-analogue-label">Historically similar to</span>
+            <span className="doomsday-analogue-value" style={{ color: regimeColor }}>
+              {analogue.period}
+            </span>
+          </div>
+          <p className="doomsday-analogue-event">{analogue.event}</p>
+          <p className="doomsday-analogue-consequence">{analogue.consequence}</p>
+        </div>
+      )}
     </div>
   );
 };

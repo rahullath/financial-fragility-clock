@@ -1,12 +1,13 @@
 /**
- * StatStrip — spec v2 §5
+ * StatStrip — spec v3
  *
- * Full-width strip with three hero numbers:
- *   1. CRASH PROXIMITY  — "X:XX to midnight" (derived from fragility score)
- *   2. CRASH PROBABILITY — RF classifier output; shows "—" if not in JSON
- *   3. CRISIS SIMILARITY — DTW score; shows "—" if not computed yet
+ * Four-stat strip:
+ *   1. CRASH PROXIMITY  — "X:XX to midnight" (fragility → time mapping)
+ *   2. REGIME TRANSITION — P(→PONZI) from walk-forward RF classifier
+ *   3. CRISIS SIMILARITY — DTW similarity vs selected crisis windows
+ *   4. DAYS TO THRESHOLD — linear extrapolation of current fragility trend
  *
- * Each stat has a 30-day sparkline beneath the number.
+ * Each stat has a 30-day sparkline and an explanatory sub-label.
  */
 
 import React, { useMemo } from 'react';
@@ -14,6 +15,11 @@ import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { toNum } from '../utils/dataUtils';
 import './StatStrip.css';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const CRITICAL_THRESHOLD = 80;  // fragility score level = "crisis conditions"
+const SLOPE_WINDOW = 10;        // days of history used for linear trend
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +39,45 @@ function minutesToMidnight(score: number): string {
   const hh = Math.floor(mins / 60);
   const mm = mins % 60;
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+/**
+ * Compute the linear extrapolation of fragility score to CRITICAL_THRESHOLD.
+ * Uses OLS on the last SLOPE_WINDOW data points.
+ *
+ * Returns:
+ *   { days: number, direction: 'rising'|'falling'|'stable' }
+ *   days = Infinity if slope is zero or negative (not heading to threshold)
+ */
+function computeDaysToThreshold(scores: (number | null)[]): {
+  days: number | null;
+  direction: 'rising' | 'falling' | 'stable';
+  slopePerDay: number;
+} {
+  const valid = scores.filter((v): v is number => v != null);
+  if (valid.length < 3) return { days: null, direction: 'stable', slopePerDay: 0 };
+
+  const n = valid.length;
+  // OLS: y = a + b*x where x is 0..n-1
+  const xMean = (n - 1) / 2;
+  const yMean = valid.reduce((s, v) => s + v, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (i - xMean) * (valid[i] - yMean);
+    den += (i - xMean) ** 2;
+  }
+  const slope = den === 0 ? 0 : num / den;  // points per trading day
+  const currentScore = valid[n - 1];
+
+  if (Math.abs(slope) < 0.05) return { days: null, direction: 'stable', slopePerDay: slope };
+
+  if (slope <= 0) return { days: null, direction: 'falling', slopePerDay: slope };
+
+  // How many days at this slope until we hit the critical threshold?
+  if (currentScore >= CRITICAL_THRESHOLD) return { days: 0, direction: 'rising', slopePerDay: slope };
+  const days = Math.round((CRITICAL_THRESHOLD - currentScore) / slope);
+  return { days, direction: 'rising', slopePerDay: slope };
 }
 
 // ── Sparkline ─────────────────────────────────────────────────────────────────
@@ -83,15 +128,17 @@ interface StatBlockProps {
   label: string;
   value: string;
   sub: string;
+  detail?: string;           // additional one-liner below sub
   sparkValues: (number | null)[];
   sparkColor: string;
 }
 
-const StatBlock: React.FC<StatBlockProps> = ({ label, value, sub, sparkValues, sparkColor }) => (
+const StatBlock: React.FC<StatBlockProps> = ({ label, value, sub, detail, sparkValues, sparkColor }) => (
   <div className="stat-block">
     <span className="stat-label">{label}</span>
     <span className="stat-value" style={{ color: sparkColor }}>{value}</span>
     <span className="stat-sub">{sub}</span>
+    {detail && <span className="stat-detail">{detail}</span>}
     <div className="stat-spark">
       <Sparkline values={sparkValues} color={sparkColor} />
     </div>
@@ -105,44 +152,96 @@ const StatStrip: React.FC = () => {
   const { selectedDate } = useDateContext();
 
   const rows = currentModelData.featuresData.data;
-
   const { row, idx } = useMemo(() => findRowForDate(rows, selectedDate), [rows, selectedDate]);
 
-  // ── Fragility score → minutes to midnight ──────────────────────────────────
+  // ── Stat 1: Fragility → minutes-to-midnight ────────────────────────────────
   const score = toNum(row?.fragility_score) ?? 0;
   const timeStr = minutesToMidnight(score);
 
-  // ── 30-day sparklines ──────────────────────────────────────────────────────
+  // ── 30-day sparkline window ────────────────────────────────────────────────
   const sparkWindow = 30;
   const sparkRows = useMemo(
     () => rows.slice(Math.max(0, idx - sparkWindow + 1), idx + 1),
-    [rows, idx, sparkWindow]
+    [rows, idx]
   );
   const fragSparkline = sparkRows.map((r) => toNum(r.fragility_score));
 
-  // Crash probability — from RF classifier output, or null if not present
-  const crashProbSparkline = sparkRows.map((r) => {
-    const v = toNum((r as Record<string, unknown>)['crash_probability'] as number | null);
-    return v;
-  });
-  const crashProbValue = toNum((row as Record<string, unknown> | null)?.['crash_probability'] as number | null);
-  const crashProbStr = crashProbValue != null ? `${(crashProbValue * 100).toFixed(0)}%` : '—';
-  const crashProbSub = crashProbValue != null ? 'next 30 days' : 'classifier not computed';
+  // ── Stat 2: Regime transition probability (→ PONZI) ────────────────────────
+  const regimeProbValue = toNum((row as Record<string, unknown> | null)?.['crash_probability'] as number | null);
+  const regimeProbStr = regimeProbValue != null ? `${(regimeProbValue * 100).toFixed(0)}%` : '—';
+  const regimeProbSub = regimeProbValue != null
+    ? `P(→ PONZI regime, 30d)`
+    : 'classifier not computed';
+  const regimeProbSparkline = sparkRows.map((r) =>
+    toNum((r as Record<string, unknown>)['crash_probability'] as number | null)
+  );
 
-  // Crisis similarity — DTW output if present, else null
+  // ── Stat 3: Crisis similarity (DTW) ───────────────────────────────────────
   const similarityValue = toNum((row as Record<string, unknown> | null)?.['crisis_similarity_composite'] as number | null);
   const similarityStr = similarityValue != null ? `${similarityValue.toFixed(0)} / 100` : '—';
-  const similaritySub = similarityValue != null ? 'vs selected crises' : 'DTW not computed';
-  const simSparkline = sparkRows.map((r) => toNum((r as Record<string, unknown>)['crisis_similarity_composite'] as number | null));
+  const similaritySub = similarityValue != null ? 'vs selected crises (DTW)' : 'DTW not computed';
+  const simSparkline = sparkRows.map((r) =>
+    toNum((r as Record<string, unknown>)['crisis_similarity_composite'] as number | null)
+  );
+
+  // ── Stat 4: Days to critical threshold ────────────────────────────────────
+  // Use last SLOPE_WINDOW scores to fit a linear trend; extrapolate to score=80
+  const slopeScores = useMemo(() => {
+    const window = rows.slice(Math.max(0, idx - SLOPE_WINDOW + 1), idx + 1);
+    return window.map((r) => toNum(r.fragility_score));
+  }, [rows, idx]);
+
+  const { days, direction, slopePerDay } = useMemo(
+    () => computeDaysToThreshold(slopeScores),
+    [slopeScores]
+  );
+
+  let daysStr: string;
+  let daysSub: string;
+  let daysDetail: string | undefined;
+
+  if (score >= CRITICAL_THRESHOLD) {
+    daysStr = 'NOW';
+    daysSub = 'Critical threshold reached';
+    daysDetail = `Score ${score.toFixed(0)} ≥ ${CRITICAL_THRESHOLD} — crisis conditions active`;
+  } else if (direction === 'falling') {
+    daysStr = '↓';
+    daysSub = 'Fragility declining';
+    daysDetail = `Trend: ${slopePerDay.toFixed(2)} pts/day — moving away from threshold`;
+  } else if (direction === 'stable' || days == null) {
+    daysStr = '—';
+    daysSub = 'Trend flat';
+    daysDetail = 'Insufficient directional signal over last 10 days';
+  } else {
+    daysStr = `~${days}d`;
+    daysSub = `to score ${CRITICAL_THRESHOLD} (critical)`;
+    // Convert trading days to calendar estimate (÷5 * 7)
+    const calDays = Math.round(days * 7 / 5);
+    daysDetail = `At ${slopePerDay.toFixed(2)} pts/day · ≈${calDays} calendar days if trend holds`;
+  }
 
   // ── Colours ────────────────────────────────────────────────────────────────
   const proximityColor = score > 67 ? '#ef4444' : score > 33 ? '#f59e0b' : '#22c55e';
-  const probColor = crashProbValue != null
-    ? (crashProbValue > 0.67 ? '#ef4444' : crashProbValue > 0.33 ? '#f59e0b' : '#22c55e')
+
+  const probColor = regimeProbValue != null
+    ? (regimeProbValue > 0.67 ? '#ef4444' : regimeProbValue > 0.33 ? '#f59e0b' : '#22c55e')
     : '#3d4357';
+
   const simColor = similarityValue != null
     ? (similarityValue > 67 ? '#ef4444' : similarityValue > 33 ? '#f59e0b' : '#22c55e')
     : '#3d4357';
+
+  const daysColor = score >= CRITICAL_THRESHOLD
+    ? '#ef4444'
+    : direction === 'falling'
+    ? '#22c55e'
+    : direction === 'stable' || days == null
+    ? '#3d4357'
+    : days < 20
+    ? '#ef4444'
+    : days < 60
+    ? '#f59e0b'
+    : '#22c55e';
 
   return (
     <div className="stat-strip panel-card">
@@ -150,15 +249,16 @@ const StatStrip: React.FC = () => {
         label="CRASH PROXIMITY"
         value={timeStr}
         sub="to midnight"
+        detail={`Fragility score: ${score.toFixed(1)} / 100`}
         sparkValues={fragSparkline}
         sparkColor={proximityColor}
       />
       <div className="stat-divider" />
       <StatBlock
-        label="CRASH PROBABILITY"
-        value={crashProbStr}
-        sub={crashProbSub}
-        sparkValues={crashProbSparkline}
+        label="REGIME TRANSITION"
+        value={regimeProbStr}
+        sub={regimeProbSub}
+        sparkValues={regimeProbSparkline}
         sparkColor={probColor}
       />
       <div className="stat-divider" />
@@ -168,6 +268,15 @@ const StatStrip: React.FC = () => {
         sub={similaritySub}
         sparkValues={simSparkline}
         sparkColor={simColor}
+      />
+      <div className="stat-divider" />
+      <StatBlock
+        label="DAYS TO CRITICAL"
+        value={daysStr}
+        sub={daysSub}
+        detail={daysDetail}
+        sparkValues={slopeScores}
+        sparkColor={daysColor}
       />
     </div>
   );

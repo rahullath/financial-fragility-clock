@@ -1,0 +1,35 @@
+/**
+ * pages.css — shared page-level styles used across all routes
+ * Page headers, section headings, shared layout helpers.
+ * Import once in App.tsx.
+ */
+
+/* ── Page header ────────────────────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--bg-border);
+  margin-bottom: 0.25rem;
+}
+
+.page-header-title h1 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;         /* Instrument Serif looks best at regular weight */
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.page-header-title p {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-faint);
+  letter-spacing: 0.08em;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
