@@ -19,6 +19,7 @@
 
 .heatmap-scroll {
   overflow-x: auto;
+  padding-top: 0.5rem;
 }
 
 /* Hover overlay */

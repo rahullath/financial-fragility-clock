@@ -25,6 +25,53 @@ import warnings
 from typing import Dict, Tuple, List
 
 
+def compute_regime_metrics(
+    y_true: pd.Series | np.ndarray,
+    y_pred: pd.Series | np.ndarray,
+    regimes: pd.Series | np.ndarray | None
+) -> Dict[str, Dict[str, float | int | None]]:
+    """Compute per-regime regression metrics for a validation split."""
+    regime_metrics: Dict[str, Dict[str, float | int | None]] = {}
+
+    if regimes is None:
+        return regime_metrics
+
+    y_true_series = pd.Series(y_true).reset_index(drop=True)
+    y_pred_series = pd.Series(y_pred).reset_index(drop=True)
+    regimes_series = pd.Series(regimes).reset_index(drop=True)
+
+    for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
+        regime_mask = regimes_series == regime
+        n_obs = int(regime_mask.sum())
+
+        if n_obs == 0:
+            regime_metrics[regime] = {
+                'rmse': None,
+                'mae': None,
+                'r2': None,
+                'n_observations': 0,
+            }
+            continue
+
+        regime_y_true = y_true_series[regime_mask]
+        regime_y_pred = y_pred_series[regime_mask]
+
+        rmse = float(np.sqrt(mean_squared_error(regime_y_true, regime_y_pred)))
+        mae = float(mean_absolute_error(regime_y_true, regime_y_pred))
+        r2 = None
+        if n_obs >= 2 and regime_y_true.nunique() > 1:
+            r2 = float(r2_score(regime_y_true, regime_y_pred))
+
+        regime_metrics[regime] = {
+            'rmse': rmse,
+            'mae': mae,
+            'r2': r2,
+            'n_observations': n_obs,
+        }
+
+    return regime_metrics
+
+
 def train_random_forest_walk_forward(df: pd.DataFrame, 
                                      target_col: str = 'SP500',
                                      feature_cols: List[str] = None) -> Dict:
@@ -185,17 +232,15 @@ def train_random_forest_walk_forward(df: pd.DataFrame,
         print(f"  MAE: {test_mae:.6f}")
         
         # Compute regime-specific RMSE
+        regime_metrics = compute_regime_metrics(y_test, y_test_pred, regimes_test)
         regime_rmse = {}
         if regimes_test is not None:
             print(f"\nRegime-Specific Test RMSE:")
             for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
-                regime_mask = regimes_test == regime
-                if regime_mask.sum() > 0:
-                    regime_y_test = y_test[regime_mask]
-                    regime_y_pred = y_test_pred[regime_mask]
-                    regime_rmse_val = np.sqrt(mean_squared_error(regime_y_test, regime_y_pred))
-                    regime_rmse[regime] = float(regime_rmse_val)
-                    print(f"  {regime}: {regime_rmse_val:.6f} (n={regime_mask.sum()})")
+                regime_row = regime_metrics[regime]
+                if regime_row['rmse'] is not None:
+                    regime_rmse[regime] = regime_row['rmse']
+                    print(f"  {regime}: {regime_row['rmse']:.6f} (n={regime_row['n_observations']})")
                 else:
                     regime_rmse[regime] = None
                     print(f"  {regime}: No observations in test set")
@@ -225,6 +270,7 @@ def train_random_forest_walk_forward(df: pd.DataFrame,
                 'test_rmse': float(test_rmse),
                 'test_mae': float(test_mae)
             },
+            'regime_metrics': regime_metrics,
             'regime_rmse': regime_rmse,
             'feature_importance': feature_importance
         }
@@ -727,10 +773,13 @@ def export_model_outputs_b(walk_forward_results: Dict,
     print(f"  Timestamp: {metadata['timestamp']}")
     print(f"  Python version: {metadata['python_version']}")
     
+    preferred_split = walk_forward_results.get('split_2020') or walk_forward_results.get('split_2008') or {}
+
     # Compile full output structure
     output = {
         'metadata': metadata,
         'walk_forward_validation': walk_forward_results,
+        'regime_metrics': preferred_split.get('regime_metrics', {}),
         'crisis_prediction': crisis_prediction_results,
         'shap': shap_results
     }

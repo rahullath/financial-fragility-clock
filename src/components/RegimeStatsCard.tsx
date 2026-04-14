@@ -95,7 +95,7 @@ const RegimeStatsCard: React.FC = () => {
   }, [currentModelData]);
 
   return (
-    <div className="regime-stats" aria-label="Regime statistics">
+    <div className="regime-stats" data-testid="regime-stats-card" aria-label="Regime statistics">
       <div className="rs-title">Regime Statistics</div>
       <div className="rs-grid">
         {(['HEDGE', 'SPECULATIVE', 'PONZI'] as Regime[]).map((regime) => {

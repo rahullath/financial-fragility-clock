@@ -14,6 +14,8 @@ import React, { useMemo } from 'react';
 import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { toNum } from '../utils/dataUtils';
+import { generateStatStripExplanation } from '../utils/laymanExplanations';
+import LaymanOverlay from './LaymanOverlay';
 import './StatStrip.css';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -35,10 +37,35 @@ function findRowForDate(rows: DataRow[], date: Date): { row: DataRow | null; idx
 }
 
 function minutesToMidnight(score: number): string {
-  const mins = Math.round((1 - score / 100) * 720);
-  const hh = Math.floor(mins / 60);
-  const mm = mins % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  // PONZI regime (score >= 70): show "past midnight" to indicate crisis threshold crossed
+  if (score >= 70) {
+    const minsPast = Math.round((score - 70) / 30 * 120); // maps 70-100 to 0-120 minutes past
+    
+    if (score >= 99) {
+      return 'PAST MIDNIGHT';
+    } else if (minsPast === 0) {
+      return 'PAST MIDNIGHT';
+    } else {
+      return `${minsPast} minutes past midnight`;
+    }
+  }
+  
+  // HEDGE and SPECULATIVE regimes (score < 70): show "to midnight"
+  const mins = Math.round((1 - score / 100) * 120); // 120 min = 2 hours
+  
+  if (mins >= 60) {
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    if (mm === 0) {
+      return `${hh}h 0m to midnight`;
+    }
+    return `${hh}h ${mm}m to midnight`;
+  } else if (mins <= 1) {
+    // At score=100 (0 minutes) or score=99.17+ (1 minute), show "1 minute to midnight"
+    return '1 minute to midnight';
+  } else {
+    return `${mins} minutes to midnight`;
+  }
 }
 
 /**
@@ -157,6 +184,10 @@ const StatStrip: React.FC = () => {
   // ── Stat 1: Fragility → minutes-to-midnight ────────────────────────────────
   const score = toNum(row?.fragility_score) ?? 0;
   const timeStr = minutesToMidnight(score);
+  
+  // Determine if we're past midnight for the sub-label
+  const isPastMidnight = score >= 70;
+  const proximitySub = isPastMidnight ? 'past midnight' : 'to midnight';
 
   // ── 30-day sparkline window ────────────────────────────────────────────────
   const sparkWindow = 30;
@@ -244,11 +275,16 @@ const StatStrip: React.FC = () => {
     : '#22c55e';
 
   return (
-    <div className="stat-strip panel-card">
+    <div className="stat-strip panel-card" data-testid="stat-strip">
+      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+        <LaymanOverlay 
+          explanationGenerator={() => generateStatStripExplanation(row)}
+        />
+      </div>
       <StatBlock
         label="CRASH PROXIMITY"
         value={timeStr}
-        sub="to midnight"
+        sub={proximitySub}
         detail={`Fragility score: ${score.toFixed(1)} / 100`}
         sparkValues={fragSparkline}
         sparkColor={proximityColor}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DateProvider, useDateContext } from '../contexts/DateContext';
 import { CrisisProvider } from '../contexts/CrisisContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import DoomsdayClock from '../components/DoomsdayClock';
 import RegimeTimeline from '../components/RegimeTimeline';
 import SHAPChart from '../components/SHAPChart';
@@ -123,7 +124,10 @@ const SLIDES = [Slide0, Slide1, Slide2, Slide3, Slide4];
 // ── Inner component ─────────────────────────────────────────────────────────
 
 const PresentationInner: React.FC = () => {
+  usePageTitle('Presentation Mode');
+  
   const [slide, setSlide] = useState(0);
+  const navigate = useNavigate();
 
   const goNext = useCallback(() => setSlide((s) => Math.min(s + 1, TOTAL_SLIDES - 1)), []);
   const goPrev = useCallback(() => setSlide((s) => Math.max(s - 1, 0)), []);
@@ -132,19 +136,27 @@ const PresentationInner: React.FC = () => {
     (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
-      else if (e.key === 'Escape') { window.location.href = '/'; }
+      else if (e.key === 'Escape') { navigate('/'); }
       else if (e.key === 'f' || e.key === 'F') {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
         else document.exitFullscreen().catch(() => {});
       }
     },
-    [goNext, goPrev]
+    [goNext, goPrev, navigate]
   );
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      navigate('/');
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [navigate]);
 
 
   return (

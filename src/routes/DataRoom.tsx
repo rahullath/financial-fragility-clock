@@ -13,6 +13,8 @@ import NetworkMST from '../components/NetworkMST';
 import RegimeStatsCard from '../components/RegimeStatsCard';
 import ModelToggle from '../components/ModelToggle';
 import ModelComparisonPanel from '../components/ModelComparisonPanel';
+import ResponsiveContainer from '../components/ResponsiveContainer';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 // ── Adv dropdown (model switching) ───────────────────────────────────────────
 
@@ -67,29 +69,42 @@ const PageHeader: React.FC = () => (
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-const DataRoom: React.FC = () => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-    <PageHeader />
+const DataRoom: React.FC = () => {
+  usePageTitle('Data Room');
+  
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <PageHeader />
 
-    {/* Scrubber + crisis selector */}
-    <div className="dash-row dash-row--full">
-      <DateScrubber />
-    </div>
-    <div className="dash-row dash-row--full">
-      <CrisisSelector />
-    </div>
+      {/* Scrubber + crisis selector */}
+      <ResponsiveContainer priority="high" mobileLayout="stack">
+        <div className="dash-row dash-row--full">
+          <DateScrubber />
+        </div>
+      </ResponsiveContainer>
+      
+      <ResponsiveContainer priority="medium" mobileLayout="scroll">
+        <div className="dash-row dash-row--full">
+          <CrisisSelector />
+        </div>
+      </ResponsiveContainer>
 
-    {/* Heatmap — full width, most important chart */}
-    <div className="dash-row dash-row--full">
-      <CorrelationHeatmap />
-    </div>
+      {/* Heatmap — full width, most important chart */}
+      <ResponsiveContainer priority="high" mobileLayout="stack">
+        <div className="dash-row dash-row--full">
+          <CorrelationHeatmap />
+        </div>
+      </ResponsiveContainer>
 
-    {/* MST + Regime stats side by side */}
-    <div className="dash-row dash-row--bottom">
-      <div className="dash-cell"><NetworkMST /></div>
-      <div className="dash-cell"><RegimeStatsCard /></div>
+      {/* MST + Regime stats side by side */}
+      <ResponsiveContainer priority="medium" mobileLayout="stack">
+        <div className="dash-row dash-row--bottom">
+          <div className="dash-cell"><NetworkMST /></div>
+          <div className="dash-cell"><RegimeStatsCard /></div>
+        </div>
+      </ResponsiveContainer>
     </div>
-  </div>
-);
+  );
+};
 
 export default DataRoom;

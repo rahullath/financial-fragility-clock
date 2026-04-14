@@ -1,0 +1,169 @@
+/**
+ * ResponsiveContainer.css
+ * 
+ * Styles for mobile responsive container component.
+ * Handles layout modes, priority ordering, and mobile optimizations.
+ */
+
+.responsive-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ── Desktop mode ────────────────────────────────────────────────────────── */
+.responsive-container--desktop {
+  /* Default desktop styles - no special handling needed */
+}
+
+/* ── Mobile mode ────────────────────────────────────────────────────────── */
+.responsive-container--mobile {
+  /* Mobile-specific adjustments */
+}
+
+/* ── Layout modes ────────────────────────────────────────────────────────── */
+
+/* Stack: Components stack vertically */
+.responsive-container--layout-stack.responsive-container--mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Scroll: Horizontal scrolling for wide content */
+.responsive-container--layout-scroll.responsive-container--mobile .responsive-container__content {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.responsive-container--layout-scroll.responsive-container--mobile .responsive-container__content > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Collapse: Collapsible sections with toggle */
+.responsive-container--layout-collapse.responsive-container--mobile {
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  margin-bottom: 0.5rem;
+}
+
+.responsive-container--layout-collapse.responsive-container--mobile.responsive-container--collapsed .responsive-container__content {
+  display: none;
+}
+
+.responsive-container__toggle {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: color 0.15s, background 0.15s;
+}
+
+.responsive-container__toggle:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.responsive-container__toggle:active {
+  transform: scale(0.98);
+}
+
+/* ── Priority-based ordering ────────────────────────────────────────────── */
+/* Higher priority items appear first in mobile view */
+.responsive-container--priority-high {
+  order: -2;
+}
+
+.responsive-container--priority-medium {
+  order: -1;
+}
+
+.responsive-container--priority-low {
+  order: 0;
+}
+
+/* ── Mobile font scaling ────────────────────────────────────────────────── */
+.responsive-container--mobile {
+  /* Scale down fonts for mobile readability */
+  font-size: 0.9rem;
+}
+
+.responsive-container--mobile .panel-title {
+  font-size: 0.55rem;
+}
+
+.responsive-container--mobile h1 {
+  font-size: 1.3rem;
+}
+
+.responsive-container--mobile h2 {
+  font-size: 1.1rem;
+}
+
+.responsive-container--mobile h3 {
+  font-size: 0.95rem;
+}
+
+/* ── Touch target optimization ──────────────────────────────────────────── */
+/* Ensure all interactive elements are at least 44x44px on mobile */
+.responsive-container--mobile button,
+.responsive-container--mobile a,
+.responsive-container--mobile input[type="checkbox"],
+.responsive-container--mobile input[type="radio"],
+.responsive-container--mobile .clickable {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Small buttons get padding to reach 44px */
+.responsive-container--mobile .btn-export,
+.responsive-container--mobile .btn-adv {
+  padding: 0.6rem 0.8rem;
+}
+
+/* ── Remove hover-only features on mobile ───────────────────────────────── */
+.responsive-container--mobile .btn-export {
+  /* Always show export buttons on mobile (no hover state) */
+  opacity: 1;
+}
+
+/* Disable hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .responsive-container--mobile *:hover {
+    /* Prevent hover styles from sticking on touch */
+  }
+}
+
+/* ── Content wrapper ────────────────────────────────────────────────────── */
+.responsive-container__content {
+  width: 100%;
+}
+
+/* ── Performance optimization ───────────────────────────────────────────── */
+/* Use GPU acceleration for smooth orientation changes */
+.responsive-container {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .responsive-container,
+  .responsive-container__toggle {
+    transition: none;
+  }
+}

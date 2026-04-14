@@ -28,6 +28,10 @@ import ModelPerformanceTable from '../components/ModelPerformanceTable';
 import RegimeStatsCard from '../components/RegimeStatsCard';
 import ModelToggle from '../components/ModelToggle';
 import ModelComparisonPanel from '../components/ModelComparisonPanel';
+import RegimeTransitionMatrix from '../components/RegimeTransitionMatrix';
+import VolatilityClusteringChart from '../components/VolatilityClusteringChart';
+import CorrelationNetworkEvolution from '../components/CorrelationNetworkEvolution';
+import ResponsiveContainer from '../components/ResponsiveContainer';
 
 const Dashboard: React.FC = () => {
   const [advOpen, setAdvOpen] = useState(false);
@@ -93,42 +97,75 @@ const Dashboard: React.FC = () => {
       <main className="app-main">
 
         {/* Stat strip */}
-        <section className="dash-row dash-row--full">
-          <StatStrip />
-        </section>
+        <ResponsiveContainer priority="high" mobileLayout="scroll">
+          <section className="dash-row dash-row--full">
+            <StatStrip />
+          </section>
+        </ResponsiveContainer>
 
         {/* Clock + Timeline */}
-        <section className="dash-row dash-row--top">
-          <div className="dash-cell">
-            <DoomsdayClock />
-          </div>
-          <div className="dash-cell">
-            <RegimeTimeline />
-          </div>
-        </section>
+        <ResponsiveContainer priority="high" mobileLayout="stack">
+          <section className="dash-row dash-row--top">
+            <div className="dash-cell">
+              <DoomsdayClock />
+            </div>
+            <div className="dash-cell">
+              <RegimeTimeline />
+            </div>
+          </section>
+        </ResponsiveContainer>
 
         {/* Date Scrubber */}
-        <section className="dash-row dash-row--full">
-          <DateScrubber />
-        </section>
+        <ResponsiveContainer priority="high" mobileLayout="stack">
+          <section className="dash-row dash-row--full">
+            <DateScrubber />
+          </section>
+        </ResponsiveContainer>
 
         {/* Crisis Selector */}
-        <section className="dash-row dash-row--full">
-          <CrisisSelector />
-        </section>
+        <ResponsiveContainer priority="medium" mobileLayout="scroll">
+          <section className="dash-row dash-row--full">
+            <CrisisSelector />
+          </section>
+        </ResponsiveContainer>
 
         {/* Trio: Heatmap + SHAP + MST */}
-        <section className="dash-row dash-row--trio">
-          <div className="dash-cell"><CorrelationHeatmap /></div>
-          <div className="dash-cell"><SHAPChart /></div>
-          <div className="dash-cell"><NetworkMST /></div>
-        </section>
+        <ResponsiveContainer priority="medium" mobileLayout="stack">
+          <section className="dash-row dash-row--trio">
+            <div className="dash-cell"><CorrelationHeatmap /></div>
+            <div className="dash-cell"><SHAPChart /></div>
+            <div className="dash-cell"><NetworkMST /></div>
+          </section>
+        </ResponsiveContainer>
+
+        {/* Regime Transition Matrix */}
+        <ResponsiveContainer priority="medium" mobileLayout="collapse">
+          <section className="dash-row dash-row--full">
+            <RegimeTransitionMatrix />
+          </section>
+        </ResponsiveContainer>
+
+        {/* Volatility Clustering */}
+        <ResponsiveContainer priority="low" mobileLayout="collapse">
+          <section className="dash-row dash-row--full">
+            <VolatilityClusteringChart />
+          </section>
+        </ResponsiveContainer>
+
+        {/* Correlation Network Evolution */}
+        <ResponsiveContainer priority="low" mobileLayout="collapse">
+          <section className="dash-row dash-row--full">
+            <CorrelationNetworkEvolution />
+          </section>
+        </ResponsiveContainer>
 
         {/* Performance Table + Regime Stats */}
-        <section className="dash-row dash-row--bottom">
-          <div className="dash-cell"><ModelPerformanceTable /></div>
-          <div className="dash-cell"><RegimeStatsCard /></div>
-        </section>
+        <ResponsiveContainer priority="low" mobileLayout="stack">
+          <section className="dash-row dash-row--bottom">
+            <div className="dash-cell"><ModelPerformanceTable /></div>
+            <div className="dash-cell"><RegimeStatsCard /></div>
+          </section>
+        </ResponsiveContainer>
 
       </main>
 

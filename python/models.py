@@ -20,6 +20,53 @@ import sys
 import warnings
 
 
+def compute_regime_metrics(
+    y_true: pd.Series | np.ndarray,
+    y_pred: pd.Series | np.ndarray,
+    regimes: pd.Series | np.ndarray | None
+) -> dict[str, dict[str, float | int | None]]:
+    """Compute per-regime regression metrics on the evaluation set."""
+    regime_metrics: dict[str, dict[str, float | int | None]] = {}
+
+    if regimes is None:
+        return regime_metrics
+
+    y_true_series = pd.Series(y_true).reset_index(drop=True)
+    y_pred_series = pd.Series(y_pred).reset_index(drop=True)
+    regimes_series = pd.Series(regimes).reset_index(drop=True)
+
+    for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
+        regime_mask = regimes_series == regime
+        n_obs = int(regime_mask.sum())
+
+        if n_obs == 0:
+            regime_metrics[regime] = {
+                'rmse': None,
+                'mae': None,
+                'r2': None,
+                'n_observations': 0,
+            }
+            continue
+
+        regime_y_true = y_true_series[regime_mask]
+        regime_y_pred = y_pred_series[regime_mask]
+
+        rmse = float(np.sqrt(mean_squared_error(regime_y_true, regime_y_pred)))
+        mae = float(mean_absolute_error(regime_y_true, regime_y_pred))
+        r2 = None
+        if n_obs >= 2 and regime_y_true.nunique() > 1:
+            r2 = float(r2_score(regime_y_true, regime_y_pred))
+
+        regime_metrics[regime] = {
+            'rmse': rmse,
+            'mae': mae,
+            'r2': r2,
+            'n_observations': n_obs,
+        }
+
+    return regime_metrics
+
+
 def train_ols(X_train: pd.DataFrame, y_train: pd.Series, 
               X_test: pd.DataFrame, y_test: pd.Series,
               regimes_test: pd.Series = None) -> dict:
@@ -102,19 +149,16 @@ def train_ols(X_train: pd.DataFrame, y_train: pd.Series,
     print(f"  MAE: {test_mae:.6f}")
     
     # Compute regime-specific RMSE on test set
+    regime_metrics = compute_regime_metrics(y_test, y_test_pred, regimes_test)
     regime_rmse = {}
     if regimes_test is not None:
         print(f"\nRegime-Specific Test RMSE:")
         for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
-            regime_mask = regimes_test == regime
-            if regime_mask.sum() > 0:
-                regime_y_test = y_test[regime_mask]
-                regime_y_pred = y_test_pred[regime_mask]
-                regime_rmse_val = np.sqrt(mean_squared_error(regime_y_test, regime_y_pred))
-                regime_rmse[regime] = float(regime_rmse_val)
-                print(f"  {regime}: {regime_rmse_val:.6f} (n={regime_mask.sum()})")
+            regime_row = regime_metrics[regime]
+            regime_rmse[regime] = regime_row['rmse']
+            if regime_row['rmse'] is not None:
+                print(f"  {regime}: {regime_row['rmse']:.6f} (n={regime_row['n_observations']})")
             else:
-                regime_rmse[regime] = None
                 print(f"  {regime}: No observations in test set")
     
     # Compute diagnostic tests on residuals
@@ -153,6 +197,7 @@ def train_ols(X_train: pd.DataFrame, y_train: pd.Series,
         'coefficients': coefficients,
         'intercept': intercept,
         'metrics': metrics,
+        'regime_metrics': regime_metrics,
         'regime_rmse': regime_rmse,
         'diagnostics': diagnostics
     }
@@ -290,19 +335,16 @@ def train_random_forest(X_train: pd.DataFrame, y_train: pd.Series,
     print(f"  MAE: {test_mae:.6f}")
 
     # Compute regime-specific RMSE on test set
+    regime_metrics = compute_regime_metrics(y_test, y_test_pred, regimes_test)
     regime_rmse = {}
     if regimes_test is not None:
         print(f"\nRegime-Specific Test RMSE:")
         for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
-            regime_mask = regimes_test == regime
-            if regime_mask.sum() > 0:
-                regime_y_test = y_test[regime_mask]
-                regime_y_pred = y_test_pred[regime_mask]
-                regime_rmse_val = np.sqrt(mean_squared_error(regime_y_test, regime_y_pred))
-                regime_rmse[regime] = float(regime_rmse_val)
-                print(f"  {regime}: {regime_rmse_val:.6f} (n={regime_mask.sum()})")
+            regime_row = regime_metrics[regime]
+            regime_rmse[regime] = regime_row['rmse']
+            if regime_row['rmse'] is not None:
+                print(f"  {regime}: {regime_row['rmse']:.6f} (n={regime_row['n_observations']})")
             else:
-                regime_rmse[regime] = None
                 print(f"  {regime}: No observations in test set")
 
     # Compute Gini-based feature importance (built-in)
@@ -360,6 +402,7 @@ def train_random_forest(X_train: pd.DataFrame, y_train: pd.Series,
     # Compile results
     rf_results = {
         'metrics': metrics,
+        'regime_metrics': regime_metrics,
         'regime_rmse': regime_rmse,
         'feature_importance': feature_importance
     }
@@ -742,11 +785,24 @@ def export_model_outputs(ols: dict, rf: dict, shap_results: dict,
     for lib, version in metadata['libraries'].items():
         print(f"    {lib}: {version}")
     
+    model_regime_metrics = {
+        'OLS': ols.get('regime_metrics', {}),
+        'RandomForest': rf.get('regime_metrics', {}),
+    }
+
+    regime_metrics = {}
+    for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
+        preferred = rf.get('regime_metrics', {}).get(regime) or ols.get('regime_metrics', {}).get(regime)
+        if preferred:
+            regime_metrics[regime] = preferred
+
     # Compile full output structure
     output = {
         'metadata': metadata,
         'ols': ols,
         'random_forest': rf,
+        'regime_metrics': regime_metrics,
+        'model_regime_metrics': model_regime_metrics,
         'shap': shap_results,
         'comparison': comparison
     }

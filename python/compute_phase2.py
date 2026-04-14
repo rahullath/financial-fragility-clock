@@ -171,7 +171,7 @@ def load_features(model: str) -> tuple[pd.DataFrame, dict]:
     with open(path) as f:
         raw = json.load(f)
     df = pd.DataFrame(raw["data"])
-    df["date"] = pd.to_datetime(df["date"])
+    df["date"] = pd.to_datetime(df["date"], format="mixed")
     df = df.set_index("date").sort_index()
     # JSON may store numbers as strings — coerce everything to float
     df = _coerce_numeric(df)

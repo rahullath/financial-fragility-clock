@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useMemo,
   ReactNode,
 } from 'react';
 import { useModelContext } from './ModelContext';
@@ -41,8 +42,28 @@ interface DateProviderProps {
 export const DateProvider: React.FC<DateProviderProps> = ({ children }) => {
   const { currentModelData } = useModelContext();
 
-  const [start, end] = currentModelData.info.dateRange;
-  const dateRange: [Date, Date] = [new Date(start), new Date(end)];
+  // Derive actual date range from the data itself, not just metadata
+  // This ensures we include all dates, including 2026 live data
+  const dateRange: [Date, Date] = useMemo(() => {
+    const rows = currentModelData.featuresData.data;
+    if (rows.length === 0) {
+      // Fallback to metadata if no data
+      const [start, end] = currentModelData.info.dateRange;
+      return [new Date(start), new Date(end)];
+    }
+    
+    // Find actual min and max dates from the data
+    let minDate = new Date(rows[0].date as string);
+    let maxDate = new Date(rows[0].date as string);
+    
+    for (const row of rows) {
+      const date = new Date(row.date as string);
+      if (date < minDate) minDate = date;
+      if (date > maxDate) maxDate = date;
+    }
+    
+    return [minDate, maxDate];
+  }, [currentModelData]);
 
   // Initialise to the first valid date with a non-null fragility_score
   const firstValidDate = (() => {

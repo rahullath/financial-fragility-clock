@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { usePageTitle } from '../hooks/usePageTitle';
 import './Methods.css';
 
 /**
@@ -7,6 +8,8 @@ import './Methods.css';
  * Methodology and Theoretical Foundation Explanation Component
  */
 const Methods: React.FC = () => {
+  usePageTitle('Methods');
+  
   return (
     <div className="methods-route">
       <header className="methods-header">

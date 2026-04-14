@@ -20,7 +20,7 @@ const CrisisSelector: React.FC = () => {
   const { selectedModel } = useModelContext();
 
   return (
-    <div className="crisis-selector panel-card">
+    <div className="crisis-selector panel-card" data-testid="crisis-selector">
       <div className="crisis-selector-inner">
         <span className="crisis-selector-label">Reference crises</span>
         <div className="crisis-chip-row">
