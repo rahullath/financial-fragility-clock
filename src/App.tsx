@@ -9,6 +9,7 @@
  *   /dashboard    → DataRoom        (heatmaps, MST, correlations)
  *   /model        → ModelLab        (SHAP, performance, predictions)
  *   /history      → HistoryArchive  (annotated crisis timeline)
+ *   /report       → Report          (assignment answers)
  *   /methods      → Methods         (theory + methodology)
  *   /present      → PresentationMode (no sidebar, fullscreen)
  *
@@ -29,6 +30,7 @@ import ClockLanding from './routes/ClockLanding';
 import DataRoom from './routes/DataRoom';
 import ModelLab from './routes/ModelLab';
 import HistoryArchive from './routes/HistoryArchive';
+import Report from './routes/Report';
 import Methods from './routes/Methods';
 import PresentationMode from './routes/PresentationMode';
 
@@ -59,6 +61,10 @@ const App: React.FC = () => (
               <Route
                 path="/history"
                 element={<Layout><HistoryArchive /></Layout>}
+              />
+              <Route
+                path="/report"
+                element={<Layout><Report /></Layout>}
               />
               <Route
                 path="/methods"

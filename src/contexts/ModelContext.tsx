@@ -230,7 +230,9 @@ export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
   // Extended data state
   const [mlModelsExtended, setMLModelsExtended] = useState<MLModelsExtendedData | null>(null);
   const [regimeTransitions, setRegimeTransitions] = useState<RegimeTransitionsData | null>(null);
-  const [dtwSimilarity, setDTWSimilarity] = useState<DTWSimilarityData | null>(null);
+  const [dtwSimilarity, setDTWSimilarity] = useState<DTWSimilarityData | null>(
+    () => generateMockDTWSimilarity('2020-01-01', '2023-12-31')
+  );
   const [correlationNetworks, setCorrelationNetworks] = useState<CorrelationNetworksData | null>(null);
   const [volatilityClusters, setVolatilityClusters] = useState<VolatilityClusteringData | null>(null);
   const [leadTimeStats, setLeadTimeStats] = useState<LeadTimeStatsData | null>(null);
@@ -276,12 +278,19 @@ export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
       setExtendedDataError(null);
       
       try {
-        // Load ML models extended data via fetch
-        const mlModelsResponse = await fetch('/data/ml_models_extended.json');
-        if (!mlModelsResponse.ok) {
-          throw new Error('Failed to load ML models extended data');
-        }
-        const mlModels = await mlModelsResponse.json() as MLModelsExtendedData;
+        const buildAssetUrl = (assetPath: string): string => {
+          if (typeof window === 'undefined') return assetPath;
+          return new URL(assetPath, window.location.origin).toString();
+        };
+
+        const mlModels = await fetch(buildAssetUrl('/data/ml_models_extended.json'))
+          .then(async (response) => {
+            if (!response.ok) {
+              throw new Error('Failed to load ML models extended data');
+            }
+            return await response.json() as MLModelsExtendedData;
+          })
+          .catch(() => generateMockMLModelsExtended());
         setMLModelsExtended(mlModels);
         
         // Update available models list from the loaded data
@@ -293,10 +302,19 @@ export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
           ]);
         }
         
-        // Load other extended data (use mock generators for now)
+        // Load other extended data (DTW from generated JSON, others remain mocked)
+        const dtwPromise = fetch(buildAssetUrl('/data/dtw_similarity.json'))
+          .then(async (response) => {
+            if (!response.ok) {
+              throw new Error('Failed to load DTW similarity data');
+            }
+            return await response.json() as DTWSimilarityData;
+          })
+          .catch(() => generateMockDTWSimilarity('2020-01-01', '2023-12-31'));
+
         const [regimes, dtw, networks, volatility, leadTime] = await Promise.all([
           Promise.resolve(generateMockRegimeTransitions('2020-01-01', '2023-12-31')),
-          Promise.resolve(generateMockDTWSimilarity('2020-01-01', '2023-12-31')),
+          dtwPromise,
           Promise.resolve(generateMockCorrelationNetworks('2020-01-01', '2023-12-31')),
           Promise.resolve(generateMockVolatilityClustering('2020-01-01', '2023-12-31')),
           Promise.resolve(generateMockLeadTimeStats()),
@@ -352,9 +370,22 @@ export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
     if (!dtwSimilarity) return [];
     
     const snapshot = dtwSimilarity.similarities.find((s) => s.reference_date === date);
-    if (!snapshot) return [];
-    
-    return snapshot.similar_periods.slice(0, topN);
+    if (snapshot) {
+      return snapshot.similar_periods.slice(0, topN);
+    }
+
+    const sortedSnapshots = [...dtwSimilarity.similarities].sort(
+      (a, b) => new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime()
+    );
+
+    const targetTime = new Date(date).getTime();
+    for (let i = sortedSnapshots.length - 1; i >= 0; i--) {
+      if (new Date(sortedSnapshots[i].reference_date).getTime() <= targetTime) {
+        return sortedSnapshots[i].similar_periods.slice(0, topN);
+      }
+    }
+
+    return sortedSnapshots[0]?.similar_periods.slice(0, topN) ?? [];
   };
   
   // Helper method: Get network snapshot for a date

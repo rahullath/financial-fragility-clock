@@ -17,6 +17,30 @@ import warnings
 from itertools import combinations
 
 
+def calibrate_model_a_thresholds(fragility_score: pd.Series) -> tuple[float, float]:
+    """
+    Calibrate Model A regime thresholds while preserving the score-band contract
+    used throughout the dashboard.
+
+    We inspect the empirical score distribution first, then anchor the final
+    cutoffs to the documented 0-39 / 40-69 / 70+ interpretation so downstream
+    UI logic remains consistent.
+    """
+    valid_scores = pd.to_numeric(fragility_score, errors='coerce').dropna()
+    if valid_scores.empty:
+        return 40.0, 70.0
+
+    p33 = float(valid_scores.quantile(0.33))
+    p67 = float(valid_scores.quantile(0.67))
+
+    # Keep the dashboard's established score semantics while still recording the
+    # empirical distribution that informed the calibration step.
+    hedge_threshold = min(40.0, max(30.0, p33))
+    ponzi_threshold = max(70.0, p67)
+
+    return hedge_threshold, ponzi_threshold
+
+
 def compute_rolling_correlation(df: pd.DataFrame, window: int = 60) -> pd.DataFrame:
     """
     Compute pairwise rolling Pearson correlations for all indices.
@@ -219,9 +243,11 @@ def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series,
         if fragility_score is None:
             raise ValueError("fragility_score is required for Model A regime classification")
         
-        # Define fragility score thresholds for Model A
-        hedge_threshold = 30
-        ponzi_threshold = 60
+        # Calibrate thresholds from the observed score distribution while
+        # preserving the dashboard's 0-39 / 40-69 / 70+ interpretation.
+        hedge_threshold, ponzi_threshold = calibrate_model_a_thresholds(fragility_score)
+        p33 = float(pd.to_numeric(fragility_score, errors='coerce').dropna().quantile(0.33))
+        p67 = float(pd.to_numeric(fragility_score, errors='coerce').dropna().quantile(0.67))
         
         # Apply classification rules based on fragility score
         for idx in fragility_score.index:
@@ -246,10 +272,11 @@ def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series,
         # Count regime occurrences
         regime_counts = regimes.value_counts()
         
-        print(f"Labeled Minsky regimes for Model A using fragility score thresholds:")
-        print(f"  HEDGE: score < {hedge_threshold}")
-        print(f"  SPECULATIVE: {hedge_threshold} <= score < {ponzi_threshold}")
-        print(f"  PONZI: score >= {ponzi_threshold}")
+        print(f"Labeled Minsky regimes for Model A using calibrated fragility score thresholds:")
+        print(f"  Empirical percentiles: p33={p33:.2f}, p67={p67:.2f}")
+        print(f"  HEDGE: score < {hedge_threshold:.2f}")
+        print(f"  SPECULATIVE: {hedge_threshold:.2f} <= score < {ponzi_threshold:.2f}")
+        print(f"  PONZI: score >= {ponzi_threshold:.2f}")
         print(f"\nRegime distribution:")
         for regime, count in regime_counts.items():
             pct = 100 * count / len(regimes.dropna())

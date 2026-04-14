@@ -81,19 +81,13 @@ const DTWSimilarityHeatmap: React.FC = () => {
   
   const svgWidth = periodsPerRow * cellWidth + 40;
   const svgHeight = numRows * cellHeight + labelHeight + topMargin;
-
-  if (!dtwSimilarity || similarityData.allPeriods.length === 0) {
-    return (
-      <div className="dtw-similarity-empty">
-        <p>No similarity data available for the selected date.</p>
-      </div>
-    );
-  }
+  const hasSimilarityData = !!dtwSimilarity && similarityData.allPeriods.length > 0;
 
   return (
     <div 
       className="dtw-similarity-heatmap" 
       id="chart-dtw-similarity"
+      role="region"
       aria-label="Historical similarity heatmap"
     >
       <div className="dtw-header">
@@ -121,95 +115,101 @@ const DTWSimilarityHeatmap: React.FC = () => {
       </div>
 
       <div className="dtw-container">
-        <svg width={svgWidth} height={svgHeight}>
-          {/* Title */}
-          <text
-            x={svgWidth / 2}
-            y={20}
-            textAnchor="middle"
-            fontSize={11}
-            fill="var(--text-muted)"
-            fontFamily="var(--font-mono)"
-            fontWeight="600"
-          >
-            Similar Historical Periods (Click to Navigate)
-          </text>
+        {hasSimilarityData ? (
+          <svg width={svgWidth} height={svgHeight}>
+            {/* Title */}
+            <text
+              x={svgWidth / 2}
+              y={20}
+              textAnchor="middle"
+              fontSize={11}
+              fill="var(--text-muted)"
+              fontFamily="var(--font-mono)"
+              fontWeight="600"
+            >
+              Similar Historical Periods (Click to Navigate)
+            </text>
 
-          {/* Heatmap cells */}
-          {similarityData.allPeriods.map((period, index) => {
-            const row = Math.floor(index / periodsPerRow);
-            const col = index % periodsPerRow;
-            const x = col * cellWidth + 20;
-            const y = row * cellHeight + topMargin + labelHeight;
-            
-            const isTop5 = similarityData.top5Dates.has(period.date);
-            const isHovered = hoveredPeriod?.date === period.date;
-            const fill = similarityColorScale(period.score);
+            {/* Heatmap cells */}
+            {similarityData.allPeriods.map((period, index) => {
+              const row = Math.floor(index / periodsPerRow);
+              const col = index % periodsPerRow;
+              const x = col * cellWidth + 20;
+              const y = row * cellHeight + topMargin + labelHeight;
+              
+              const isTop5 = similarityData.top5Dates.has(period.date);
+              const isHovered = hoveredPeriod?.date === period.date;
+              const fill = similarityColorScale(period.score);
 
-            return (
-              <g
-                key={period.date}
-                onMouseEnter={() => 
-                  setHoveredPeriod({
-                    date: period.date,
-                    score: period.score,
-                    features: period.features_matched,
-                  })
-                }
-                onMouseLeave={() => setHoveredPeriod(null)}
-                onClick={() => handlePeriodClick(period.date)}
-                style={{ cursor: 'pointer' }}
-              >
-                <rect
-                  x={x}
-                  y={y}
-                  width={cellWidth}
-                  height={cellHeight}
-                  fill={fill}
-                  stroke={
-                    isHovered 
-                      ? 'var(--text-primary)' 
-                      : isTop5 
-                      ? 'var(--accent-primary)'
-                      : 'var(--bg-border)'
+              return (
+                <g
+                  key={period.date}
+                  onMouseEnter={() => 
+                    setHoveredPeriod({
+                      date: period.date,
+                      score: period.score,
+                      features: period.features_matched,
+                    })
                   }
-                  strokeWidth={isHovered ? 2 : isTop5 ? 2 : 0.5}
-                  opacity={isTop5 ? 1 : 0.8}
-                  style={{ transition: 'all 200ms ease' }}
-                />
-                
-                {/* Label for top 5 */}
-                {isTop5 && (
-                  <>
-                    <text
-                      x={x + cellWidth / 2}
-                      y={y - 5}
-                      textAnchor="middle"
-                      fontSize={8}
-                      fill="var(--accent-primary)"
-                      fontFamily="var(--font-mono)"
-                      fontWeight="700"
-                      pointerEvents="none"
-                    >
-                      ★
-                    </text>
-                    <text
-                      x={x + cellWidth / 2}
-                      y={y + cellHeight + 12}
-                      textAnchor="middle"
-                      fontSize={7}
-                      fill="var(--text-secondary)"
-                      fontFamily="var(--font-mono)"
-                      pointerEvents="none"
-                    >
-                      {formatDateDisplay(period.date).split(',')[0]}
-                    </text>
-                  </>
-                )}
-              </g>
-            );
-          })}
-        </svg>
+                  onMouseLeave={() => setHoveredPeriod(null)}
+                  onClick={() => handlePeriodClick(period.date)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <rect
+                    x={x}
+                    y={y}
+                    width={cellWidth}
+                    height={cellHeight}
+                    fill={fill}
+                    stroke={
+                      isHovered 
+                        ? 'var(--text-primary)' 
+                        : isTop5 
+                        ? 'var(--accent-primary)'
+                        : 'var(--bg-border)'
+                    }
+                    strokeWidth={isHovered ? 2 : isTop5 ? 2 : 0.5}
+                    opacity={isTop5 ? 1 : 0.8}
+                    style={{ transition: 'all 200ms ease' }}
+                  />
+                  
+                  {/* Label for top 5 */}
+                  {isTop5 && (
+                    <>
+                      <text
+                        x={x + cellWidth / 2}
+                        y={y - 5}
+                        textAnchor="middle"
+                        fontSize={8}
+                        fill="var(--accent-primary)"
+                        fontFamily="var(--font-mono)"
+                        fontWeight="700"
+                        pointerEvents="none"
+                      >
+                        ★
+                      </text>
+                      <text
+                        x={x + cellWidth / 2}
+                        y={y + cellHeight + 12}
+                        textAnchor="middle"
+                        fontSize={7}
+                        fill="var(--text-secondary)"
+                        fontFamily="var(--font-mono)"
+                        pointerEvents="none"
+                      >
+                        {formatDateDisplay(period.date).split(',')[0]}
+                      </text>
+                    </>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        ) : (
+          <div className="dtw-similarity-empty">
+            <p>No similarity data available for the selected date.</p>
+          </div>
+        )}
       </div>
 
       {/* Hover tooltip */}
@@ -234,17 +234,23 @@ const DTWSimilarityHeatmap: React.FC = () => {
       {/* Top 5 list */}
       <div className="dtw-top5-list">
         <div className="dtw-top5-title">Top 5 Most Similar Periods</div>
-        {similarityData.top5.map((period, index) => (
-          <div 
-            key={period.date}
-            className="dtw-top5-item"
-            onClick={() => handlePeriodClick(period.date)}
-          >
-            <span className="dtw-top5-rank">#{index + 1}</span>
-            <span className="dtw-top5-date">{formatDateDisplay(period.date)}</span>
-            <span className="dtw-top5-score">{(period.score * 100).toFixed(1)}%</span>
+        {hasSimilarityData ? (
+          similarityData.top5.map((period, index) => (
+            <div 
+              key={period.date}
+              className="dtw-top5-item"
+              onClick={() => handlePeriodClick(period.date)}
+            >
+              <span className="dtw-top5-rank">#{index + 1}</span>
+              <span className="dtw-top5-date">{formatDateDisplay(period.date)}</span>
+              <span className="dtw-top5-score">{(period.score * 100).toFixed(1)}%</span>
+            </div>
+          ))
+        ) : (
+          <div className="dtw-top5-item dtw-top5-item--empty">
+            No comparable periods yet
           </div>
-        ))}
+        )}
       </div>
 
       {/* Legend */}
@@ -258,11 +264,11 @@ const DTWSimilarityHeatmap: React.FC = () => {
       <div className="dtw-metadata">
         <div className="dtw-metadata-item">
           <span className="dtw-metadata-label">Window Size:</span>
-          <span className="dtw-metadata-value">{dtwSimilarity.metadata.window_size} days</span>
+          <span className="dtw-metadata-value">{dtwSimilarity?.metadata.window_size ?? 0} days</span>
         </div>
         <div className="dtw-metadata-item">
           <span className="dtw-metadata-label">Features Analyzed:</span>
-          <span className="dtw-metadata-value">{dtwSimilarity.metadata.feature_set.length}</span>
+          <span className="dtw-metadata-value">{dtwSimilarity?.metadata.feature_set.length ?? 0}</span>
         </div>
       </div>
     </div>

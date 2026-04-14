@@ -26,7 +26,7 @@ export interface ModelPerformanceMetrics {
   precision: number;
   recall: number;
   f1_score: number;
-  roc_auc: number;
+  roc_auc: number | null;
   roc_curve: ROCPoint[];
 }
 

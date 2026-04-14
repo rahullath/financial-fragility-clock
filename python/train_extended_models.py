@@ -571,11 +571,22 @@ def export_ml_models_extended(models_results, X_test, y_test, dates_test, filepa
                 **class_metrics
             }
     
+    legacy_model_entries = {}
+    for model_id, prediction_rows in predictions.items():
+        model_performance = performance.get(model_id, {})
+        legacy_model_entries[model_id] = {
+            'predictions': [row['fragility_score'] for row in prediction_rows],
+            'rmse': model_performance.get('test_rmse'),
+            'mae': model_performance.get('test_mae'),
+            'r2': model_performance.get('test_r2'),
+        }
+
     # Compile output
     output = {
         'metadata': metadata,
         'predictions': predictions,
-        'performance': performance
+        'performance': performance,
+        **legacy_model_entries,
     }
     
     # Ensure output directory exists

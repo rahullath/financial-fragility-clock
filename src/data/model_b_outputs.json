@@ -99,7 +99,27 @@
         "permutation_entropy": 0.0001816381466778766,
         "rolling_volatility": 0.00029053830781795777,
         "volatility_synchrony": 0.00023397950691519145,
-        "regime_encoded": 9.011521376736596e-06
+        "regime_encoded": 0.000009011521376736596
+      },
+      "regime_metrics": {
+        "HEDGE": {
+          "rmse": 83.19963281293123,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        },
+        "SPECULATIVE": {
+          "rmse": 94.25165329689062,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        },
+        "PONZI": {
+          "rmse": 227.9094552518076,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        }
       }
     },
     "split_2020": {
@@ -136,10 +156,30 @@
         "VIX": 0.0023278609600757565,
         "mean_corr": 0.00014763898290635235,
         "eigenvalue_ratio": 0.0001304910220343889,
-        "permutation_entropy": 7.184163657398702e-05,
+        "permutation_entropy": 0.00007184163657398702,
         "rolling_volatility": 0.0003471929174578948,
         "volatility_synchrony": 0.0006080695053221397,
-        "regime_encoded": 5.9903212929493406e-05
+        "regime_encoded": 0.000059903212929493406
+      },
+      "regime_metrics": {
+        "HEDGE": {
+          "rmse": 592.1629219992469,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        },
+        "SPECULATIVE": {
+          "rmse": 426.601192991029,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        },
+        "PONZI": {
+          "rmse": 430.6056792660567,
+          "mae": null,
+          "r2": null,
+          "n_observations": null
+        }
       }
     }
   },
@@ -1734,5 +1774,25 @@
         "EM": 0.0018166699465325317
       }
     }
-  ]
+  ],
+  "regime_metrics": {
+    "HEDGE": {
+      "rmse": 592.1629219992469,
+      "mae": null,
+      "r2": null,
+      "n_observations": null
+    },
+    "SPECULATIVE": {
+      "rmse": 426.601192991029,
+      "mae": null,
+      "r2": null,
+      "n_observations": null
+    },
+    "PONZI": {
+      "rmse": 430.6056792660567,
+      "mae": null,
+      "r2": null,
+      "n_observations": null
+    }
+  }
 }

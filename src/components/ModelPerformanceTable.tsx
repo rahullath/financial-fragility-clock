@@ -13,6 +13,12 @@ interface MetricRow {
   ponzi_rmse: number | null;
 }
 
+interface RegimeMetric {
+  rmse?: number | null;
+  mae?: number | null;
+  r2?: number | null;
+}
+
 function fmt(v: number | null, d = 4): string {
   return v != null ? v.toFixed(d) : '—';
 }
@@ -43,6 +49,27 @@ const ModelPerformanceTable: React.FC = () => {
     rows: MetricRow[];
     ponziCallout: boolean;
   }>(() => {
+    const normalizedModelMetrics = outputs['model_regime_metrics'] as
+      | Record<string, Record<string, RegimeMetric>>
+      | undefined;
+    const normalizedRegimeMetrics = outputs['regime_metrics'] as
+      | Record<string, RegimeMetric>
+      | undefined;
+
+    const getModelRegimeRmse = (
+      modelKey: string,
+      regime: 'HEDGE' | 'SPECULATIVE' | 'PONZI',
+      fallback?: Record<string, number>
+    ): number | null => {
+      const normalized = normalizedModelMetrics?.[modelKey]?.[regime]?.rmse;
+      if (normalized != null) return normalized;
+
+      const aggregate = normalizedRegimeMetrics?.[regime]?.rmse;
+      if (aggregate != null && modelKey === 'RandomForest') return aggregate;
+
+      return fallback?.[regime] ?? null;
+    };
+
     // ── Model A ──────────────────────────────────────────────────────────────
     if (currentModelData.info.id === 'A') {
       const ols = outputs['ols'] as
@@ -57,6 +84,7 @@ const ModelPerformanceTable: React.FC = () => {
 
       const mkRow = (
         name: string,
+        normalizedModelKey: string,
         metrics: Record<string, number> | undefined,
         rrmse: Record<string, number> | undefined
       ): MetricRow => ({
@@ -64,15 +92,15 @@ const ModelPerformanceTable: React.FC = () => {
         r2: metrics?.['test_r2'] ?? metrics?.['r2'] ?? null,
         rmse: metrics?.['test_rmse'] ?? metrics?.['rmse'] ?? null,
         mae: metrics?.['test_mae'] ?? metrics?.['mae'] ?? null,
-        hedge_rmse: rrmse?.['HEDGE'] ?? null,
-        spec_rmse: rrmse?.['SPECULATIVE'] ?? null,
-        ponzi_rmse: rrmse?.['PONZI'] ?? null,
+        hedge_rmse: getModelRegimeRmse(normalizedModelKey, 'HEDGE', rrmse),
+        spec_rmse: getModelRegimeRmse(normalizedModelKey, 'SPECULATIVE', rrmse),
+        ponzi_rmse: getModelRegimeRmse(normalizedModelKey, 'PONZI', rrmse),
       });
 
       return {
         rows: [
-          mkRow('OLS', ols?.metrics, ols?.regime_rmse),
-          mkRow('Random Forest', rf?.metrics, rf?.regime_rmse),
+          mkRow('OLS', 'OLS', ols?.metrics, ols?.regime_rmse),
+          mkRow('Random Forest', 'RandomForest', rf?.metrics, rf?.regime_rmse),
         ],
         ponziCallout: comparison?.ponzi_validation ?? false,
       };
@@ -93,9 +121,9 @@ const ModelPerformanceTable: React.FC = () => {
       r2: metrics?.['test_r2'] ?? null,
       rmse: metrics?.['test_rmse'] ?? null,
       mae: metrics?.['test_mae'] ?? null,
-      hedge_rmse: rrmse?.['HEDGE'] ?? null,
-      spec_rmse: rrmse?.['SPECULATIVE'] ?? null,
-      ponzi_rmse: rrmse?.['PONZI'] ?? null,
+      hedge_rmse: getModelRegimeRmse('RandomForest', 'HEDGE', rrmse),
+      spec_rmse: getModelRegimeRmse('RandomForest', 'SPECULATIVE', rrmse),
+      ponzi_rmse: getModelRegimeRmse('RandomForest', 'PONZI', rrmse),
     };
 
     // Compare PONZI RMSE between 2008 and 2020 splits for callout

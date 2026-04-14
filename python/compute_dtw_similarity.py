@@ -50,6 +50,19 @@ def dtw_distance(s1, s2):
     return dtw_matrix[n, m]
 
 
+def zscore_series(series: pd.Series) -> np.ndarray:
+    """Normalize a series so DTW compares shape rather than raw scale."""
+    values = pd.to_numeric(series, errors='coerce').astype(float)
+    if values.isna().all():
+        return np.array([], dtype=float)
+
+    values = values.ffill().bfill().fillna(0.0).to_numpy()
+    std = float(np.std(values))
+    if std == 0:
+        return np.zeros(len(values), dtype=float)
+    return (values - float(np.mean(values))) / std
+
+
 def compute_dtw_similarity():
     """
     Compute DTW similarity between current conditions and historical crises.
@@ -72,10 +85,10 @@ def compute_dtw_similarity():
         
         print(f"Loaded {len(df)} observations")
         
-        # Placeholder implementation - compute basic similarity metrics
-        # TODO: Implement actual DTW analysis for crisis periods
-        
-        # Define crisis periods (placeholder)
+        feature_set = ['fragility_score', 'mean_corr', 'rolling_volatility', 'permutation_entropy']
+        window_size = 90
+
+        # Define crisis periods available in the Model A sample.
         crisis_periods = [
             {
                 'id': 'flash_crash_2010',
@@ -92,41 +105,114 @@ def compute_dtw_similarity():
         ]
         
         print(f"\nAnalyzing {len(crisis_periods)} crisis periods")
-        
-        # Compute similarity scores (placeholder)
-        similarity_scores = {}
+
+        valid_df = df[['date', *feature_set]].dropna().sort_values('date').reset_index(drop=True)
+        if len(valid_df) < window_size:
+            raise ValueError('Insufficient valid observations for DTW analysis')
+
+        crisis_windows = {}
         for crisis in crisis_periods:
-            # Extract crisis period data
-            crisis_data = df[
-                (df['date'] >= crisis['start']) & 
-                (df['date'] <= crisis['end'])
-            ]
-            
-            if len(crisis_data) > 0 and 'fragility_score' in crisis_data.columns:
-                # Placeholder: use simple correlation as similarity metric
-                similarity_scores[crisis['id']] = {
-                    'name': crisis['name'],
-                    'similarity_score': 0.75,  # Placeholder value
-                    'observations': len(crisis_data)
-                }
-                print(f"  {crisis['name']}: {len(crisis_data)} observations")
-        
+            crisis_data = valid_df[
+                (valid_df['date'] >= crisis['start']) & 
+                (valid_df['date'] <= crisis['end'])
+            ][['date', *feature_set]].dropna()
+
+            if len(crisis_data) < 20:
+                continue
+
+            crisis_windows[crisis['id']] = {
+                'meta': crisis,
+                'data': crisis_data,
+            }
+
+        if not crisis_windows:
+            raise ValueError('No crisis windows produced valid DTW scores')
+
+        similarities = []
+        latest_similarity_scores = {}
+
+        for end_idx in range(window_size - 1, len(valid_df)):
+            reference_window = valid_df.iloc[end_idx - window_size + 1:end_idx + 1]
+            reference_date = reference_window['date'].iloc[-1].strftime('%Y-%m-%d')
+            similar_periods = []
+
+            for crisis_id, crisis_window in crisis_windows.items():
+                distances = []
+                for feature in feature_set:
+                    reference_series = zscore_series(reference_window[feature])
+                    crisis_series = zscore_series(crisis_window['data'][feature])
+                    if len(reference_series) == 0 or len(crisis_series) == 0:
+                        continue
+                    distances.append(
+                        dtw_distance(reference_series, crisis_series)
+                        / max(len(reference_series), len(crisis_series))
+                    )
+
+                if not distances:
+                    continue
+
+                avg_distance = float(np.mean(distances))
+                similarity = float(1 / (1 + avg_distance))
+                similar_periods.append({
+                    'date': crisis_window['meta']['start'],
+                    'score': similarity,
+                    'features_matched': feature_set,
+                })
+
+                if end_idx == len(valid_df) - 1:
+                    latest_similarity_scores[crisis_id] = {
+                        'name': crisis_window['meta']['name'],
+                        'similarity': similarity,
+                        'distance': avg_distance,
+                        'observations': int(len(crisis_window['data'])),
+                        'features_matched': feature_set,
+                    }
+
+            similarities.append({
+                'reference_date': reference_date,
+                'similar_periods': sorted(similar_periods, key=lambda period: period['score'], reverse=True),
+            })
+
+        ranked_scores = sorted(
+            latest_similarity_scores.items(),
+            key=lambda item: item[1]['similarity'],
+            reverse=True,
+        )
+        most_similar_id, most_similar_score = ranked_scores[0]
+
+        for crisis_id, score_data in latest_similarity_scores.items():
+            print(
+                f"  {score_data['name']}: similarity={score_data['similarity']:.4f}, "
+                f"distance={score_data['distance']:.4f}, observations={score_data['observations']}"
+            )
+
         # Generate output structure
         result = {
             'metadata': {
                 'generated_at': datetime.now().isoformat(),
                 'description': 'DTW similarity analysis between current and historical crises',
-                'note': 'Placeholder implementation - requires full DTW analysis',
-                'method': 'Dynamic Time Warping'
+                'method': 'Dynamic Time Warping',
+                'window_size': window_size,
+                'feature_set': feature_set,
             },
             'crisis_periods': crisis_periods,
-            'similarity_scores': similarity_scores,
+            'similarity_scores': latest_similarity_scores,
             'current_similarity': {
-                'most_similar_crisis': 'flash_crash_2010',
-                'similarity_score': 0.75,
-                'confidence': 0.80
-            }
+                'reference_date': similarities[-1]['reference_date'],
+                'most_similar_crisis': most_similar_id,
+                'similarity_score': most_similar_score['similarity'],
+                'confidence': float(min(0.99, 1 / (1 + most_similar_score['distance'] / 2))),
+            },
+            'similarities': similarities,
         }
+
+        # Preserve a simple top-level summary shape for existing tests.
+        for crisis_id, score_data in latest_similarity_scores.items():
+            result[crisis_id] = {
+                'name': score_data['name'],
+                'similarity': score_data['similarity'],
+                'distance': score_data['distance'],
+            }
         
         return result
         

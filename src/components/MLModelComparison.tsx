@@ -37,6 +37,21 @@ interface ModelWithPerformance {
   performance: ModelPerformanceMetrics;
 }
 
+function metricSortValue(value: number | null | undefined, direction: SortDirection): number {
+  if (value == null || Number.isNaN(value)) {
+    return direction === 'desc' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+  }
+  return value;
+}
+
+function formatPercent(value: number | null | undefined): string {
+  return value != null ? `${(value * 100).toFixed(2)}%` : '—';
+}
+
+function formatMetric(value: number | null | undefined, digits = 4): string {
+  return value != null ? value.toFixed(digits) : '—';
+}
+
 const MLModelComparison: React.FC = () => {
   const { mlModelsExtended, availableMLModels, selectedMLModel, setSelectedMLModel } = useModelContext();
   
@@ -63,8 +78,8 @@ const MLModelComparison: React.FC = () => {
   // Sort models by selected metric
   const sortedModels = useMemo(() => {
     const sorted = [...modelsWithPerformance].sort((a, b) => {
-      const aValue = a.performance[sortMetric];
-      const bValue = b.performance[sortMetric];
+      const aValue = metricSortValue(a.performance[sortMetric], sortDirection);
+      const bValue = metricSortValue(b.performance[sortMetric], sortDirection);
       return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
     });
     return sorted;
@@ -76,13 +91,11 @@ const MLModelComparison: React.FC = () => {
     const best: Record<MetricKey, string> = {} as Record<MetricKey, string>;
 
     metrics.forEach((metric) => {
-      let bestModel = modelsWithPerformance[0];
-      modelsWithPerformance.forEach((model) => {
-        if (model.performance[metric] > bestModel.performance[metric]) {
-          bestModel = model;
-        }
-      });
-      if (bestModel) {
+      const rankedModels = [...modelsWithPerformance].sort(
+        (a, b) => metricSortValue(b.performance[metric], 'desc') - metricSortValue(a.performance[metric], 'desc')
+      );
+      const bestModel = rankedModels[0];
+      if (bestModel && bestModel.performance[metric] != null) {
         best[metric] = bestModel.modelId;
       }
     });
@@ -256,19 +269,19 @@ const MLModelComparison: React.FC = () => {
                     {model.modelId}
                   </td>
                   <td className={bestModels.accuracy === model.modelId ? 'best-metric' : ''}>
-                    {(model.performance.accuracy * 100).toFixed(2)}%
+                    {formatPercent(model.performance.accuracy)}
                   </td>
                   <td className={bestModels.precision === model.modelId ? 'best-metric' : ''}>
-                    {(model.performance.precision * 100).toFixed(2)}%
+                    {formatPercent(model.performance.precision)}
                   </td>
                   <td className={bestModels.recall === model.modelId ? 'best-metric' : ''}>
-                    {(model.performance.recall * 100).toFixed(2)}%
+                    {formatPercent(model.performance.recall)}
                   </td>
                   <td className={bestModels.f1_score === model.modelId ? 'best-metric' : ''}>
-                    {(model.performance.f1_score * 100).toFixed(2)}%
+                    {formatPercent(model.performance.f1_score)}
                   </td>
                   <td className={bestModels.roc_auc === model.modelId ? 'best-metric' : ''}>
-                    {model.performance.roc_auc.toFixed(4)}
+                    {formatMetric(model.performance.roc_auc)}
                   </td>
                   <td>
                     <button
