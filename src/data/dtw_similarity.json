@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "generated_at": "2026-04-13T23:58:05.554387",
+    "description": "DTW similarity analysis between current and historical crises",
+    "note": "Placeholder implementation - requires full DTW analysis",
+    "method": "Dynamic Time Warping"
+  },
+  "crisis_periods": [
+    {
+      "id": "flash_crash_2010",
+      "name": "Flash Crash 2010",
+      "start": "2010-05-01",
+      "end": "2010-06-30"
+    },
+    {
+      "id": "eu_debt_2010",
+      "name": "EU Debt Crisis",
+      "start": "2010-04-01",
+      "end": "2011-12-31"
+    }
+  ],
+  "similarity_scores": {
+    "flash_crash_2010": {
+      "name": "Flash Crash 2010",
+      "similarity_score": 0.75,
+      "observations": 42
+    },
+    "eu_debt_2010": {
+      "name": "EU Debt Crisis",
+      "similarity_score": 0.75,
+      "observations": 223
+    }
+  },
+  "current_similarity": {
+    "most_similar_crisis": "flash_crash_2010",
+    "similarity_score": 0.75,
+    "confidence": 0.8
+  }
+}

@@ -1,16 +1,20 @@
 /**
  * DoomsdayClock — spec v2 §4
  *
- * A genuine doomsday clock face:
- *  - 12 o'clock = CRASH
- *  - 6 o'clock  = SAFE
- *  - Needle moves counterclockwise from 6 toward 12 as risk rises
- *  - "X:XX to midnight" is the primary display  (derived from fragility score)
+ * A genuine doomsday clock face with literal clock hands:
+ *  - 12 o'clock = MIDNIGHT (crisis threshold at score=70)
+ *  - Clock shows actual time: "1h 20m to midnight" = 10:40pm
+ *  - Three hands like a real clock:
+ *    - Hour hand (short, thick) - moves smoothly with minutes
+ *    - Minute hand (long, thin) - shows exact minutes
+ *    - Second hand (medium, dim red) - ambient rotation showing time passing
+ *  - "X:XX to/past midnight" is the primary display (derived from fragility score)
  *  - Regime label below in regime colour
  *  - Regime-coloured radial glow behind face
  *
- * Needle angle:  0 score → 6 o'clock (180°), 100 score → 12 o'clock (0°/360°)
- * Going counterclockwise:  angle = 180 + (score / 100) * 180
+ * Time mapping:
+ *  - Score 0-69 (HEDGE/SPECULATIVE): 10:00pm - 11:59pm (approaching midnight)
+ *  - Score 70-100 (PONZI): 12:00am - 2:00am (past midnight, crisis mode)
  */
 
 import React, { useEffect, useState, useMemo } from 'react';
@@ -18,6 +22,8 @@ import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { toNum } from '../utils/dataUtils';
 import { findAnalogue } from '../data/historicalAnalogues';
+import { generateClockExplanation } from '../utils/laymanExplanations';
+import LaymanOverlay from './LaymanOverlay';
 import './DoomsdayClock.css';
 
 // ── Types + constants ──────────────────────────────────────────────────────────
@@ -41,8 +47,35 @@ const R_NEEDLE = 88;     // needle tip radius
 
 // ── Angle helpers ─────────────────────────────────────────────────────────────
 
-/** score 0–100 → angle in clock-degrees where 0° = 12 o'clock */
-const scoreToAngle = (score: number): number => 180 + (score / 100) * 180;
+/** Convert score to actual clock time (hours and minutes) */
+const scoreToTime = (score: number): { hours: number; minutes: number } => {
+  if (score >= 70) {
+    // PONZI regime: past midnight (12:00am - 2:00am)
+    const minsPast = Math.round((score - 70) / 30 * 120); // 0-120 minutes past midnight
+    const hours = Math.floor(minsPast / 60);
+    const minutes = minsPast % 60;
+    return { hours, minutes }; // 0-2 hours
+  } else {
+    // HEDGE/SPECULATIVE: before midnight (10:00pm - 11:59pm)
+    const minsToMidnight = Math.round((1 - score / 100) * 120); // 0-120 minutes to midnight
+    const totalMinutes = 24 * 60 - minsToMidnight; // Convert to minutes from midnight
+    const hours = Math.floor(totalMinutes / 60) % 12 || 12;
+    const minutes = totalMinutes % 60;
+    return { hours: hours === 0 ? 12 : hours, minutes }; // 10-11 hours (pm)
+  }
+};
+
+/** Convert hours and minutes to clock angle (0° = 12 o'clock) */
+const timeToAngle = (hours: number, minutes: number, isHourHand: boolean): number => {
+  if (isHourHand) {
+    // Hour hand: moves smoothly based on hour + fraction of hour from minutes
+    // Each hour = 30° (360° / 12 hours)
+    return ((hours % 12) + minutes / 60) * 30;
+  } else {
+    // Minute hand: each minute = 6° (360° / 60 minutes)
+    return minutes * 6;
+  }
+};
 
 /** clock-degrees → polar (x,y) centred on (cx, cy) */
 const polar = (cx: number, cy: number, r: number, angleDeg: number) => {
@@ -52,12 +85,37 @@ const polar = (cx: number, cy: number, r: number, angleDeg: number) => {
 
 // ── Minutes-to-midnight formatter ─────────────────────────────────────────────
 
-/** score 0–100 → "HH:MM" string, where 100 = "00:00" and 0 = "12:00" */
+/** score 0–100 → "Xh Xm to midnight" or "XX minutes to midnight", where 100 = "1 minute to midnight" and 0 = "2h 0m to midnight" */
 const minutesToMidnight = (score: number): string => {
-  const mins = Math.round((1 - score / 100) * 720); // 720 min = 12 hours
-  const hh = Math.floor(mins / 60);
-  const mm = mins % 60;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  // PONZI regime (score >= 70): show "past midnight" to indicate crisis threshold crossed
+  if (score >= 70) {
+    const minsPast = Math.round((score - 70) / 30 * 120); // maps 70-100 to 0-120 minutes past
+    
+    if (score >= 99) {
+      return 'PAST MIDNIGHT';
+    } else if (minsPast === 0) {
+      return 'PAST MIDNIGHT';
+    } else {
+      return `${minsPast} minutes past midnight`;
+    }
+  }
+  
+  // HEDGE and SPECULATIVE regimes (score < 70): show "to midnight"
+  const mins = Math.round((1 - score / 100) * 120); // 120 min = 2 hours
+  
+  if (mins >= 60) {
+    const hh = Math.floor(mins / 60);
+    const mm = mins % 60;
+    if (mm === 0) {
+      return `${hh}h 0m to midnight`;
+    }
+    return `${hh}h ${mm}m to midnight`;
+  } else if (mins <= 1) {
+    // At score=100 (0 minutes) or score=99.17+ (1 minute), show "1 minute to midnight"
+    return '1 minute to midnight';
+  } else {
+    return `${mins} minutes to midnight`;
+  }
 };
 
 // ── Data resolver ─────────────────────────────────────────────────────────────
@@ -72,19 +130,10 @@ function findRowForDate(rows: DataRow[], date: Date): DataRow | null {
   return best ?? null;
 }
 
-// ── Needle tip colour ─────────────────────────────────────────────────────────
-
-function needleTipColor(score: number): string {
-  if (score < 33) return '#22c55e';
-  if (score < 67) return '#f59e0b';
-  if (score < 85) return '#ef4444';
-  return '#ff2020';
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const DoomsdayClock: React.FC = () => {
-  const { currentModelData } = useModelContext();
+  const { currentModelData, lastUpdated } = useModelContext();
   const { selectedDate } = useDateContext();
 
   // ── Derive display values ──────────────────────────────────────────────────
@@ -92,7 +141,15 @@ const DoomsdayClock: React.FC = () => {
     const rows = currentModelData.featuresData.data;
     const row = findRowForDate(rows, selectedDate);
     const score = row ? (toNum(row.fragility_score) ?? 0) : 0;
-    const regime = ((row?.regime as string) ?? 'SPECULATIVE') as Regime;
+    
+    // Determine regime based on score (not from data, as data might not have it)
+    let regime: Regime = 'HEDGE';
+    if (score >= 70) {
+      regime = 'PONZI';
+    } else if (score >= 40) {
+      regime = 'SPECULATIVE';
+    }
+    
     const formattedDate = selectedDate.toLocaleDateString('en-US', {
       year: 'numeric', month: 'short', day: 'numeric',
     });
@@ -104,14 +161,39 @@ const DoomsdayClock: React.FC = () => {
   const timeDisplay = minutesToMidnight(score);
   const analogue = findAnalogue(score);
 
-  // ── Animated needle angle ──────────────────────────────────────────────────
-  const targetAngle = scoreToAngle(score);
-  const [displayAngle, setDisplayAngle] = useState(targetAngle);
+  // Check if selectedDate is within historical data range to avoid circular analogues
+  const [startDateStr, endDateStr] = currentModelData.info.dateRange;
+  const startDate = new Date(startDateStr);
+  const endDate = new Date(endDateStr);
+  const isHistoricalDate = selectedDate >= startDate && selectedDate <= endDate;
+  const showAnalogue = !isHistoricalDate && analogue;
+
+  // ── Animated clock hands ──────────────────────────────────────────────────
+  const { hours, minutes } = useMemo(() => scoreToTime(score), [score]);
+  const targetHourAngle = timeToAngle(hours, minutes, true);
+  const targetMinuteAngle = timeToAngle(hours, minutes, false);
+  
+  const [displayHourAngle, setDisplayHourAngle] = useState(targetHourAngle);
+  const [displayMinuteAngle, setDisplayMinuteAngle] = useState(targetMinuteAngle);
+  
+  // Ambient second hand rotation (completes full rotation every 60 seconds)
+  const [secondAngle, setSecondAngle] = useState(0);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setDisplayAngle(targetAngle));
+    const id = requestAnimationFrame(() => {
+      setDisplayHourAngle(targetHourAngle);
+      setDisplayMinuteAngle(targetMinuteAngle);
+    });
     return () => cancelAnimationFrame(id);
-  }, [targetAngle]);
+  }, [targetHourAngle, targetMinuteAngle]);
+  
+  // Ambient second hand animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondAngle((prev) => (prev + 6) % 360); // 6° per second
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Drive CSS custom property so App.css animations react to score ──────
   useEffect(() => {
@@ -142,13 +224,29 @@ const DoomsdayClock: React.FC = () => {
     };
   });
 
-  // Needle geometry
-  const needleTip = polar(CX, CY, R_NEEDLE, displayAngle);
-  const needleBase = polar(CX, CY, 16, displayAngle + 180);
-  const tColor = needleTipColor(score);
+  // Clock hand geometry
+  const hourHandTip = polar(CX, CY, R_NEEDLE * 0.6, displayHourAngle); // Shorter hour hand
+  const hourHandBase = polar(CX, CY, 12, displayHourAngle + 180);
+  
+  const minuteHandTip = polar(CX, CY, R_NEEDLE, displayMinuteAngle); // Longer minute hand
+  const minuteHandBase = polar(CX, CY, 12, displayMinuteAngle + 180);
+  
+  const secondHandTip = polar(CX, CY, R_NEEDLE * 0.85, secondAngle); // Medium second hand
+  const secondHandBase = polar(CX, CY, 16, secondAngle + 180);
 
   return (
-    <div className="doomsday-clock" aria-label={`Doomsday clock: ${timeDisplay} to midnight, fragility ${score.toFixed(1)}, ${safeRegime} regime`}>
+    <div className="doomsday-clock" data-testid="doomsday-clock" aria-label={`Doomsday clock: ${timeDisplay} to midnight, fragility ${score.toFixed(1)}, ${safeRegime} regime`}>
+      {/* Layman overlay trigger */}
+      <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+        <LaymanOverlay 
+          explanationGenerator={() => {
+            const rows = currentModelData.featuresData.data;
+            const row = findRowForDate(rows, selectedDate);
+            return generateClockExplanation(row);
+          }}
+        />
+      </div>
+
       {/* Breathing glow ring — speed + size driven by --fragility-score CSS var */}
       <div className="clock-glow-ring" aria-hidden="true" />
       {/* ── Clock SVG ──────────────────────────────────────────────────── */}
@@ -160,6 +258,11 @@ const DoomsdayClock: React.FC = () => {
             <stop offset="100%" stopColor={regimeColor} stopOpacity="0" />
           </radialGradient>
         </defs>
+        
+        {/* ── Hover title for literal time display ────────────────────────── */}
+        <title>
+          {`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${score >= 70 ? 'AM' : 'PM'}`}
+        </title>
 
         {/* ── Regime radial glow ────────────────────────────────────────── */}
         <circle
@@ -211,7 +314,7 @@ const DoomsdayClock: React.FC = () => {
           </g>
         ))}
 
-        {/* ── CRASH / SAFE labels ───────────────────────────────────────── */}
+        {/* ── CRASH label ───────────────────────────────────────── */}
         <text
           x={CX} y={CY - R_OUTER - 8}
           textAnchor="middle"
@@ -224,7 +327,7 @@ const DoomsdayClock: React.FC = () => {
           CRASH
         </text>
         <text
-          x={CX} y={CY + R_OUTER + 18}
+          x={CX} y={CY + R_OUTER + 32}
           textAnchor="middle"
           fontSize={8}
           fontFamily="var(--font-mono)"
@@ -260,34 +363,23 @@ const DoomsdayClock: React.FC = () => {
           {formattedDate.toUpperCase()}
         </text>
 
-        {/* ── "X:XX" — primary display ──────────────────────────────────── */}
-        <text
-          x={CX} y={CY - 4}
-          textAnchor="middle"
-          fontSize={38}
-          fontWeight={700}
-          fontFamily="var(--font-display)"
-          fill="#ffffff"
-          letterSpacing="-0.02em"
-        >
-          {timeDisplay}
-        </text>
-
-        {/* ── "to midnight" label ───────────────────────────────────────── */}
-        <text
-          x={CX} y={CY + 20}
-          textAnchor="middle"
-          fontSize={8}
-          fontFamily="var(--font-mono)"
-          fill="rgba(255,255,255,0.3)"
-          letterSpacing="0.15em"
-        >
-          TO MIDNIGHT
-        </text>
+        {/* ── Last updated label (if live data exists) ──────────────────── */}
+        {lastUpdated && (
+          <text
+            x={CX} y={CY - 30}
+            textAnchor="middle"
+            fontSize={7}
+            fontFamily="var(--font-mono)"
+            fill="rgba(34,197,94,0.4)"
+            letterSpacing="0.08em"
+          >
+            LAST UPDATED: {new Date(lastUpdated).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase()}
+          </text>
+        )}
 
         {/* ── Raw score ─────────────────────────────────────────────────── */}
         <text
-          x={CX} y={CY + 38}
+          x={CX} y={CY + 28}
           textAnchor="middle"
           fontSize={11}
           fontFamily="var(--font-mono)"
@@ -298,39 +390,107 @@ const DoomsdayClock: React.FC = () => {
           {score.toFixed(1)} / 100
         </text>
 
-        {/* ── Needle ────────────────────────────────────────────────────── */}
-        <g className="clock-needle-group" style={{ transform: `rotate(${displayAngle - 180}deg)`, transformOrigin: `${CX}px ${CY}px` }}>
+        {/* ── Clock hands ────────────────────────────────────────────────── */}
+        
+        {/* Second hand (ambient rotation) - always dim red */}
+        <g style={{ transition: 'transform 1000ms linear' }}>
+          <line
+            x1={secondHandBase.x} y1={secondHandBase.y}
+            x2={secondHandTip.x}  y2={secondHandTip.y}
+            stroke="rgba(239, 68, 68, 0.4)"
+            strokeWidth={0.8}
+            strokeLinecap="round"
+          />
+        </g>
+
+        {/* Minute hand - colored by regime */}
+        <g style={{ transition: 'transform 800ms ease' }}>
+          {/* PONZI: Add glow effect */}
+          {score >= 70 && (
+            <line
+              x1={minuteHandBase.x} y1={minuteHandBase.y}
+              x2={minuteHandTip.x}  y2={minuteHandTip.y}
+              stroke={regimeColor}
+              strokeWidth={8}
+              strokeLinecap="round"
+              opacity={0.3}
+              filter="blur(4px)"
+            />
+          )}
+          {/* SPECULATIVE: Add subtle glow */}
+          {score >= 40 && score < 70 && (
+            <line
+              x1={minuteHandBase.x} y1={minuteHandBase.y}
+              x2={minuteHandTip.x}  y2={minuteHandTip.y}
+              stroke={regimeColor}
+              strokeWidth={5}
+              strokeLinecap="round"
+              opacity={0.2}
+              filter="blur(2px)"
+            />
+          )}
           {/* Shadow */}
           <line
-            x1={needleBase.x + 1} y1={needleBase.y + 1}
-            x2={needleTip.x + 1}  y2={needleTip.y + 1}
+            x1={minuteHandBase.x + 1} y1={minuteHandBase.y + 1}
+            x2={minuteHandTip.x + 1}  y2={minuteHandTip.y + 1}
             stroke="rgba(0,0,0,0.5)"
-            strokeWidth={3}
+            strokeWidth={score >= 70 ? 3.5 : 3}
             strokeLinecap="round"
           />
           {/* Body */}
           <line
-            x1={needleBase.x} y1={needleBase.y}
-            x2={needleTip.x}  y2={needleTip.y}
-            stroke="#e8eaf0"
-            strokeWidth={1.5}
+            x1={minuteHandBase.x} y1={minuteHandBase.y}
+            x2={minuteHandTip.x}  y2={minuteHandTip.y}
+            stroke={regimeColor}
+            strokeWidth={score >= 70 ? 2.5 : 2}
+            strokeLinecap="round"
+            style={{ transition: 'stroke 600ms ease, stroke-width 600ms ease' }}
+          />
+        </g>
+
+        {/* Hour hand - colored by regime */}
+        <g style={{ transition: 'transform 800ms ease' }}>
+          {/* PONZI: Add strong glow effect */}
+          {score >= 70 && (
+            <line
+              x1={hourHandBase.x} y1={hourHandBase.y}
+              x2={hourHandTip.x}  y2={hourHandTip.y}
+              stroke={regimeColor}
+              strokeWidth={10}
+              strokeLinecap="round"
+              opacity={0.4}
+              filter="blur(6px)"
+            />
+          )}
+          {/* SPECULATIVE: Add subtle glow */}
+          {score >= 40 && score < 70 && (
+            <line
+              x1={hourHandBase.x} y1={hourHandBase.y}
+              x2={hourHandTip.x}  y2={hourHandTip.y}
+              stroke={regimeColor}
+              strokeWidth={6}
+              strokeLinecap="round"
+              opacity={0.25}
+              filter="blur(3px)"
+            />
+          )}
+          {/* Shadow */}
+          <line
+            x1={hourHandBase.x + 1} y1={hourHandBase.y + 1}
+            x2={hourHandTip.x + 1}  y2={hourHandTip.y + 1}
+            stroke="rgba(0,0,0,0.5)"
+            strokeWidth={score >= 70 ? 5 : 4}
             strokeLinecap="round"
           />
-          {/* Tip colour accent — last third of needle */}
-          {(() => {
-            const mid = polar(CX, CY, R_NEEDLE * 0.55, displayAngle);
-            return (
-              <line
-                x1={mid.x} y1={mid.y}
-                x2={needleTip.x} y2={needleTip.y}
-                stroke={tColor}
-                strokeWidth={1.5}
-                strokeLinecap="round"
-                opacity={0.9}
-                style={{ transition: 'stroke 600ms ease' }}
-              />
-            );
-          })()}
+          {/* Body */}
+          <line
+            x1={hourHandBase.x} y1={hourHandBase.y}
+            x2={hourHandTip.x}  y2={hourHandTip.y}
+            stroke={regimeColor}
+            strokeWidth={score >= 70 ? 4 : 3.5}
+            strokeLinecap="round"
+            style={{ transition: 'stroke 600ms ease, stroke-width 600ms ease' }}
+          />
         </g>
 
         {/* ── Pivot ─────────────────────────────────────────────────────── */}
@@ -338,13 +498,26 @@ const DoomsdayClock: React.FC = () => {
         <circle cx={CX} cy={CY} r={2.5} fill={regimeColor} style={{ transition: 'fill 600ms ease' }} />
       </svg>
 
+      {/* ── Time display below clock ──────────────────────────────────────── */}
+      <div style={{ 
+        textAlign: 'center', 
+        marginTop: '16px',
+        fontSize: '32px',
+        fontWeight: 700,
+        fontFamily: 'var(--font-display)',
+        color: '#ffffff',
+        letterSpacing: '-0.02em'
+      }}>
+        {timeDisplay}
+      </div>
+
       {/* ── Regime label below clock ────────────────────────────────────── */}
       <div className="doomsday-regime" style={{ color: regimeColor }}>
         {REGIME_CFG[safeRegime].label} FINANCE REGIME
       </div>
 
       {/* ── Historical analogue panel ─────────────────────────────────────── */}
-      {analogue && (
+      {showAnalogue && (
         <div className="doomsday-analogue" style={{ borderColor: regimeColor + '40' }}>
           <div className="doomsday-analogue-period">
             <span className="doomsday-analogue-label">Historically similar to</span>

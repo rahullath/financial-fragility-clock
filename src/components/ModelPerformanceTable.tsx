@@ -119,7 +119,7 @@ const ModelPerformanceTable: React.FC = () => {
   ];
 
   return (
-    <div className="perf-table-wrapper" id="chart-model-perf" aria-label="Model performance comparison">
+    <div className="perf-table-wrapper" data-testid="model-performance-table" id="chart-model-perf" aria-label="Model performance comparison">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="perf-table-title">Model Performance</div>
         <button 

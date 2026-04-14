@@ -22,6 +22,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ModelProvider } from './contexts/ModelContext';
 import { CrisisProvider } from './contexts/CrisisContext';
 import { DateProvider } from './contexts/DateContext';
+import { TutorialProvider } from './contexts/TutorialContext';
 
 import Layout from './routes/Layout';
 import ClockLanding from './routes/ClockLanding';
@@ -39,34 +40,36 @@ const App: React.FC = () => (
   <ModelProvider>
     <CrisisProvider>
       <DateProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* ── Sidebar routes ───────────────────────────── */}
-            <Route
-              path="/"
-              element={<Layout><ClockLanding /></Layout>}
-            />
-            <Route
-              path="/dashboard"
-              element={<Layout><DataRoom /></Layout>}
-            />
-            <Route
-              path="/model"
-              element={<Layout><ModelLab /></Layout>}
-            />
-            <Route
-              path="/history"
-              element={<Layout><HistoryArchive /></Layout>}
-            />
-            <Route
-              path="/methods"
-              element={<Layout><Methods /></Layout>}
-            />
+        <TutorialProvider totalSteps={8}>
+          <BrowserRouter>
+            <Routes>
+              {/* ── Sidebar routes ───────────────────────────── */}
+              <Route
+                path="/"
+                element={<Layout><ClockLanding /></Layout>}
+              />
+              <Route
+                path="/dashboard"
+                element={<Layout><DataRoom /></Layout>}
+              />
+              <Route
+                path="/model"
+                element={<Layout><ModelLab /></Layout>}
+              />
+              <Route
+                path="/history"
+                element={<Layout><HistoryArchive /></Layout>}
+              />
+              <Route
+                path="/methods"
+                element={<Layout><Methods /></Layout>}
+              />
 
-            {/* ── No sidebar ───────────────────────────────── */}
-            <Route path="/present" element={<PresentationMode />} />
-          </Routes>
-        </BrowserRouter>
+              {/* ── No sidebar ───────────────────────────────── */}
+              <Route path="/present" element={<PresentationMode />} />
+            </Routes>
+          </BrowserRouter>
+        </TutorialProvider>
       </DateProvider>
     </CrisisProvider>
   </ModelProvider>

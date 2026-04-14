@@ -48,7 +48,7 @@ const DateScrubber: React.FC = () => {
   );
 
   return (
-    <div className="date-scrubber" aria-label="Date scrubber">
+    <div className="date-scrubber" data-testid="date-scrubber" aria-label="Date scrubber">
       <div className="scrubber-label">
         <span className="scrubber-date">{formatDisplay(selectedDate)}</span>
         <span className="scrubber-range">

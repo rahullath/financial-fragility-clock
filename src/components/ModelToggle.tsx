@@ -25,7 +25,7 @@ const ModelToggle: React.FC = () => {
   return (
     <div className="model-toggle-wrapper">
       {/* Pill toggle */}
-      <div className="model-toggle" role="group" aria-label="Model selection">
+      <div className="model-toggle" data-testid="model-toggle" role="group" aria-label="Model selection">
         <button
           id="model-toggle-a"
           className={`model-toggle-btn ${selectedModel === 'A' ? 'active' : ''}`}

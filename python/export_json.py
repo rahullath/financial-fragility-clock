@@ -15,6 +15,7 @@ Output:
 
 import sys
 import time
+import subprocess
 from datetime import datetime
 from pathlib import Path
 import pandas as pd
@@ -93,9 +94,9 @@ def main():
         # ========================================================================
         step_start = log_step("STEP 1: Data Preprocessing")
         
-        # Define file paths (relative to workspace root)
-        csv_path = "context-dump/converted/Group_5.csv"
-        cleaned_data_path = "src/data/cleaned_data.json"
+        # Define file paths (relative to python/ directory)
+        csv_path = "../context-dump/converted/Group_5.csv"
+        cleaned_data_path = "../src/data/cleaned_data.json"
         
         # Check if input file exists
         if not Path(csv_path).exists():
@@ -142,17 +143,23 @@ def main():
         print(f"\n  Computing rolling volatility (30-day window)...")
         rolling_vol = compute_rolling_volatility(df_clean['ISE_USD'], window=30)
         
-        # Label Minsky regimes
-        print(f"\n  Labeling Minsky regimes...")
-        regimes = label_minsky_regime(corr_features['mean_corr'], rolling_vol)
-        
-        # Compute fragility score (without RF error initially)
+        # Compute fragility score FIRST (without RF error initially)
+        # This is needed for Model A regime classification
         print(f"\n  Computing fragility score...")
         fragility_score = compute_fragility_score(
             corr_features['mean_corr'],
             pe_series,
             rolling_vol,
             rf_error=None  # Will be updated after RF training
+        )
+        
+        # Label Minsky regimes (Model A uses fragility score thresholds)
+        print(f"\n  Labeling Minsky regimes...")
+        regimes = label_minsky_regime(
+            corr_features['mean_corr'], 
+            rolling_vol,
+            fragility_score=fragility_score,
+            model='A'  # Model A (2009-2011) uses fragility score thresholds
         )
         
         # Combine all features
@@ -165,7 +172,7 @@ def main():
         
         # Export features
         print(f"\n  Exporting features to: {features_path}")
-        export_features(features_df, features_path)
+        export_features(features_df, df_clean, features_path)
         
         step_start = log_step("Feature Engineering", step_start)
         
@@ -286,6 +293,102 @@ def main():
         step_start = log_step("Model Training", step_start)
         
         # ========================================================================
+        # STEP 4: ADDITIONAL BACKEND SCRIPTS
+        # ========================================================================
+        step_start = log_step("STEP 4: Additional Backend Scripts")
+        
+        # Execute additional backend scripts to generate supplementary JSON files
+        # Each script is wrapped in try-except to prevent pipeline failure
+        
+        # 4.1: Extended ML Models (Gradient Boosting, LSTM, SVR, Elastic Net, Ensemble)
+        print(f"\n  Running train_extended_models.py...")
+        try:
+            result = subprocess.run(
+                [sys.executable, "train_extended_models.py"],
+                cwd=Path(__file__).parent,
+                capture_output=True,
+                text=True,
+                timeout=600  # 10 minute timeout
+            )
+            if result.returncode == 0:
+                print(f"  ✓ train_extended_models.py completed successfully")
+            else:
+                print(f"  ⚠ train_extended_models.py failed with return code {result.returncode}")
+                print(f"  Error output: {result.stderr[:500]}")
+        except subprocess.TimeoutExpired:
+            print(f"  ⚠ train_extended_models.py timed out after 10 minutes")
+        except Exception as e:
+            print(f"  ⚠ train_extended_models.py failed: {str(e)}")
+        
+        # 4.2: Lead Time Statistics
+        print(f"\n  Running compute_lead_time.py...")
+        try:
+            result = subprocess.run(
+                [sys.executable, "compute_lead_time.py"],
+                cwd=Path(__file__).parent,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            if result.returncode == 0:
+                print(f"  ✓ compute_lead_time.py completed successfully")
+            else:
+                print(f"  ⚠ compute_lead_time.py failed with return code {result.returncode}")
+                print(f"  Error output: {result.stderr[:500]}")
+        except FileNotFoundError:
+            print(f"  ⚠ compute_lead_time.py not found - skipping")
+        except subprocess.TimeoutExpired:
+            print(f"  ⚠ compute_lead_time.py timed out after 5 minutes")
+        except Exception as e:
+            print(f"  ⚠ compute_lead_time.py failed: {str(e)}")
+        
+        # 4.3: DTW Similarity Analysis
+        print(f"\n  Running compute_dtw_similarity.py...")
+        try:
+            result = subprocess.run(
+                [sys.executable, "compute_dtw_similarity.py"],
+                cwd=Path(__file__).parent,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            if result.returncode == 0:
+                print(f"  ✓ compute_dtw_similarity.py completed successfully")
+            else:
+                print(f"  ⚠ compute_dtw_similarity.py failed with return code {result.returncode}")
+                print(f"  Error output: {result.stderr[:500]}")
+        except FileNotFoundError:
+            print(f"  ⚠ compute_dtw_similarity.py not found - skipping")
+        except subprocess.TimeoutExpired:
+            print(f"  ⚠ compute_dtw_similarity.py timed out after 5 minutes")
+        except Exception as e:
+            print(f"  ⚠ compute_dtw_similarity.py failed: {str(e)}")
+        
+        # 4.4: Regime Transition Probabilities
+        print(f"\n  Running compute_regime_transitions.py...")
+        try:
+            result = subprocess.run(
+                [sys.executable, "compute_regime_transitions.py"],
+                cwd=Path(__file__).parent,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            if result.returncode == 0:
+                print(f"  ✓ compute_regime_transitions.py completed successfully")
+            else:
+                print(f"  ⚠ compute_regime_transitions.py failed with return code {result.returncode}")
+                print(f"  Error output: {result.stderr[:500]}")
+        except FileNotFoundError:
+            print(f"  ⚠ compute_regime_transitions.py not found - skipping")
+        except subprocess.TimeoutExpired:
+            print(f"  ⚠ compute_regime_transitions.py timed out after 5 minutes")
+        except Exception as e:
+            print(f"  ⚠ compute_regime_transitions.py failed: {str(e)}")
+        
+        step_start = log_step("Additional Backend Scripts", step_start)
+        
+        # ========================================================================
         # PIPELINE COMPLETE
         # ========================================================================
         pipeline_duration = time.time() - pipeline_start
@@ -299,6 +402,11 @@ def main():
         print(f"  ✓ {cleaned_data_path}")
         print(f"  ✓ {features_path}")
         print(f"  ✓ {model_outputs_path}")
+        print("\nAdditional files (if scripts succeeded):")
+        print(f"  • ../src/data/ml_models_extended.json")
+        print(f"  • ../src/data/lead_time_stats.json")
+        print(f"  • ../src/data/dtw_similarity.json")
+        print(f"  • ../src/data/regime_transitions.json")
         print("\nNext steps:")
         print("  1. Review the generated JSON files")
         print("  2. Run the React dashboard: npm run dev")

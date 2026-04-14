@@ -1,0 +1,246 @@
+/* VolatilityClusteringChart.css */
+
+.volatility-clustering-chart {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.volatility-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.volatility-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.volatility-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.volatility-separator {
+  color: var(--border);
+}
+
+/* ── Stats Bar ──────────────────────────────────────────────────────────────── */
+
+.volatility-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.volatility-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 140px;
+}
+
+.volatility-stat.active-cluster {
+  border-color: var(--ponzi);
+  background: rgba(255, 82, 82, 0.05);
+}
+
+.volatility-stat .stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: var(--font-mono);
+}
+
+.volatility-stat .stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+/* ── Chart ──────────────────────────────────────────────────────────────────── */
+
+.volatility-no-data {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-family: var(--font-mono);
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────────────────── */
+
+.volatility-tooltip {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-mono);
+}
+
+.volatility-tooltip .tooltip-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.volatility-tooltip .tooltip-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.volatility-tooltip .tooltip-label {
+  color: var(--text-muted);
+}
+
+.volatility-tooltip .tooltip-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.volatility-tooltip .tooltip-cluster-info {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.volatility-tooltip .tooltip-cluster-badge {
+  display: inline-block;
+  background: var(--ponzi);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* ── Clusters List ──────────────────────────────────────────────────────────── */
+
+.volatility-clusters-list {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.volatility-clusters-list h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+}
+
+.clusters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cluster-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.cluster-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cluster-card.active {
+  border-color: var(--ponzi);
+  background: rgba(255, 82, 82, 0.05);
+  box-shadow: 0 2px 8px rgba(255, 82, 82, 0.2);
+}
+
+.cluster-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ponzi);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+.cluster-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  margin-bottom: 4px;
+  font-family: var(--font-mono);
+}
+
+.cluster-detail .cluster-label {
+  color: var(--text-muted);
+}
+
+.cluster-detail .cluster-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+
+.clusters-more {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .volatility-clustering-chart {
+    padding: 16px;
+  }
+
+  .volatility-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .volatility-stats {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .volatility-stat {
+    min-width: 100%;
+  }
+
+  .clusters-grid {
+    grid-template-columns: 1fr;
+  }
+}

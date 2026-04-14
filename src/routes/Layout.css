@@ -71,3 +71,72 @@
   background: var(--bg-surface);
   flex-shrink: 0;
 }
+
+/* ── Tutorial trigger button ───────────────────────────────────────────────── */
+.tutorial-trigger-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--bg-border);
+  border-radius: 4px;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.tutorial-trigger-button:hover {
+  background: var(--bg-elevated);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tutorial-trigger-button:active {
+  transform: scale(0.95);
+}
+
+.tutorial-trigger-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.tutorial-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border: 1px solid var(--bg-surface);
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tutorial-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Hide tutorial button on mobile to save space */
+@media (max-width: 768px) {
+  .tutorial-trigger-button {
+    display: none;
+  }
+}

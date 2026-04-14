@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "generated_at": "2026-04-13T23:58:05.177612",
+    "description": "Crisis prediction lead time statistics",
+    "note": "Placeholder implementation - requires full analysis"
+  },
+  "summary": {
+    "average_lead_time_days": 6.756521739130434,
+    "total_transitions": 116
+  },
+  "by_regime": {
+    "HEDGE_to_SPECULATIVE": {
+      "count": 0,
+      "avg_lead_time_days": 0
+    },
+    "SPECULATIVE_to_PONZI": {
+      "count": 0,
+      "avg_lead_time_days": 0
+    },
+    "PONZI_to_HEDGE": {
+      "count": 0,
+      "avg_lead_time_days": 0
+    }
+  }
+}

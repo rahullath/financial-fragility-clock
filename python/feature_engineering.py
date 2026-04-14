@@ -187,22 +187,77 @@ def compute_permutation_entropy(series: pd.Series, m: int = 3, delay: int = 1,
     return result
 
 
-def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series) -> pd.Series:
+def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series, 
+                        fragility_score: pd.Series = None, model: str = 'B') -> pd.Series:
     """
     Classify each observation into HEDGE, SPECULATIVE, or PONZI regime.
     
-    Thresholds:
+    For Model B (default): Uses correlation and volatility thresholds
     - HEDGE: mean_corr < 0.4 AND volatility < 0.8 * median_vol
     - PONZI: mean_corr > 0.7 AND volatility > 1.5 * median_vol
     - SPECULATIVE: otherwise
     
+    For Model A: Uses fragility score thresholds
+    - HEDGE: fragility_score < 30
+    - SPECULATIVE: 30 <= fragility_score < 60
+    - PONZI: fragility_score >= 60
+    
     Args:
         mean_corr: Series of mean rolling correlations
         volatility: Series of rolling volatility (standard deviation)
+        fragility_score: Series of fragility scores (required for Model A)
+        model: 'A' or 'B' to specify which model's thresholds to use
         
     Returns:
         Series of regime labels (categorical: 'HEDGE', 'SPECULATIVE', 'PONZI')
     """
+    # Initialize regime labels
+    regimes = pd.Series(index=mean_corr.index, dtype='object')
+    
+    # Model A: Use fragility score thresholds
+    if model == 'A':
+        if fragility_score is None:
+            raise ValueError("fragility_score is required for Model A regime classification")
+        
+        # Define fragility score thresholds for Model A
+        hedge_threshold = 30
+        ponzi_threshold = 60
+        
+        # Apply classification rules based on fragility score
+        for idx in fragility_score.index:
+            score = fragility_score[idx]
+            
+            # Handle NaN values
+            if pd.isna(score):
+                regimes[idx] = np.nan
+                continue
+            
+            # Classify based on fragility score
+            if score < hedge_threshold:
+                regimes[idx] = 'HEDGE'
+            elif score < ponzi_threshold:
+                regimes[idx] = 'SPECULATIVE'
+            else:
+                regimes[idx] = 'PONZI'
+        
+        # Convert to categorical
+        regimes = regimes.astype('category')
+        
+        # Count regime occurrences
+        regime_counts = regimes.value_counts()
+        
+        print(f"Labeled Minsky regimes for Model A using fragility score thresholds:")
+        print(f"  HEDGE: score < {hedge_threshold}")
+        print(f"  SPECULATIVE: {hedge_threshold} <= score < {ponzi_threshold}")
+        print(f"  PONZI: score >= {ponzi_threshold}")
+        print(f"\nRegime distribution:")
+        for regime, count in regime_counts.items():
+            pct = 100 * count / len(regimes.dropna())
+            print(f"  {regime}: {count} observations ({pct:.1f}%)")
+        
+        return regimes
+    
+    # Model B: Use correlation and volatility thresholds (original logic)
     # Calculate historical median volatility for threshold calibration
     median_vol = volatility.median()
     
@@ -211,9 +266,6 @@ def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series) -> pd.Serie
     corr_ponzi_threshold = 0.7
     vol_hedge_threshold = 0.8 * median_vol
     vol_ponzi_threshold = 1.5 * median_vol
-    
-    # Initialize regime labels
-    regimes = pd.Series(index=mean_corr.index, dtype='object')
     
     # Apply classification rules
     for idx in mean_corr.index:
@@ -245,7 +297,7 @@ def label_minsky_regime(mean_corr: pd.Series, volatility: pd.Series) -> pd.Serie
     # Count regime occurrences
     regime_counts = regimes.value_counts()
     
-    print(f"Labeled Minsky regimes using thresholds:")
+    print(f"Labeled Minsky regimes for Model B using correlation and volatility thresholds:")
     print(f"  Correlation: HEDGE < {corr_hedge_threshold}, PONZI > {corr_ponzi_threshold}")
     print(f"  Volatility: HEDGE < {vol_hedge_threshold:.6f}, PONZI > {vol_ponzi_threshold:.6f}")
     print(f"  Median volatility: {median_vol:.6f}")
@@ -360,12 +412,13 @@ def compute_fragility_score(corr: pd.Series, pe: pd.Series, vol: pd.Series,
     return fragility_score
 
 
-def export_features(features_df: pd.DataFrame, filepath: str) -> None:
+def export_features(features_df: pd.DataFrame, raw_data_df: pd.DataFrame, filepath: str) -> None:
     """
-    Write feature time series to JSON.
+    Write feature time series to JSON, including raw input features.
     
     Args:
-        features_df: DataFrame with all feature columns
+        features_df: DataFrame with engineered feature columns
+        raw_data_df: DataFrame with raw input features (SP500, DAX, FTSE, NIKKEI, BOVESPA, EU, EM)
         filepath: Output JSON file path
         
     JSON structure:
@@ -379,6 +432,13 @@ def export_features(features_df: pd.DataFrame, filepath: str) -> None:
         "data": [
             {
                 "date": "2009-01-05", 
+                "SP500": 0.123,
+                "DAX": 0.456,
+                "FTSE": 0.789,
+                "NIKKEI": 0.234,
+                "BOVESPA": 0.567,
+                "EU": 0.890,
+                "EM": 0.345,
                 "mean_corr": 0.45, 
                 "regime": "HEDGE", 
                 "fragility_score": 32.5,
@@ -393,26 +453,37 @@ def export_features(features_df: pd.DataFrame, filepath: str) -> None:
     output_path = Path(filepath)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
+    # Merge raw input features with engineered features
+    # Select the 7 input features from raw data
+    input_features = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM']
+    raw_features_subset = raw_data_df[input_features].copy()
+    
+    # Merge on date index
+    combined_df = features_df.copy()
+    for col in input_features:
+        if col in raw_features_subset.columns:
+            combined_df[col] = raw_features_subset[col]
+    
     # Identify pairwise correlation columns
-    pairwise_cols = [col for col in features_df.columns if '_' in col and 
+    pairwise_cols = [col for col in combined_df.columns if '_' in col and 
                      any(idx in col for idx in ['ISE_USD', 'SP500', 'DAX', 'FTSE', 
                                                  'NIKKEI', 'BOVESPA', 'EU', 'EM'])]
     
     # Identify main feature columns (excluding pairwise correlations)
-    main_features = [col for col in features_df.columns if col not in pairwise_cols]
+    main_features = [col for col in combined_df.columns if col not in pairwise_cols]
     
     # Prepare metadata
     metadata = {
         'features': main_features,
         'pairwise_correlation_pairs': pairwise_cols,
-        'date_range': [features_df.index.min().isoformat(), features_df.index.max().isoformat()],
+        'date_range': [combined_df.index.min().isoformat(), combined_df.index.max().isoformat()],
         'timestamp': datetime.now().isoformat(),
         'python_version': sys.version.split()[0]
     }
     
     # Convert DataFrame to list of dictionaries
     data_records = []
-    for date, row in features_df.iterrows():
+    for date, row in combined_df.iterrows():
         record = {'date': date.isoformat()}
         
         # Add main features
@@ -513,7 +584,7 @@ if __name__ == "__main__":
     # 7. Export to JSON
     print("\n7. Exporting features to JSON...")
     output_path = "../src/data/features.json"
-    export_features(features_df, output_path)
+    export_features(features_df, df, output_path)
     
     print("\n" + "=" * 60)
     print("FEATURE ENGINEERING PIPELINE COMPLETE!")

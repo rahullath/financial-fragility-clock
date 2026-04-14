@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { exportChart } from '../utils/exportChart';
+import LaymanOverlay from './LaymanOverlay';
 import './NetworkMST.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -19,6 +20,9 @@ interface MSTEdge {
   distance: number;
   correlation: number;
 }
+
+type SimNode = d3.SimulationNodeDatum & MSTNode;
+type SimEdge = d3.SimulationLinkDatum<SimNode> & MSTEdge;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -129,6 +133,9 @@ const NetworkMST: React.FC = () => {
   const { selectedDate } = useDateContext();
 
   const svgRef = useRef<SVGSVGElement>(null);
+  const [showLayman, setShowLayman] = useState(false);
+
+  const LAYMAN_EXPLANATION = "This network shows how financial markets are connected. When markets cluster tightly together, a crisis in one can quickly spread to others. The thicker the connecting lines, the stronger the relationship. Isolated markets are safer from contagion.";
 
   const indices = currentModelData.info.indices;
   const rows = currentModelData.featuresData.data;
@@ -146,8 +153,13 @@ const NetworkMST: React.FC = () => {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         if (i === j) { corrMatrix[i][j] = 1; continue; }
-        const k1 = `${indices[i]}_${indices[j]}`;
-        const k2 = `${indices[j]}_${indices[i]}`;
+        
+        // Handle ISE_USD prefix for Model A correlations
+        const idx_i = indices[i] === 'ISE' ? 'ISE_USD' : indices[i];
+        const idx_j = indices[j] === 'ISE' ? 'ISE_USD' : indices[j];
+        
+        const k1 = `${idx_i}_${idx_j}`;
+        const k2 = `${idx_j}_${idx_i}`;
         corrMatrix[i][j] = (pc[k1] ?? pc[k2] ?? 0) as number;
       }
     }
@@ -172,11 +184,16 @@ const NetworkMST: React.FC = () => {
     }
     const bc = betweennessCentrality(n, adj);
 
-    const nodes: MSTNode[] = indices.map((id, i) => ({
-      id,
-      centrality: bc[i],
-      volatility: (row[id] as number | null) ?? null,
-    }));
+    const nodes: MSTNode[] = indices.map((id, i) => {
+      // Use per-index volatility if available, otherwise null
+      const volKey = `${id}_volatility`;
+      const volatility = (row[volKey] as number | null) ?? null;
+      return {
+        id,
+        centrality: bc[i],
+        volatility: volatility,
+      };
+    });
 
     const edges: MSTEdge[] = mstEdges.map((e) => ({
       source: indices[e.i],
@@ -195,33 +212,33 @@ const NetworkMST: React.FC = () => {
 
     if (!nodes.length || !edges.length) return;
 
-    // Volatility color scale
-    const volExtent = d3.extent(nodes, (d) => d.volatility ?? 0) as [number, number];
+    // Volatility color scale - use default 0.5 for null values
+    const volExtent = d3.extent(nodes, (d) => d.volatility ?? 0.5) as [number, number];
     const volColor = d3.scaleSequential(d3.interpolateYlOrRd).domain(volExtent);
 
     // Node radius scale
     const rScale = d3.scaleLinear().domain([0, 1]).range([5, 16]);
+    const simulationNodes = nodes as SimNode[];
+    const simulationEdges: SimEdge[] = edges.map((e) => ({ ...e }));
 
     const simulation = d3
-      .forceSimulation(nodes as d3.SimulationNodeDatum[])
+      .forceSimulation(simulationNodes)
       .force('charge', d3.forceManyBody().strength(-90))
       .force('center', d3.forceCenter(W / 2, H / 2))
       .force(
         'link',
         d3
-          .forceLink(
-            edges.map((e) => ({ ...e }))
-          )
-          .id((d: d3.SimulationNodeDatum) => (d as MSTNode).id)
-          .distance((e) => (e as MSTEdge).distance * 80 + 30)
+          .forceLink<SimNode, SimEdge>(simulationEdges)
+          .id((d) => d.id)
+          .distance((e) => e.distance * 80 + 30)
       )
-      .force('collision', d3.forceCollide().radius((d) => rScale((d as MSTNode).centrality) + 4));
+      .force('collision', d3.forceCollide().radius((d) => rScale((d as SimNode).centrality) + 4));
 
     // Edge lines
     const link = svg
       .append('g')
       .selectAll('line')
-      .data(edges)
+      .data(simulationEdges)
       .join('line')
       .attr('stroke', '#ccc')
       .attr('stroke-width', (d) => Math.max(0.5, (1 - d.distance) * 3))
@@ -238,7 +255,11 @@ const NetworkMST: React.FC = () => {
     node
       .append('circle')
       .attr('r', (d) => rScale(d.centrality))
-      .attr('fill', (d) => (d.volatility != null ? volColor(d.volatility) : '#aaa'))
+      .attr('fill', (d) => {
+        // Use default volatility of 0.5 for null values
+        const volatility = d.volatility ?? 0.5;
+        return volColor(volatility);
+      })
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5);
 
@@ -259,19 +280,22 @@ const NetworkMST: React.FC = () => {
         `${d.id}\nCentrality: ${(d.centrality * 100).toFixed(1)}%\nVol: ${d.volatility?.toFixed(4) ?? '—'}`
     );
 
-    simulation.on('tick', () => {
-      type SimNode = d3.SimulationNodeDatum & MSTNode;
+    const updatePositions = () => {
       link
-        .attr('x1', (d) => ((d.source as unknown) as SimNode).x ?? 0)
-        .attr('y1', (d) => ((d.source as unknown) as SimNode).y ?? 0)
-        .attr('x2', (d) => ((d.target as unknown) as SimNode).x ?? 0)
-        .attr('y2', (d) => ((d.target as unknown) as SimNode).y ?? 0);
+        .attr('x1', (d) => (typeof d.source === 'object' ? d.source.x ?? 0 : 0))
+        .attr('y1', (d) => (typeof d.source === 'object' ? d.source.y ?? 0 : 0))
+        .attr('x2', (d) => (typeof d.target === 'object' ? d.target.x ?? 0 : 0))
+        .attr('y2', (d) => (typeof d.target === 'object' ? d.target.y ?? 0 : 0));
 
       node.attr(
         'transform',
-        (d) => `translate(${(d as d3.SimulationNodeDatum).x ?? 0},${(d as d3.SimulationNodeDatum).y ?? 0})`
+        (d) => `translate(${(d as SimNode).x ?? 0},${(d as SimNode).y ?? 0})`
       );
-    });
+    };
+
+    simulation.tick(80);
+    updatePositions();
+    simulation.on('tick', updatePositions);
 
     return () => {
       simulation.stop();
@@ -279,15 +303,24 @@ const NetworkMST: React.FC = () => {
   }, [nodes, edges]);
 
   return (
-    <div className="network-mst" id="chart-network-mst" aria-label="Market correlation network MST">
+    <div className="network-mst" data-testid="network-mst" id="chart-network-mst" aria-label="Market correlation network MST">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="mst-title">Minimum Spanning Tree</div>
-        <button 
-          onClick={() => exportChart('chart-network-mst', 'network_mst')}
-          style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer', marginBottom: '8px' }}
-        >
-          Export PNG
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            onClick={() => setShowLayman(true)}
+            style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer', marginBottom: '8px' }}
+            aria-label="?"
+          >
+            ?
+          </button>
+          <button 
+            onClick={() => exportChart('chart-network-mst', 'network_mst')}
+            style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer', marginBottom: '8px' }}
+          >
+            Export PNG
+          </button>
+        </div>
       </div>
       <svg ref={svgRef} width={W} height={H} />
       <div className="mst-legend">
@@ -297,6 +330,12 @@ const NetworkMST: React.FC = () => {
         <span className="mst-legend-sep">·</span>
         <span>Node size = centrality</span>
       </div>
+
+      <LaymanOverlay 
+        isVisible={showLayman} 
+        explanation={LAYMAN_EXPLANATION}
+        onClose={() => setShowLayman(false)}
+      />
     </div>
   );
 };

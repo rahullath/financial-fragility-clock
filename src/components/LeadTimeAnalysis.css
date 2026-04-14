@@ -1,0 +1,290 @@
+/* LeadTimeAnalysis Component Styles */
+
+.lead-time-analysis {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.lead-time-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lead-time-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.lead-time-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.lead-time-separator {
+  color: var(--border);
+}
+
+.lead-time-no-data {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* Summary Statistics */
+
+.lead-time-summary {
+  margin-bottom: 30px;
+}
+
+.lead-time-summary h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.summary-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.summary-model-id {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+.summary-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.summary-stat .stat-label {
+  color: var(--text-muted);
+}
+
+.summary-stat .stat-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.summary-stat.actionable-stat .stat-value {
+  color: var(--safe);
+  font-weight: 600;
+}
+
+/* Chart Sections */
+
+.lead-time-chart-section {
+  margin-bottom: 30px;
+}
+
+.lead-time-chart-section h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+}
+
+/* Box Plot Styles */
+
+.box-plot-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.box-plot-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.box-plot-label {
+  min-width: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+
+.box-plot-visual {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.box-plot-line {
+  position: relative;
+  height: 40px;
+  background: transparent;
+}
+
+.box-plot-whisker {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 20px;
+  background: var(--text-muted);
+}
+
+.box-plot-box {
+  position: absolute;
+  top: 25%;
+  height: 50%;
+  background: var(--accent);
+  opacity: 0.3;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+}
+
+.box-plot-median {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: var(--text);
+}
+
+.box-plot-mean {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 2px solid var(--text);
+}
+
+.box-plot-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Tooltip Styles */
+
+.lead-time-tooltip {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-mono);
+}
+
+.lead-time-tooltip .tooltip-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lead-time-tooltip .tooltip-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.lead-time-tooltip .tooltip-label {
+  color: var(--text-muted);
+}
+
+.lead-time-tooltip .tooltip-value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.lead-time-tooltip .tooltip-entry.actionable .tooltip-value {
+  color: var(--safe);
+  font-weight: 600;
+}
+
+.lead-time-tooltip .tooltip-entry.insufficient .tooltip-value {
+  color: var(--ponzi);
+  font-weight: 600;
+}
+
+/* Responsive Design */
+
+@media (max-width: 768px) {
+  .lead-time-analysis {
+    padding: 16px;
+  }
+
+  .lead-time-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .lead-time-title {
+    font-size: 16px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .box-plot-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .box-plot-label {
+    min-width: auto;
+  }
+
+  .box-plot-visual {
+    width: 100%;
+  }
+}

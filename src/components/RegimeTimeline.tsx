@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,8 +11,11 @@ import {
 } from 'recharts';
 import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
+import { useCrisisContext } from '../contexts/CrisisContext';
 import { toNum } from '../utils/dataUtils';
 import { exportChart } from '../utils/exportChart';
+import { generateTimelineExplanation } from '../utils/laymanExplanations';
+import LaymanOverlay from './LaymanOverlay';
 import './RegimeTimeline.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -84,7 +87,8 @@ const TimelineTooltip: React.FC<TooltipProps> = ({ active, payload }) => {
  */
 const RegimeTimeline: React.FC = () => {
   const { currentModelData } = useModelContext();
-  const { selectedDate, setSelectedDate, keyEvents } = useDateContext();
+  const { selectedDate, setSelectedDate } = useDateContext();
+  const { activeCrisisWindows } = useCrisisContext();
 
   // ── Chart data: only rows with a valid fragility_score ─────────────────────
   const chartData = useMemo(
@@ -94,6 +98,17 @@ const RegimeTimeline: React.FC = () => {
         .map((r) => ({ ...r, fragility_score: toNum(r.fragility_score) })),
     [currentModelData]
   );
+
+  // Helper to find row for selected date
+  const findRowForDate = (rows: DataRow[], date: Date): DataRow | null => {
+    const target = date.getTime();
+    let best: DataRow | null = null;
+    for (const r of rows) {
+      const t = new Date(r.date as string).getTime();
+      if (t <= target && toNum(r.fragility_score) != null) best = r;
+    }
+    return best ?? null;
+  };
 
   // ── Gradient stops: regime-coloured fill segments ──────────────────────────
   // Build a linear gradient based on regime at each data point (sampled at 1%)
@@ -129,8 +144,15 @@ const RegimeTimeline: React.FC = () => {
   }, [chartData]);
 
   return (
-    <div className="regime-timeline" id="chart-regime-timeline" aria-label="Fragility score timeline">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>
+    <div className="regime-timeline" data-testid="regime-timeline" id="chart-regime-timeline" aria-label="Fragility score timeline">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px', gap: '8px' }}>
+        <LaymanOverlay 
+          explanationGenerator={() => {
+            const rows = currentModelData.featuresData.data;
+            const row = findRowForDate(rows, selectedDate);
+            return generateTimelineExplanation(row);
+          }}
+        />
         <button 
           onClick={() => exportChart('chart-regime-timeline', 'regime_timeline')}
           style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer' }}
@@ -196,18 +218,18 @@ const RegimeTimeline: React.FC = () => {
           />
 
           {/* Key event markers */}
-          {keyEvents.map((event, i) => {
-            const color = SEVERITY_COLORS[event.severity] || SEVERITY_COLORS['note'];
+          {activeCrisisWindows.map((crisis, i) => {
+            const color = SEVERITY_COLORS[crisis.severity] || SEVERITY_COLORS['note'];
             return (
               <ReferenceLine
                 key={i}
-                x={event.date.toISOString().slice(0, 10)}
+                x={crisis.start}
                 stroke={color}
                 strokeDasharray="6 3"
                 strokeWidth={1.5}
                 strokeOpacity={0.7}
                 label={{
-                  value: event.label,
+                  value: crisis.label,
                   position: 'top',
                   fontSize: 9,
                   fill: color,

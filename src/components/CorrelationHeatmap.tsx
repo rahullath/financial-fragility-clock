@@ -4,6 +4,8 @@ import { interpolateRdBu } from 'd3-scale-chromatic';
 import { useModelContext, DataRow } from '../contexts/ModelContext';
 import { useDateContext } from '../contexts/DateContext';
 import { exportChart } from '../utils/exportChart';
+import { generateCorrelationExplanation } from '../utils/laymanExplanations';
+import LaymanOverlay from './LaymanOverlay';
 import './CorrelationHeatmap.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -103,20 +105,28 @@ const CorrelationHeatmap: React.FC = () => {
   const n = indices.length;
   // Max 13 indices — cap cell size so it fits in card
   const cellSize = Math.min(42, Math.floor(340 / n));
-  const labelW = 52;
+  const labelW = 70; // Increased from 52 to 70 to prevent label cutoff
   const svgW = labelW + n * cellSize;
   const svgH = labelW + n * cellSize;
 
   return (
-    <div className="corr-heatmap" id="chart-correlation-heatmap" aria-label="Correlation heatmap">
+    <div className="corr-heatmap" data-testid="correlation-heatmap" id="chart-correlation-heatmap" aria-label="Correlation heatmap">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="heatmap-title">60-day Rolling Correlations</div>
-        <button 
-          onClick={() => exportChart('chart-correlation-heatmap', 'correlation_heatmap')}
-          style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer' }}
-        >
-          Export PNG
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <LaymanOverlay 
+            explanationGenerator={() => {
+              const row = findRowForDate(rows, selectedDate);
+              return generateCorrelationExplanation(row, indices);
+            }}
+          />
+          <button 
+            onClick={() => exportChart('chart-correlation-heatmap', 'correlation_heatmap')}
+            style={{ fontSize: '0.75rem', padding: '2px 8px', cursor: 'pointer' }}
+          >
+            Export PNG
+          </button>
+        </div>
       </div>
 
       <div className="heatmap-scroll">

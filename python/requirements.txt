@@ -6,3 +6,4 @@ shap==0.42.1
 scipy==1.10.0
 yfinance>=0.2.28
 fredapi>=0.5.0
+tensorflow>=2.13.0

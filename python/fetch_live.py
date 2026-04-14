@@ -279,7 +279,9 @@ def append_to_json(path: Path, new_rows: pd.DataFrame) -> int:
         if date_str in existing_dates:
             continue
         # Build the row dict matching existing schema
-        entry = {k: v for k, v in row.items()}
+        # Replace NaN with None for valid JSON
+        import math
+        entry = {k: (None if isinstance(v, float) and math.isnan(v) else v) for k, v in row.items()}
         entry["date"] = date_str
         # Ensure crash_probability and crisis_similarity fields are null
         # (will be filled later by compute_phase2.py)
