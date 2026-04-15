@@ -11,6 +11,12 @@ Fetches (all via yfinance — no API key required):
   XU100.IS   → BIST100 local equity index (TRY-denominated)
   ^VIX       → CBOE VIX (global risk control)
   IRLTLT01TRM156N (FRED, optional) → Turkey 10Y bond yield
+
+Derived:
+  ISE_USD    = BIST100 / USDTRY  (USD-denominated ISE proxy)
+               This is the regression target for Model B walk-forward and
+               SHAP analysis. It captures the combined effect of Turkish
+               equity performance and TRY/USD exchange rate moves.
 """
 
 import pandas as pd
@@ -77,6 +83,17 @@ def fetch_turkish_macro(
     df["BIST100_ret"]  = np.log(df["BIST100"] / df["BIST100"].shift(1))
     df["USDTRY_vol30"] = df["USDTRY_ret"].rolling(30).std() * np.sqrt(252)
 
+    # ISE_USD: USD-denominated Turkish equity index (BIST100 price / USD-TRY rate)
+    # This is the regression target for Model B.  It captures both Turkish equity
+    # performance and exchange-rate stress in a single series — exactly what the
+    # Minsky fragility framework measures for an emerging-market sovereign context.
+    # Guard against division by zero / NaN in USDTRY.
+    if df["USDTRY"].notna().any() and df["BIST100"].notna().any():
+        df["ISE_USD"] = df["BIST100"] / df["USDTRY"]
+    else:
+        warnings.warn("Could not construct ISE_USD: BIST100 or USDTRY missing")
+        df["ISE_USD"] = np.nan
+
     return df
 
 
@@ -89,7 +106,8 @@ def _merge_with_turkish_macro(
     common_idx = market_df.index.intersection(turkish_df.index)
     df = market_df.reindex(common_idx).copy()
     for col in ["USDTRY", "USDTRY_ret", "USDTRY_vol30",
-                "BIST100", "BIST100_ret", "TR_YIELD10Y", "VIX"]:
+                "BIST100", "BIST100_ret", "ISE_USD",
+                "TR_YIELD10Y", "VIX"]:
         if col in turkish_df.columns and col not in df.columns:
             df[col] = turkish_df[col].reindex(common_idx)
     return df.ffill(limit=max_gap)
