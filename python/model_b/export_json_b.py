@@ -230,8 +230,12 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
 
     section("STAGE 4 — Model Training & Validation")
 
+    # ISE_USD is the Turkish ISE dollar-denominated index — the correct target
+    # for a Turkish market fragility model. SP500 was an erroneous override.
+    TARGET_COL = "ISE_USD"
+
     log("Running walk-forward validation (2003→2008, 2003→2020) …")
-    walk_forward_results = train_random_forest_walk_forward(labeled_df, target_col="SP500")
+    walk_forward_results = train_random_forest_walk_forward(labeled_df, target_col=TARGET_COL)
 
     # Classification pass: generate crash_probability for the full 2003-2025 series
     log("Generating crash_probability (RF classifier, 30-day horizon) ...")
@@ -255,7 +259,6 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
                 else:
                     date_str = date_str.split(" ")[0]
                 
-                # Fetch prob directly by converting labeled_df index to strings
                 prob = None
                 try:
                     dt = pd.to_datetime(date_str)
@@ -284,7 +287,7 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
     crisis_results = validate_crisis_prediction(labeled_df)
 
     log("Computing SHAP values for crisis periods …")
-    shap_results = compute_shap_values_b(labeled_df, target_col="SP500")
+    shap_results = compute_shap_values_b(labeled_df, target_col=TARGET_COL)
 
     log(f"Exporting model outputs → {OUTPUTS_PATH}")
     export_model_outputs_b(
@@ -308,72 +311,6 @@ def _stage_crash_probability(labeled_df: pd.DataFrame) -> "pd.Series | None":
     dashboard date has an ML-derived crash probability.
     """
     try:
-        # Ensure the parent python/ directory is on the path for target_engineering
-        _parent = Path(__file__).parent.parent.resolve()
-        if str(_parent) not in sys.path:
-            sys.path.insert(0, str(_parent))
-
-        from target_engineering import create_crash_target
-        from sklearn.ensemble import RandomForestClassifier
-
-        feature_cols = []
-        for col in ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM',
-                    'BIST100', 'SHANGHAI', 'HANGSENG', 'KOSPI', 'ASX200']:
-            if col in labeled_df.columns:
-                feature_cols.append(col)
-        for col in ['mean_corr', 'eigenvalue_ratio', 'permutation_entropy', 'rolling_volatility']:
-            if col in labeled_df.columns:
-                feature_cols.append(col)
-
-        target_col = 'SP500'  # Model B fetches yfinance data; ISE_USD is not in scope
-        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.10)
-
-        df_model = labeled_df[feature_cols].copy()
-        df_model['crash_target'] = crash_target
-        df_model = df_model.dropna()
-        for col in feature_cols:
-            df_model[col] = pd.to_numeric(df_model[col], errors='coerce')
-        df_model = df_model.dropna()
-
-        X = df_model[feature_cols]
-        y = df_model['crash_target'].astype(int)
-        train_size = int(len(X) * 0.8)
-
-        rf_clf = RandomForestClassifier(
-            n_estimators=300, max_depth=10, min_samples_split=10,
-            class_weight='balanced', random_state=42, n_jobs=-1,
-        )
-        rf_clf.fit(X.iloc[:train_size], y.iloc[:train_size])
-
-        probas = pd.Series(
-            rf_clf.predict_proba(X)[:, 1],
-            index=df_model.index,
-            name='crash_probability',
-        )
-        return probas
-
-    except ImportError as exc:
-        log(f"  WARNING: crash_probability skipped — missing module: {exc}")
-        return None
-    except Exception as exc:
-        import traceback
-        log(f"  WARNING: crash_probability generation failed: {exc}")
-        traceback.print_exc()
-        return None
-
-
-
-def _stage_crash_probability(labeled_df):
-    """
-    Fit a RF Classifier on a 30-day forward ISE_USD crash target and return
-    probabilistic scores for the full 2003-2025 dataset.
-
-    Supplementary to the heuristic fragility_score. Populates the
-    `crash_probability` column so every dashboard date has an ML-derived
-    crash probability.
-    """
-    try:
-        import sys
         _parent = Path(__file__).parent.parent.resolve()
         if str(_parent) not in sys.path:
             sys.path.insert(0, str(_parent))
@@ -393,7 +330,17 @@ def _stage_crash_probability(labeled_df):
         if not feature_cols:
             return None
 
-        target_col = 'SP500'  # Model B has no ISE_USD column — uses SP500
+        # Use ISE_USD as the crash target: we are modelling Turkish market fragility.
+        # Fall back to BIST100 (local-currency proxy) if ISE_USD is absent.
+        if "ISE_USD" in labeled_df.columns:
+            target_col = "ISE_USD"
+        elif "BIST100" in labeled_df.columns:
+            target_col = "BIST100"
+            log("  NOTE: ISE_USD not found — using BIST100 as crash target proxy")
+        else:
+            log("  WARNING: neither ISE_USD nor BIST100 available; skipping crash_probability")
+            return None
+
         crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.10)
 
         df_m = labeled_df[feature_cols].copy()
