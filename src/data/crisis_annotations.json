@@ -1,0 +1,39 @@
+{
+  "events": [
+    {
+      "date": "2018-05-23",
+      "label": "2018 TRY Pressure Starts",
+      "description": "USD/TRY begins accelerated depreciation. US sanctions threat amplifies EM selloff."
+    },
+    {
+      "date": "2018-08-10",
+      "label": "2018 TRY Freefall",
+      "description": "USD/TRY doubles in 12 months. US tariffs on Turkish steel announced. ISE_USD \u221245% in 2018. Erdogan publicly refuses CBRT rate hikes."
+    },
+    {
+      "date": "2021-03-20",
+      "label": "CBRT Governor Sacked",
+      "description": "Third central bank chief fired in two years after hiking rates. TRY loses 15% in a single trading day."
+    },
+    {
+      "date": "2021-11-23",
+      "label": "2021 Lira Collapse",
+      "description": "Erdogan's unorthodox rate-cut cycle amid 21%+ inflation. USD/TRY >13 (from 8). ISE_USD \u221240% in USD terms."
+    },
+    {
+      "date": "2022-10-01",
+      "label": "CPI Peaks at 85%",
+      "description": "Turkish CPI hits 85.5% YoY. Dollarization accelerates. Local BIST gains mask ongoing USD-denominated collapse."
+    },
+    {
+      "date": "2023-06-22",
+      "label": "Policy Normalisation Begins",
+      "description": "Finance minister \u015eim\u015fek signals orthodox policy. CBRT begins hiking from 8.5% toward eventual 50%."
+    },
+    {
+      "date": "2024-03-21",
+      "label": "CBRT Rate Reaches 50%",
+      "description": "Policy rate stabilises at 50%. TRY volatility normalises. ISE_USD begins gradual recovery."
+    }
+  ]
+}

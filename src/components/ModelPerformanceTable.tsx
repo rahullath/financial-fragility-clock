@@ -9,6 +9,7 @@ interface MetricRow {
   accuracy: number | null;
   roc_auc: number | null;
   cv_auc_mean: number | null;
+  avg_lead_time_days: number | null;
   // Regression metrics (Model B — walk-forward)
   r2: number | null;
   rmse: number | null;
@@ -80,6 +81,7 @@ const ModelPerformanceTable: React.FC = () => {
         accuracy:    (metrics?.['accuracy'] as number | null) ?? null,
         roc_auc:     (metrics?.['roc_auc']  as number | null) ?? null,
         cv_auc_mean: (metrics?.['cv_auc_mean'] as number | null) ?? null,
+        avg_lead_time_days: (metrics?.['avg_lead_time_days'] as number | null) ?? null,
         r2: null, rmse: null, mae: null,
         hedge_rmse: null, spec_rmse: null, ponzi_rmse: null,
       });
@@ -137,7 +139,7 @@ const ModelPerformanceTable: React.FC = () => {
         rrmse: Record<string, number> | undefined
       ): MetricRow => ({
         model: name,
-        accuracy: null, roc_auc: null, cv_auc_mean: null,
+        accuracy: null, roc_auc: null, cv_auc_mean: null, avg_lead_time_days: null,
         r2:    metrics?.['test_r2']   ?? metrics?.['r2']   ?? null,
         rmse:  metrics?.['test_rmse'] ?? metrics?.['rmse'] ?? null,
         mae:   metrics?.['test_mae']  ?? metrics?.['mae']  ?? null,
@@ -187,7 +189,7 @@ const ModelPerformanceTable: React.FC = () => {
 
     const rfRow: MetricRow = {
       model: 'Random Forest (WF)',
-      accuracy: null, roc_auc: null, cv_auc_mean: null,
+      accuracy: null, roc_auc: null, cv_auc_mean: null, avg_lead_time_days: null,
       r2:    metrics?.['test_r2']   ?? null,
       rmse:  metrics?.['test_rmse'] ?? null,
       mae:   metrics?.['test_mae']  ?? null,
@@ -212,6 +214,7 @@ const ModelPerformanceTable: React.FC = () => {
           { key: 'accuracy',    label: 'Accuracy',    metric: 'accuracy',    fmt: fmtPct },
           { key: 'roc_auc',     label: 'ROC-AUC',     metric: 'roc_auc',     fmt: (v) => fmt(v, 4) },
           { key: 'cv_auc_mean', label: 'CV ROC-AUC',  metric: 'cv_auc_mean', fmt: (v) => fmt(v, 4) },
+          { key: 'avg_lead_time_days', label: 'Avg Lead Time', metric: 'avg_lead_time_days', fmt: (v) => v != null ? `${v.toFixed(0)} days` : '—' },
         ]
       : [
           { key: 'r2',         label: 'R²',         metric: 'r2',   fmt: (v) => fmt(v, 4) },

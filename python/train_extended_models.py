@@ -389,24 +389,40 @@ def main():
         df_feat = df_feat.set_index('date')
 
         # ── Build feature matrix ──────────────────────────────────────────────
-        feature_cols = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM']
-        engineered   = ['mean_corr', 'permutation_entropy']
         target_col   = 'ISE_USD'
 
-        df_model = df_clean[[target_col] + feature_cols].copy()
-        for col in engineered:
-            if col in df_feat.columns:
-                df_model[col] = df_feat[col]
+        labeled_df = df_clean.copy()
+        for col in df_feat.columns:
+            if col not in labeled_df.columns:
+                labeled_df[col] = df_feat[col]
+
+        # Global contagion features (identical to Model A — establishes continuity)
+        global_features = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM']
+        structural_features = ['mean_corr', 'permutation_entropy']
+
+        # Turkish sovereign features — the NEW Model B dimension
+        # SHAP will reveal which group dominates per crisis: global vs. local
+        turkish_features = ['USDTRY_ret', 'USDTRY_vol30', 'BIST_ISE_DIV', 'TR_YIELD10Y', 'VIX']
+
+        # Only include Turkish features with >20% non-null coverage
+        available_turkish = [c for c in turkish_features
+                             if c in labeled_df.columns
+                             and labeled_df[c].notna().mean() > 0.20]
+
+        feature_cols = [c for c in global_features + structural_features + available_turkish
+                        if c in labeled_df.columns]
+
+        df_model = labeled_df[[target_col] + feature_cols].copy()
 
         # ── Crash target ──────────────────────────────────────────────────────
         # Import here so this script works standalone (called from export_json.py)
         sys.path.insert(0, str(Path(__file__).parent))
         from target_engineering import create_crash_target
 
-        crash_target = create_crash_target(df_model, col=target_col, horizon=30, threshold=-0.05)
+        crash_target = create_crash_target(df_model, col=target_col, horizon=30, threshold=-0.10)
         df_model['crash_target'] = crash_target
 
-        all_cols = feature_cols + engineered
+        all_cols = feature_cols
         df_valid = df_model.dropna(subset=all_cols + ['crash_target'])
         df_valid  = df_valid.apply(lambda c: pd.to_numeric(c, errors='coerce') if c.name != 'crash_target' else c)
         df_valid  = df_valid.dropna(subset=all_cols + ['crash_target'])

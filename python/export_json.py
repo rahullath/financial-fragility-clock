@@ -161,7 +161,7 @@ def main():
             df_clean,
             col='ISE_USD',
             horizon=30,
-            threshold=-0.05,
+            threshold=-0.10,
         )
 
         # Store class‑balance stats for model_outputs.json

@@ -28,10 +28,10 @@ class HistoricallyVerifiedRegimeClassifier:
     
     # Hard-coded crisis periods (PONZI regime)
     CRISIS_PERIODS = [
-        # 2008 Financial Crisis (Lehman Brothers collapse)
-        ('2008-09-01', '2009-03-31', 'PONZI', '2008 Financial Crisis'),
-        # COVID-19 Crash
-        ('2020-03-01', '2020-03-31', 'PONZI', 'COVID-19 Crash'),
+    ('2008-09-01', '2009-03-31', 'PONZI', '2008 Global Financial Crisis'),
+    ('2018-05-01', '2018-11-30', 'PONZI', '2018 Turkish Currency Crisis'),
+    ('2020-03-01', '2020-04-30', 'PONZI', 'COVID-19 Market Crash'),
+    ('2021-03-01', '2022-01-31', 'PONZI', '2021-22 Turkish Lira Collapse'),
     ]
     
     # Threshold definitions for non-crisis periods

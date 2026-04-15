@@ -16,6 +16,7 @@ import { toNum } from '../utils/dataUtils';
 import { exportChart } from '../utils/exportChart';
 import { generateTimelineExplanation } from '../utils/laymanExplanations';
 import LaymanOverlay from './LaymanOverlay';
+import { TURKISH_CRISIS_EVENTS } from '../data/crisisAnnotations';
 import './RegimeTimeline.css';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -238,6 +239,22 @@ const RegimeTimeline: React.FC = () => {
               />
             );
           })}
+
+          {TURKISH_CRISIS_EVENTS.map(event => (
+            <ReferenceLine
+              key={event.date}
+              x={event.date}
+              stroke="var(--ponzi)"
+              strokeDasharray="3 3"
+              strokeWidth={1}
+              label={{
+                value: event.label,
+                position: 'insideTopRight',
+                fontSize: 10,
+                fill: 'var(--text-muted)',
+              }}
+            />
+          ))}
 
           <Area
             type="monotone"

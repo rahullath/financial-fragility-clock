@@ -132,6 +132,6 @@ if __name__ == "__main__":
     df = df.set_index("date")
     df = df.apply(pd.to_numeric, errors="coerce")
 
-    crash_target = create_crash_target(df, col="ISE_USD", horizon=30, threshold=-0.05)
+    crash_target = create_crash_target(df, col="ISE_USD", horizon=30, threshold=-0.10)
     print(f"\nSample (first 5 non-NaN):")
     print(crash_target.dropna().head())

@@ -70,75 +70,32 @@ def section(title: str) -> None:
 
 # ── Stage helpers ──────────────────────────────────────────────────────────────
 def stage_fetch_and_preprocess(api_key: str | None) -> pd.DataFrame:
-    """Fetch market + macro data, merge, clean, and export cleaned JSON."""
-    from fetch_market_data import (
-        fetch_market_data,
-        handle_missing_data as handle_market_missing,
-        validate_data as validate_market,
-    )
+    from fetch_market_data import fetch_market_data, handle_missing_data, validate_data
+    from fetch_turkish_macro import fetch_turkish_macro, get_crisis_annotations, _merge_with_turkish_macro
+    from preprocessing_b import handle_missing_values, validate_data_completeness, \
+                                 compute_descriptive_stats, export_to_json
 
-    section("STAGE 1 — Fetch & Preprocess")
+    section("STAGE 1 — Fetch & Preprocess (Turkish Macro Pivot)")
 
-    # ── Market data ───────────────────────────────────────────────────────────
-    log("Fetching market data via yfinance …")
-    market_df = fetch_market_data(start_date="2003-01-01", end_date="2025-12-31")
-    market_df = handle_market_missing(market_df, max_gap=5)
-    validate_market(market_df)
+    market_df = handle_missing_data(fetch_market_data(
+        start_date="2003-01-01", end_date="2025-12-31"), max_gap=5)
+    validate_data(market_df)
 
-    # ── Macro data (optional) ─────────────────────────────────────────────────
-    macro_df = None
-    if api_key:
-        log("Fetching macro data via FRED API …")
-        try:
-            from fetch_macro_data import (
-                fetch_macro_data,
-                resample_to_daily,
-                handle_missing_data as handle_macro_missing,
-            )
-            raw_macro = fetch_macro_data(api_key=api_key,
-                                         start_date="2003-01-01",
-                                         end_date="2025-12-31")
-            macro_daily = resample_to_daily(raw_macro)
-            macro_df = handle_macro_missing(macro_daily)
-            log(f"FRED macro data loaded: {macro_df.shape}")
-        except Exception as exc:
-            warnings.warn(f"FRED API fetch failed: {exc}. Continuing without macro data.")
-            macro_df = None
-    else:
-        log("FRED_API_KEY not set — skipping macro data (macro signals will be absent).")
+    # TRY=X, XU100.IS, ^VIX via yfinance — no API key needed.
+    # TR_YIELD10Y via FRED only if api_key provided.
+    turkish_df = fetch_turkish_macro(
+        start_date="2003-01-01", end_date="2025-12-31", fred_api_key=api_key)
 
-    # ── Merge ─────────────────────────────────────────────────────────────────
-    from preprocessing_b import (
-        merge_market_and_macro,
-        handle_missing_values,
-        validate_data_completeness,
-        compute_descriptive_stats,
-        export_to_json,
-    )
+    clean_df = handle_missing_values(_merge_with_turkish_macro(market_df, turkish_df), max_gap=5)
+    validate_data_completeness(clean_df)
+    export_to_json(clean_df, compute_descriptive_stats(clean_df), CLEANED_DATA_PATH)
 
-    if macro_df is not None:
-        merged_df = merge_market_and_macro(market_df, macro_df)
-    else:
-        log("Using market data only (no macro merge).")
-        merged_df = market_df.copy()
+    # Crisis annotations for dashboard overlay
+    with open(str(DATA_DIR / "crisis_annotations.json"), "w") as f:
+        json.dump({"events": get_crisis_annotations()}, f, indent=2)
 
-    log("Handling missing values …")
-    clean_df = handle_missing_values(merged_df, max_gap=5)
-
-    log("Validating data completeness …")
-    is_valid = validate_data_completeness(clean_df)
-    if not is_valid:
-        warnings.warn("Data validation failed — continuing anyway.")
-
-    log("Computing descriptive statistics …")
-    stats = compute_descriptive_stats(clean_df)
-
-    log(f"Exporting cleaned data → {CLEANED_DATA_PATH}")
-    export_to_json(clean_df, stats, CLEANED_DATA_PATH)
-
-    log(f"Stage 1 complete: {len(clean_df)} observations × {len(clean_df.columns)} columns")
+    log(f"Stage 1 complete: {len(clean_df)} obs × {len(clean_df.columns)} cols")
     return clean_df
-
 
 def stage_feature_engineering(clean_df: pd.DataFrame) -> pd.DataFrame:
     """Compute all features and export model_b_features.json."""
@@ -150,6 +107,7 @@ def stage_feature_engineering(clean_df: pd.DataFrame) -> pd.DataFrame:
         compute_fragility_score_b,
         export_features,
     )
+    from fetch_turkish_macro import get_crisis_annotations
 
     section("STAGE 2 — Feature Engineering")
 
@@ -196,6 +154,19 @@ def stage_feature_engineering(clean_df: pd.DataFrame) -> pd.DataFrame:
     # Attach normalized macro signals
     for col in macro_normalized.columns:
         features_df[col] = macro_normalized[col]
+
+    # Attach crisis annotations for dashboard overlay
+    with open(str(DATA_DIR / "crisis_annotations.json"), "w") as f:
+        json.dump({"events": get_crisis_annotations()}, f, indent=2)  
+    
+    # BIST/ISE divergence: key Turkey-specific signal.
+    # Spikes when TRY depreciates: BIST holds in local terms but ISE_USD collapses.
+    if "BIST100_ret" in clean_df.columns and "ISE_USD" in clean_df.columns:
+        ise_ret  = np.log(clean_df["ISE_USD"] / clean_df["ISE_USD"].shift(1))
+        bist_roll = clean_df["BIST100_ret"].rolling(5).sum()
+        ise_roll  = ise_ret.rolling(5).sum()
+        features_df["BIST_ISE_DIV"] = (bist_roll - ise_roll).reindex(features_df.index)
+        log("Added BIST_ISE_DIV to feature matrix.")
 
     log(f"Exporting features ({features_df.shape}) → {FEATURES_PATH}")
     export_features(features_df, FEATURES_PATH)
@@ -269,6 +240,45 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
         labeled_df = labeled_df.copy()
         labeled_df["crash_probability"] = crash_probability
         log(f"  crash_probability populated for {crash_probability.notna().sum()} rows")
+        
+        # Export slim features JSON for frontend (without heavy pairwise correlations)
+        try:
+            with open(FEATURES_PATH, "r") as f:
+                features_data = json.load(f)
+                
+            features_data["metadata"]["features"].append("crash_probability")
+            
+            for i, row in enumerate(features_data["data"]):
+                date_str = row["date"]
+                if "T" in date_str:
+                    date_str = date_str.split("T")[0]
+                else:
+                    date_str = date_str.split(" ")[0]
+                
+                # Fetch prob directly by converting labeled_df index to strings
+                prob = None
+                try:
+                    dt = pd.to_datetime(date_str)
+                    if dt in crash_probability.index:
+                        prob = float(crash_probability.loc[dt])
+                        if pd.isna(prob): prob = None
+                except Exception:
+                    pass
+                
+                row["crash_probability"] = prob
+                # Eliminate pairwise_correlations to keep the file small enough for Vite
+                if "pairwise_correlations" in row:
+                    del row["pairwise_correlations"]
+                    
+            if "pairwise_correlation_pairs" in features_data["metadata"]:
+                del features_data["metadata"]["pairwise_correlation_pairs"]
+                
+            slim_path = str(Path(FEATURES_PATH).parent / "model_b_features_slim.json")
+            with open(slim_path, "w") as f:
+                json.dump(features_data, f, indent=2)
+            log(f"  Exported slim features JSON -> {slim_path}")
+        except Exception as e:
+            log(f"  WARNING: Failed to export slim features JSON: {e}")
 
     log("Running crisis prediction validation ...")
     crisis_results = validate_crisis_prediction(labeled_df)
@@ -316,7 +326,7 @@ def _stage_crash_probability(labeled_df: pd.DataFrame) -> "pd.Series | None":
                 feature_cols.append(col)
 
         target_col = 'SP500'  # Model B fetches yfinance data; ISE_USD is not in scope
-        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.05)
+        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.10)
 
         df_model = labeled_df[feature_cols].copy()
         df_model['crash_target'] = crash_target
@@ -384,7 +394,7 @@ def _stage_crash_probability(labeled_df):
             return None
 
         target_col = 'SP500'  # Model B has no ISE_USD column — uses SP500
-        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.05)
+        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.10)
 
         df_m = labeled_df[feature_cols].copy()
         df_m['crash_target'] = crash_target
