@@ -1,9 +1,12 @@
-pandas==1.5.3
-numpy==1.24.0
-scikit-learn==1.2.2
-statsmodels==0.14.0
-shap==0.42.1
-scipy==1.10.0
-yfinance>=0.2.28
-fredapi>=0.5.0
-tensorflow>=2.13.0
+# Turkey ISE2 Pipeline — python/requirements.txt
+pandas>=2.0
+numpy>=1.24
+scikit-learn>=1.3
+xgboost>=2.0
+statsmodels>=0.14
+yfinance>=0.2.40
+python-dotenv>=1.0
+fredapi>=3.0
+shap>=0.44
+# TensorFlow optional (LSTM model):
+# tensorflow>=2.15

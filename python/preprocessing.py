@@ -1,267 +1,174 @@
 """
-Preprocessing module for Financial Fragility Clock.
+preprocessing.py — Turkey ISE2 Pipeline (turkey branch)
 
-This module handles CSV parsing, missing value handling, descriptive statistics,
-and JSON export for the ISE dataset.
+Loads Group_5.csv, cleans and scales for ISE2 (USD-based BIST100 return).
+Target: ise2  (ISE in USD terms)
+Features: sp, dax, ftse, nikkei, bovespa, eu, em
+
+Design notes
+------------
+- RobustScaler instead of StandardScaler: financial return distributions have
+  fat tails; median/IQR scaling is more appropriate than mean/stdev.
+- Time-aware 80/20 split: NO shuffling — this is a time-series.
+- Forward-fill then mean-imputation for market-holiday gaps.
+- ISE TL column dropped — we predict USD returns (ise2) exclusively.
 """
 
 import pandas as pd
 import numpy as np
-from scipy import stats
-import json
-from datetime import datetime
 from pathlib import Path
-import sys
-import warnings
+from sklearn.preprocessing import RobustScaler
+import json
+
+# ---------------------------------------------------------------------------
+# Column name constants (match CSV headers exactly)
+# ---------------------------------------------------------------------------
+RAW_COLS = ["date", "ISE", "ise2", "sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+FEATURE_COLS = ["sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+TARGET_COL = "ise2"  # ISE100 USD-based daily return — the ONLY target
 
 
-def load_csv(filepath: str) -> pd.DataFrame:
+def load_raw(csv_path: str | Path) -> pd.DataFrame:
     """
-    Parse ISE dataset CSV with flexible delimiter and date format detection.
-    
-    Args:
-        filepath: Path to Group_5.csv
-        
-    Returns:
-        DataFrame with datetime index and 8 numeric columns
-        
-    Raises:
-        FileNotFoundError: If CSV file doesn't exist
-        ValueError: If row count != 536 after parsing
+    Load Group_5.csv and return a clean DataFrame indexed by date.
+    Drops the TL-based ISE column immediately to avoid target leakage.
     """
-    # Check if file exists
-    if not Path(filepath).exists():
-        raise FileNotFoundError(f"CSV file not found: {filepath}")
-    
-    try:
-        # Read CSV with flexible parsing
-        # The CSV has an extra unnamed column at the start and a header row
-        df = pd.read_csv(filepath, skiprows=1)
-        
-        # Drop the first unnamed column if it exists
-        if df.columns[0] == 'Unnamed: 0' or df.iloc[:, 0].name in ['', 'Unnamed: 0']:
-            df = df.iloc[:, 1:]
-        
-        # Rename columns to standard names
-        expected_columns = ['date', 'ISE_TL', 'ISE_USD', 'SP500', 'DAX', 'FTSE', 
-                          'NIKKEI', 'BOVESPA', 'EU', 'EM']
-        
-        if len(df.columns) == len(expected_columns):
-            df.columns = expected_columns
-        else:
-            # Try to match columns by position
-            print(f"Warning: Expected {len(expected_columns)} columns, got {len(df.columns)}")
-            print(f"Columns found: {list(df.columns)}")
-        
-        # Convert date column to datetime with flexible parsing
-        try:
-            df['date'] = pd.to_datetime(df['date'], format='%d-%b-%y')
-        except:
-            try:
-                df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-            except:
-                df['date'] = pd.to_datetime(df['date'], infer_datetime_format=True)
-        
-        # Set date as index
-        df = df.set_index('date')
-        # Note: Not setting freq='D' as the data may have gaps (weekends, holidays)
-        
-        # Convert all numeric columns to float
-        numeric_columns = ['ISE_TL', 'ISE_USD', 'SP500', 'DAX', 'FTSE', 
-                          'NIKKEI', 'BOVESPA', 'EU', 'EM']
-        for col in numeric_columns:
-            if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-        
-        # Validate row count
-        if len(df) != 536:
-            raise ValueError(f"Expected exactly 536 rows, but parsed {len(df)} rows")
-        
-        print(f"Successfully loaded {len(df)} observations from {filepath}")
-        print(f"Date range: {df.index.min()} to {df.index.max()}")
-        print(f"Columns: {list(df.columns)}")
-        
-        return df
-        
-    except Exception as e:
-        if isinstance(e, ValueError) and "536 rows" in str(e):
-            raise
-        raise ValueError(f"Error parsing CSV file: {str(e)}")
+    df = pd.read_csv(csv_path)
+
+    # Normalise column names (strip whitespace, lower-case non-date cols)
+    df.columns = df.columns.str.strip()
+    # Rename to standard names if CSV uses slightly different casing
+    rename_map = {
+        col: col.lower() for col in df.columns if col.lower() in
+        ["ise", "ise2", "sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+    }
+    rename_map.update({"Date": "date", "DATE": "date"})
+    df = df.rename(columns=rename_map)
+
+    # Parse date
+    df["date"] = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
+    df = df.dropna(subset=["date"]).sort_values("date").reset_index(drop=True)
+    df = df.set_index("date")
+
+    # Drop TL-denominated ISE (not the target; keeping it causes leakage)
+    if "ise" in df.columns:
+        df = df.drop(columns=["ise"])
+
+    # Keep only the columns we care about
+    keep = [TARGET_COL] + FEATURE_COLS
+    df = df[[c for c in keep if c in df.columns]]
+
+    print(f"[preprocessing] Loaded {len(df)} rows  |  {df.index[0].date()} → {df.index[-1].date()}")
+    return df
 
 
-def handle_missing_values(df: pd.DataFrame, max_gap: int = 3) -> pd.DataFrame:
+def clean(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Forward-fill missing values for gaps <= max_gap days, flag longer gaps.
-    
-    Args:
-        df: Raw DataFrame with potential NaN values
-        max_gap: Maximum consecutive days to forward-fill
-        
-    Returns:
-        DataFrame with missing values handled, flagged rows excluded
+    Handle missing values:
+    1. Forward-fill (market holidays / data gaps carry previous close)
+    2. Backward-fill for leading NaNs
+    3. Column-mean for any residual NaNs
     """
-    df_clean = df.copy()
-    excluded_ranges = []
-    
-    # Check each column for missing values
-    for col in df_clean.columns:
-        if df_clean[col].isna().any():
-            # Find consecutive NaN groups
-            is_nan = df_clean[col].isna()
-            nan_groups = (is_nan != is_nan.shift()).cumsum()
-            
-            for group_id in nan_groups[is_nan].unique():
-                group_mask = (nan_groups == group_id) & is_nan
-                gap_size = group_mask.sum()
-                
-                if gap_size > max_gap:
-                    # Flag and exclude this range
-                    start_date = df_clean.index[group_mask][0]
-                    end_date = df_clean.index[group_mask][-1]
-                    excluded_ranges.append((col, start_date, end_date, gap_size))
-                    warnings.warn(
-                        f"Excluding {gap_size} observations in {col} from {start_date} to {end_date} "
-                        f"(gap > {max_gap} days)"
-                    )
-                    # Mark these rows for exclusion
-                    df_clean.loc[group_mask, col] = np.nan
-    
-    # Apply forward-fill for remaining gaps (≤ max_gap)
-    df_clean = df_clean.ffill(limit=max_gap)
-    
-    # Remove rows that still have NaN values (these are the excluded ones)
-    rows_before = len(df_clean)
-    df_clean = df_clean.dropna()
-    rows_after = len(df_clean)
-    
-    if rows_before != rows_after:
-        print(f"Excluded {rows_before - rows_after} rows due to missing value gaps > {max_gap} days")
-    
-    if excluded_ranges:
-        print(f"\nExcluded date ranges:")
-        for col, start, end, gap in excluded_ranges:
-            print(f"  {col}: {start} to {end} ({gap} days)")
-    
-    return df_clean
+    df = df.copy()
+    original_nulls = df.isnull().sum().sum()
+    df = df.ffill().bfill()
+    df = df.fillna(df.mean())
+    remaining = df.isnull().sum().sum()
+    print(f"[preprocessing] Nulls before: {original_nulls}  |  after: {remaining}")
+    return df
 
 
-def compute_descriptive_stats(df: pd.DataFrame) -> dict:
+def split_train_test(df: pd.DataFrame, test_ratio: float = 0.20):
     """
-    Compute mean, std, min, max, quartiles for all numeric columns.
-    
-    Args:
-        df: DataFrame with numeric columns
-        
-    Returns:
-        Dictionary with column names as keys, stats dict as values
+    Chronological 80/20 split — NO shuffling.
+    Returns (df_train, df_test).
     """
-    stats_dict = {}
-    
-    for col in df.columns:
-        col_stats = {
-            'mean': float(df[col].mean()),
-            'std': float(df[col].std()),
-            'min': float(df[col].min()),
-            'max': float(df[col].max()),
-            'q25': float(df[col].quantile(0.25)),
-            'q50': float(df[col].quantile(0.50)),
-            'q75': float(df[col].quantile(0.75))
-        }
-        
-        # Perform Shapiro-Wilk normality test
-        try:
-            shapiro_stat, shapiro_p = stats.shapiro(df[col].dropna())
-            col_stats['shapiro_stat'] = float(shapiro_stat)
-            col_stats['shapiro_p'] = float(shapiro_p)
-            col_stats['is_normal'] = bool(shapiro_p > 0.05)
-        except Exception as e:
-            print(f"Warning: Could not perform Shapiro-Wilk test for {col}: {e}")
-            col_stats['shapiro_stat'] = None
-            col_stats['shapiro_p'] = None
-            col_stats['is_normal'] = None
-        
-        stats_dict[col] = col_stats
-    
-    return stats_dict
+    n = len(df)
+    split_idx = int(n * (1 - test_ratio))
+    df_train = df.iloc[:split_idx].copy()
+    df_test  = df.iloc[split_idx:].copy()
+    print(f"[preprocessing] Train: {len(df_train)} rows  ({df_train.index[0].date()} → {df_train.index[-1].date()})")
+    print(f"[preprocessing] Test : {len(df_test)} rows   ({df_test.index[0].date()} → {df_test.index[-1].date()})")
+    return df_train, df_test
 
 
-def export_cleaned_data(df: pd.DataFrame, stats: dict, filepath: str) -> None:
+def scale_features(df_train: pd.DataFrame, df_test: pd.DataFrame):
     """
-    Write cleaned data and metadata to JSON.
-    
-    Args:
-        df: Cleaned DataFrame
-        stats: Descriptive statistics dictionary
-        filepath: Output JSON file path
-        
-    JSON structure:
-    {
-        "metadata": {
-            "rows": 536, 
-            "columns": 8, 
-            "date_range": [...], 
-            "stats": {...},
-            "timestamp": "...",
-            "python_version": "..."
+    Fit RobustScaler on training set; apply to both train and test.
+    Returns (X_train_scaled, X_test_scaled, y_train, y_test, scaler).
+    Scaler is fit ONLY on training features — no lookahead.
+    """
+    scaler = RobustScaler()
+
+    X_train_raw = df_train[FEATURE_COLS]
+    X_test_raw  = df_test[FEATURE_COLS]
+    y_train = df_train[TARGET_COL].copy()
+    y_test  = df_test[TARGET_COL].copy()
+
+    X_train_scaled = pd.DataFrame(
+        scaler.fit_transform(X_train_raw),
+        columns=FEATURE_COLS,
+        index=df_train.index
+    )
+    X_test_scaled = pd.DataFrame(
+        scaler.transform(X_test_raw),
+        columns=FEATURE_COLS,
+        index=df_test.index
+    )
+
+    print(f"[preprocessing] RobustScaler fitted on {len(X_train_scaled)} training rows")
+    return X_train_scaled, X_test_scaled, y_train, y_test, scaler
+
+
+def run(csv_path: str | Path, out_dir: str | Path = "../src/data") -> dict:
+    """
+    Full preprocessing pipeline for Model A (2009-11 dataset only).
+    Returns a dict with all arrays needed by models.py.
+    Also writes cleaned_data_a.json for the dashboard.
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    df = load_raw(csv_path)
+    df = clean(df)
+    df_train, df_test = split_train_test(df)
+    X_train, X_test, y_train, y_test, scaler = scale_features(df_train, df_test)
+
+    # Export cleaned data JSON for dashboard
+    export = {
+        "meta": {
+            "source": "Group_5.csv",
+            "target": TARGET_COL,
+            "features": FEATURE_COLS,
+            "n_total": len(df),
+            "n_train": len(df_train),
+            "n_test": len(df_test),
+            "train_start": str(df_train.index[0].date()),
+            "train_end": str(df_train.index[-1].date()),
+            "test_start": str(df_test.index[0].date()),
+            "test_end": str(df_test.index[-1].date()),
         },
-        "data": [{"date": "2009-01-05", "ISE_USD": 0.0123, ...}, ...]
+        "ise2_series": [
+            {"date": str(d.date()), "value": float(v)}
+            for d, v in df[TARGET_COL].items()
+        ]
     }
-    """
-    # Create output directory if it doesn't exist
-    output_path = Path(filepath)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    # Prepare metadata
-    metadata = {
-        'rows': len(df),
-        'columns': len(df.columns),
-        'date_range': [df.index.min().isoformat(), df.index.max().isoformat()],
-        'stats': stats,
-        'timestamp': datetime.now().isoformat(),
-        'python_version': sys.version.split()[0]
+    with open(out_dir / "cleaned_data_a.json", "w") as f:
+        json.dump(export, f, indent=2)
+    print(f"[preprocessing] Exported cleaned_data_a.json")
+
+    return {
+        "df": df,
+        "df_train": df_train,
+        "df_test": df_test,
+        "X_train": X_train,
+        "X_test": X_test,
+        "y_train": y_train,
+        "y_test": y_test,
+        "scaler": scaler,
     }
-    
-    # Convert DataFrame to list of dictionaries
-    data_records = []
-    for date, row in df.iterrows():
-        record = {'date': date.isoformat()}
-        for col in df.columns:
-            record[col] = float(row[col]) if not pd.isna(row[col]) else None
-        data_records.append(record)
-    
-    # Create final JSON structure
-    output_data = {
-        'metadata': metadata,
-        'data': data_records
-    }
-    
-    # Write to file
-    with open(filepath, 'w') as f:
-        json.dump(output_data, f, indent=2)
-    
-    print(f"\nExported cleaned data to {filepath}")
-    print(f"  Rows: {metadata['rows']}")
-    print(f"  Columns: {metadata['columns']}")
-    print(f"  Date range: {metadata['date_range'][0]} to {metadata['date_range'][1]}")
 
 
 if __name__ == "__main__":
-    # Example usage
-    print("Financial Fragility Clock - Preprocessing Module")
-    print("=" * 60)
-    
-    # Load CSV (path relative to workspace root)
-    csv_path = "../context-dump/converted/Group_5.csv"
-    df = load_csv(csv_path)
-    
-    # Handle missing values
-    df_clean = handle_missing_values(df, max_gap=3)
-    
-    # Compute descriptive statistics
-    stats = compute_descriptive_stats(df_clean)
-    
-    # Export to JSON (path relative to workspace root)
-    output_path = "../src/data/cleaned_data.json"
-    export_cleaned_data(df_clean, stats, output_path)
-    
-    print("\nPreprocessing complete!")
+    result = run("../data/Group_5.csv")
+    print(result["X_train"].describe())
