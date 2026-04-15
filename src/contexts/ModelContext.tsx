@@ -312,12 +312,43 @@ export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
           })
           .catch(() => generateMockDTWSimilarity('2020-01-01', '2023-12-31'));
 
+        // Try to load real pipeline output files; fall back to mocks when absent.
+        // Once `python export_json.py` has run and produced these files, the
+        // dashboard will automatically display real data without any code change.
+        const regimesPromise = fetch(buildAssetUrl('/data/regime_transitions.json'))
+          .then(async (r) => {
+            if (!r.ok) throw new Error('regime_transitions.json not found');
+            return await r.json() as RegimeTransitionsData;
+          })
+          .catch(() => generateMockRegimeTransitions('2020-01-01', '2023-12-31'));
+
+        const networksPromise = fetch(buildAssetUrl('/data/correlation_networks.json'))
+          .then(async (r) => {
+            if (!r.ok) throw new Error('correlation_networks.json not found');
+            return await r.json() as CorrelationNetworksData;
+          })
+          .catch(() => generateMockCorrelationNetworks('2020-01-01', '2023-12-31'));
+
+        const volatilityPromise = fetch(buildAssetUrl('/data/volatility_clustering.json'))
+          .then(async (r) => {
+            if (!r.ok) throw new Error('volatility_clustering.json not found');
+            return await r.json() as VolatilityClusteringData;
+          })
+          .catch(() => generateMockVolatilityClustering('2020-01-01', '2023-12-31'));
+
+        const leadTimePromise = fetch(buildAssetUrl('/data/lead_time_stats.json'))
+          .then(async (r) => {
+            if (!r.ok) throw new Error('lead_time_stats.json not found');
+            return await r.json() as LeadTimeStatsData;
+          })
+          .catch(() => generateMockLeadTimeStats());
+
         const [regimes, dtw, networks, volatility, leadTime] = await Promise.all([
-          Promise.resolve(generateMockRegimeTransitions('2020-01-01', '2023-12-31')),
+          regimesPromise,
           dtwPromise,
-          Promise.resolve(generateMockCorrelationNetworks('2020-01-01', '2023-12-31')),
-          Promise.resolve(generateMockVolatilityClustering('2020-01-01', '2023-12-31')),
-          Promise.resolve(generateMockLeadTimeStats()),
+          networksPromise,
+          volatilityPromise,
+          leadTimePromise,
         ]);
         
         setRegimeTransitions(regimes);

@@ -18,6 +18,15 @@ Usage (from repo root):
 Or with a FRED API key for macro signals:
     FRED_API_KEY=your_key ./venv/bin/python python/model_b/export_json_b.py
 
+ACADEMIC CONTEXT
+----------------
+Model B uses two complementary approaches:
+  a) Walk-forward regression (ISE_USD target) — tests whether pre-crisis
+     features predict crisis-period ISE returns (2008 and 2020 splits).
+  b) Classification pass (binary crash target, 30-day horizon) — generates
+     `crash_probability` for the full 2003-2025 time series so the dashboard
+     displays a continuous ML-derived fragility probability curve.
+
 Requirements: 22.1, 22.2, 22.5, 26.1, 26.3
 """
 
@@ -253,7 +262,15 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
     log("Running walk-forward validation (2003→2008, 2003→2020) …")
     walk_forward_results = train_random_forest_walk_forward(labeled_df, target_col="SP500")
 
-    log("Running crisis prediction validation …")
+    # Classification pass: generate crash_probability for the full 2003-2025 series
+    log("Generating crash_probability (RF classifier, 30-day horizon) ...")
+    crash_probability = _stage_crash_probability(labeled_df)
+    if crash_probability is not None:
+        labeled_df = labeled_df.copy()
+        labeled_df["crash_probability"] = crash_probability
+        log(f"  crash_probability populated for {crash_probability.notna().sum()} rows")
+
+    log("Running crisis prediction validation ...")
     crisis_results = validate_crisis_prediction(labeled_df)
 
     log("Computing SHAP values for crisis periods …")
@@ -269,6 +286,140 @@ def stage_model_training(labeled_df: pd.DataFrame) -> tuple[dict, dict, dict]:
 
     log("Stage 4 complete.")
     return walk_forward_results, crisis_results, shap_results
+
+
+def _stage_crash_probability(labeled_df: pd.DataFrame) -> "pd.Series | None":
+    """
+    Fit a RF Classifier on a 30-day forward ISE_USD crash target and return
+    probabilistic scores for the full 2003-2025 dataset.
+
+    Supplementary to the heuristic fragility_score. Populates the
+    `crash_probability` column in model_b_features_slim.json so every
+    dashboard date has an ML-derived crash probability.
+    """
+    try:
+        # Ensure the parent python/ directory is on the path for target_engineering
+        _parent = Path(__file__).parent.parent.resolve()
+        if str(_parent) not in sys.path:
+            sys.path.insert(0, str(_parent))
+
+        from target_engineering import create_crash_target
+        from sklearn.ensemble import RandomForestClassifier
+
+        feature_cols = []
+        for col in ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM',
+                    'BIST100', 'SHANGHAI', 'HANGSENG', 'KOSPI', 'ASX200']:
+            if col in labeled_df.columns:
+                feature_cols.append(col)
+        for col in ['mean_corr', 'eigenvalue_ratio', 'permutation_entropy', 'rolling_volatility']:
+            if col in labeled_df.columns:
+                feature_cols.append(col)
+
+        target_col = 'SP500'  # Model B fetches yfinance data; ISE_USD is not in scope
+        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.05)
+
+        df_model = labeled_df[feature_cols].copy()
+        df_model['crash_target'] = crash_target
+        df_model = df_model.dropna()
+        for col in feature_cols:
+            df_model[col] = pd.to_numeric(df_model[col], errors='coerce')
+        df_model = df_model.dropna()
+
+        X = df_model[feature_cols]
+        y = df_model['crash_target'].astype(int)
+        train_size = int(len(X) * 0.8)
+
+        rf_clf = RandomForestClassifier(
+            n_estimators=300, max_depth=10, min_samples_split=10,
+            class_weight='balanced', random_state=42, n_jobs=-1,
+        )
+        rf_clf.fit(X.iloc[:train_size], y.iloc[:train_size])
+
+        probas = pd.Series(
+            rf_clf.predict_proba(X)[:, 1],
+            index=df_model.index,
+            name='crash_probability',
+        )
+        return probas
+
+    except ImportError as exc:
+        log(f"  WARNING: crash_probability skipped — missing module: {exc}")
+        return None
+    except Exception as exc:
+        import traceback
+        log(f"  WARNING: crash_probability generation failed: {exc}")
+        traceback.print_exc()
+        return None
+
+
+
+def _stage_crash_probability(labeled_df):
+    """
+    Fit a RF Classifier on a 30-day forward ISE_USD crash target and return
+    probabilistic scores for the full 2003-2025 dataset.
+
+    Supplementary to the heuristic fragility_score. Populates the
+    `crash_probability` column so every dashboard date has an ML-derived
+    crash probability.
+    """
+    try:
+        import sys
+        _parent = Path(__file__).parent.parent.resolve()
+        if str(_parent) not in sys.path:
+            sys.path.insert(0, str(_parent))
+
+        from target_engineering import create_crash_target
+        from sklearn.ensemble import RandomForestClassifier
+
+        feature_cols = []
+        for col in ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM',
+                    'BIST100', 'SHANGHAI', 'HANGSENG', 'KOSPI', 'ASX200']:
+            if col in labeled_df.columns:
+                feature_cols.append(col)
+        for col in ['mean_corr', 'eigenvalue_ratio', 'permutation_entropy', 'rolling_volatility']:
+            if col in labeled_df.columns:
+                feature_cols.append(col)
+
+        if not feature_cols:
+            return None
+
+        target_col = 'SP500'  # Model B has no ISE_USD column — uses SP500
+        crash_target = create_crash_target(labeled_df, col=target_col, horizon=30, threshold=-0.05)
+
+        df_m = labeled_df[feature_cols].copy()
+        df_m['crash_target'] = crash_target
+        df_m = df_m.dropna()
+        for col in feature_cols:
+            df_m[col] = pd.to_numeric(df_m[col], errors='coerce')
+        df_m = df_m.dropna()
+
+        if df_m.empty:
+            return None
+
+        X = df_m[feature_cols]
+        y = df_m['crash_target'].astype(int)
+        train_size = int(len(X) * 0.8)
+
+        rf_clf = RandomForestClassifier(
+            n_estimators=300, max_depth=10, min_samples_split=10,
+            class_weight='balanced', random_state=42, n_jobs=-1,
+        )
+        rf_clf.fit(X.iloc[:train_size], y.iloc[:train_size])
+
+        return pd.Series(
+            rf_clf.predict_proba(X)[:, 1],
+            index=df_m.index,
+            name='crash_probability',
+        )
+
+    except ImportError as exc:
+        log(f"  WARNING: crash_probability skipped -- missing module: {exc}")
+        return None
+    except Exception as exc:
+        import traceback
+        log(f"  WARNING: crash_probability generation failed: {exc}")
+        traceback.print_exc()
+        return None
 
 
 def print_summary(walk_forward_results: dict, crisis_results: dict) -> None:

@@ -1,52 +1,52 @@
 {
   "metadata": {
-    "generated_at": "2026-04-13T23:58:05.937155",
+    "generated_at": "2026-04-15T01:19:42.655294",
     "description": "Regime transition probabilities and statistics",
     "total_observations": 536,
-    "total_transitions": 116
+    "total_transitions": 357
   },
   "transition_matrix": {
     "HEDGE": {
       "HEDGE": 0.0,
-      "SPECULATIVE": 1.0,
-      "PONZI": 0.0
+      "SPECULATIVE": 0.4881,
+      "PONZI": 0.5119
     },
     "SPECULATIVE": {
-      "HEDGE": 0.8929,
+      "HEDGE": 0.4444,
       "SPECULATIVE": 0.0,
-      "PONZI": 0.1071
+      "PONZI": 0.5556
     },
     "PONZI": {
-      "HEDGE": 0.0,
-      "SPECULATIVE": 1.0,
+      "HEDGE": 0.4624,
+      "SPECULATIVE": 0.5376,
       "PONZI": 0.0
     }
   },
   "transition_counts": {
     "HEDGE": {
       "HEDGE": 0,
-      "SPECULATIVE": 25,
-      "PONZI": 0
+      "SPECULATIVE": 41,
+      "PONZI": 43
     },
     "SPECULATIVE": {
-      "HEDGE": 25,
+      "HEDGE": 40,
       "SPECULATIVE": 0,
-      "PONZI": 3
+      "PONZI": 50
     },
     "PONZI": {
-      "HEDGE": 0,
-      "SPECULATIVE": 3,
+      "HEDGE": 43,
+      "SPECULATIVE": 50,
       "PONZI": 0
     }
   },
   "average_duration_days": {
-    "HEDGE": 10.8,
-    "SPECULATIVE": 13.5,
-    "PONZI": 16.7
+    "HEDGE": 2.6,
+    "SPECULATIVE": 2.3,
+    "PONZI": 2.3
   },
   "regime_distribution": {
-    "HEDGE": 186,
-    "SPECULATIVE": 256,
-    "PONZI": 35
+    "HEDGE": 147,
+    "SPECULATIVE": 152,
+    "PONZI": 148
   }
 }

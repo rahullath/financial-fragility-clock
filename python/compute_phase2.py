@@ -398,7 +398,7 @@ def compute_regime_transition_probability(df: pd.DataFrame, model: str) -> pd.Se
             print(f"    Fold {fold_i}: FAILED — {e}")
             continue
 
-    # Aggregate (mean over folds)
+    # Aggregate fold predictions (mean over folds for overlapping dates)
     accum: dict = {}
     for idx_arr, probs_arr in all_preds:
         for date, prob in zip(idx_arr, probs_arr):
@@ -407,9 +407,31 @@ def compute_regime_transition_probability(df: pd.DataFrame, model: str) -> pd.Se
     for date, prob_list in accum.items():
         prob_out[date] = round(float(np.mean(prob_list)), 4)
 
+    # ── Backfill: fit on ALL labelled rows and predict the training-period gaps
+    # Walk-forward only covers test folds (typically ~last 40% of data).  We fit
+    # one final model on the full labelled set and fill dates that are still NaN.
+    # These are flagged as in-sample estimates in metadata (not out-of-sample).
+    unfilled_mask = prob_out.isna() & valid_mask
+    if unfilled_mask.sum() > 0:
+        print(f"  Backfill: fitting final model on {len(X_all)} labelled rows "
+              f"to fill {unfilled_mask.sum()} training-period gaps …")
+        try:
+            final_clf = RandomForestClassifier(
+                n_estimators=300, max_depth=5, min_samples_split=10,
+                random_state=42, n_jobs=-1, class_weight="balanced",
+            )
+            final_clf.fit(X_all, y_all)
+            backfill_X = df.loc[unfilled_mask, available]
+            backfill_probs = final_clf.predict_proba(backfill_X)[:, 1]
+            for date, p in zip(backfill_X.index, backfill_probs):
+                prob_out[date] = round(float(p), 4)
+            print(f"  Backfill complete — {unfilled_mask.sum()} rows filled (in-sample).")
+        except Exception as e:
+            print(f"  Backfill FAILED: {e}")
+
     n_filled = prob_out.notna().sum()
     print(f"  Transition probability filled for {n_filled}/{len(df)} dates")
-    print(f"  Mean P(→PONZI): {prob_out.dropna().mean():.3f}")
+    print(f"  Mean P(->PONZI): {prob_out.dropna().mean():.3f}")
     return prob_out
 
 

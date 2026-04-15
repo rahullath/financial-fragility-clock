@@ -2,6 +2,9 @@ import React, { useMemo, useState } from 'react';
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -56,80 +59,86 @@ const FeatureImportanceTimeSeries: React.FC<FeatureImportanceTimeSeriesProps> = 
   const LAYMAN_EXPLANATION = "This chart shows how the importance of different factors changes over time. Each line represents a financial indicator. When a line goes up, that factor is becoming more important in predicting market fragility. Watch for sudden spikes - they indicate a factor that's suddenly driving risk.";
 
   // Extract SHAP values over time from model outputs
-  const { timeSeriesData, topFeatures, significantChanges } = useMemo(() => {
-    // Read from feature_importance_timeseries field in model outputs
-    const timeseriesData = currentModelData.outputsData.feature_importance_timeseries;
-    
-    if (!timeseriesData || timeseriesData.length === 0) {
-      return { timeSeriesData: [], topFeatures: [], significantChanges: new Set<string>() };
-    }
+  const { timeSeriesData, topFeatures, significantChanges, isStatic } = useMemo(() => {
+    // Primary: read from feature_importance_timeseries field in model outputs
+    const timeseriesRaw = currentModelData.outputsData.feature_importance_timeseries as
+      | Array<{ timestamp: string; feature_importance: Record<string, number> }>
+      | undefined;
 
-    // Expected 7 input features
-    const expectedFeatures = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM'];
-    
-    // Calculate average importance for each feature across all time points
-    const featureAvgs: Record<string, number> = {};
-    expectedFeatures.forEach(feature => {
-      const values = timeseriesData
-        .map(point => point.feature_importance[feature] || 0)
-        .filter(v => !isNaN(v));
-      featureAvgs[feature] = values.reduce((sum, v) => sum + v, 0) / values.length;
-    });
+    // ── Time-series path ────────────────────────────────────────────────────
+    if (timeseriesRaw && timeseriesRaw.length > 0) {
+      const expectedFeatures = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM'];
 
-    // Get top N features by average importance
-    const sortedFeatures = Object.entries(featureAvgs)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, topN)
-      .map(([name]) => name);
-
-    // Filter out any features not in the expected 7 (remove made-up variables like "regime_confidence")
-    const validFeatures = sortedFeatures.filter(f => expectedFeatures.includes(f));
-
-    // Build time series data
-    let filteredData = timeseriesData;
-    
-    // Apply date range filter if provided
-    if (dateRange) {
-      const [startDate, endDate] = dateRange;
-      const startTime = new Date(startDate).getTime();
-      const endTime = new Date(endDate).getTime();
-      
-      filteredData = timeseriesData.filter(point => {
-        const pointTime = new Date(point.timestamp).getTime();
-        return pointTime >= startTime && pointTime <= endTime;
+      const featureAvgs: Record<string, number> = {};
+      expectedFeatures.forEach(feature => {
+        const values = timeseriesRaw
+          .map(point => point.feature_importance[feature] || 0)
+          .filter(v => !isNaN(v));
+        featureAvgs[feature] = values.reduce((sum, v) => sum + v, 0) / values.length;
       });
-    }
 
-    const tsData: FeatureImportanceDataPoint[] = filteredData.map(point => {
-      const dataPoint: FeatureImportanceDataPoint = { date: point.timestamp };
-      validFeatures.forEach(feature => {
-        dataPoint[feature] = point.feature_importance[feature] || 0;
-      });
-      return dataPoint;
-    });
+      const sortedFeatures = Object.entries(featureAvgs)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, topN)
+        .map(([name]) => name)
+        .filter(f => expectedFeatures.includes(f));
 
-    // Detect significant changes (features with >50% change in importance)
-    const changes = new Set<string>();
-    validFeatures.forEach(feature => {
-      const values = tsData.map(d => Number(d[feature]));
-      if (values.length < 2) return;
-      
-      const maxVal = Math.max(...values);
-      const minVal = Math.min(...values);
-      const range = maxVal - minVal;
-      const avgVal = values.reduce((sum, v) => sum + v, 0) / values.length;
-      
-      // If range is more than 50% of average, mark as significant
-      if (range > avgVal * 0.5) {
-        changes.add(feature);
+      let filteredData = timeseriesRaw;
+      if (dateRange) {
+        const [startDate, endDate] = dateRange;
+        const startTime = new Date(startDate).getTime();
+        const endTime   = new Date(endDate).getTime();
+        filteredData = timeseriesRaw.filter(point => {
+          const t = new Date(point.timestamp).getTime();
+          return t >= startTime && t <= endTime;
+        });
       }
-    });
 
-    return {
-      timeSeriesData: tsData,
-      topFeatures: validFeatures,
-      significantChanges: changes,
-    };
+      const tsData: FeatureImportanceDataPoint[] = filteredData.map(point => {
+        const dp: FeatureImportanceDataPoint = { date: point.timestamp };
+        sortedFeatures.forEach(f => { dp[f] = point.feature_importance[f] || 0; });
+        return dp;
+      });
+
+      const changes = new Set<string>();
+      sortedFeatures.forEach(feature => {
+        const values = tsData.map(d => Number(d[feature]));
+        if (values.length < 2) return;
+        const maxVal = Math.max(...values);
+        const minVal = Math.min(...values);
+        const avgVal = values.reduce((s, v) => s + v, 0) / values.length;
+        if (maxVal - minVal > avgVal * 0.5) changes.add(feature);
+      });
+
+      return { timeSeriesData: tsData, topFeatures: sortedFeatures, significantChanges: changes, isStatic: false };
+    }
+
+    // ── Static fallback: random_forest.feature_importance ──────────────────
+    // Used when the classification pipeline produces a single importance dict
+    // rather than a time-series.
+    const rf = currentModelData.outputsData['random_forest'] as
+      | { feature_importance?: Record<string, number> }
+      | undefined;
+    const staticImportance = rf?.feature_importance;
+
+    if (staticImportance && Object.keys(staticImportance).length > 0) {
+      const sorted = Object.entries(staticImportance)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, topN);
+
+      const features  = sorted.map(([f]) => f);
+      const staticRow: FeatureImportanceDataPoint = { date: 'Model Average' };
+      sorted.forEach(([f, v]) => { staticRow[f] = v; });
+
+      return {
+        timeSeriesData:    [staticRow],
+        topFeatures:       features,
+        significantChanges: new Set<string>(),
+        isStatic: true,
+      };
+    }
+
+    return { timeSeriesData: [], topFeatures: [], significantChanges: new Set<string>(), isStatic: false };
   }, [currentModelData.outputsData, topN, dateRange]);
 
   // Toggle feature visibility
@@ -184,7 +193,9 @@ const FeatureImportanceTimeSeries: React.FC<FeatureImportanceTimeSeriesProps> = 
     <div className="feature-importance-timeseries" id="chart-feature-importance">
       <div className="feature-importance-header">
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <span className="feature-importance-title">Feature Importance Over Time</span>
+          <span className="feature-importance-title">
+            {isStatic ? 'Feature Importance (Gini)' : 'Feature Importance Over Time'}
+          </span>
           <LaymanOverlay 
             explanationGenerator={() => LAYMAN_EXPLANATION}
             triggerLabel="?"
@@ -193,7 +204,12 @@ const FeatureImportanceTimeSeries: React.FC<FeatureImportanceTimeSeriesProps> = 
         </div>
         <div className="feature-importance-meta">
           <span>Top {topN} features</span>
-          {dateRange && (
+          {isStatic && (
+            <span style={{ fontSize: '0.7rem', opacity: 0.7, marginLeft: 8 }}>
+              Gini importance from Random Forest Classifier
+            </span>
+          )}
+          {!isStatic && dateRange && (
             <span className="date-range">
               {dateRange[0]} to {dateRange[1]}
             </span>
@@ -201,56 +217,87 @@ const FeatureImportanceTimeSeries: React.FC<FeatureImportanceTimeSeriesProps> = 
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={400}>
-        <LineChart
-          data={timeSeriesData}
-          margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
-            tickFormatter={(date) => {
-              const d = new Date(date);
-              return `${d.getMonth() + 1}/${d.getDate()}`;
-            }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
-            axisLine={false}
-            tickLine={false}
-            label={{ value: 'Importance', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            onClick={(e) => handleLegendClick(e.dataKey as string)}
-            wrapperStyle={{ cursor: 'pointer', fontSize: '11px' }}
-            formatter={(value: string) => (
-              <span style={{ opacity: hiddenFeatures.has(value) ? 0.5 : 1 }}>
-                {value}
-                {significantChanges.has(value) && (
-                  <span className="legend-badge" title="Significant change">!</span>
-                )}
-              </span>
-            )}
-          />
-          {topFeatures.map((feature, index) => (
-            <Line
-              key={feature}
-              type="monotone"
-              dataKey={feature}
-              stroke={FEATURE_COLORS[index % FEATURE_COLORS.length]}
-              strokeWidth={significantChanges.has(feature) ? 2.5 : 1.5}
-              dot={false}
-              hide={hiddenFeatures.has(feature)}
-              isAnimationActive={true}
-              animationDuration={300}
+      {isStatic ? (
+        // Static bar chart for classification pipeline (single importance snapshot)
+        <ResponsiveContainer width="100%" height={Math.max(200, topFeatures.length * 32 + 40)}>
+          <BarChart
+            data={topFeatures.map(f => ({ feature: f, value: Number(timeSeriesData[0]?.[f] ?? 0) }))}
+            layout="vertical"
+            margin={{ top: 4, right: 40, bottom: 4, left: 110 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+            <XAxis
+              type="number"
+              tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+              axisLine={false} tickLine={false}
+              tickFormatter={(v: number) => v.toFixed(3)}
             />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
+            <YAxis
+              type="category"
+              dataKey="feature"
+              width={105}
+              tick={{ fontSize: 11, fill: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}
+              axisLine={false} tickLine={false}
+            />
+            <Tooltip formatter={(v: number) => v.toFixed(4)} />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} isAnimationActive animationDuration={400}>
+              {topFeatures.map((_, i) => (
+                <Cell key={i} fill={FEATURE_COLORS[i % FEATURE_COLORS.length]} fillOpacity={1 - i * 0.04} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        // Time-series line chart
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+            data={timeSeriesData}
+            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+              tickFormatter={(date) => {
+                const d = new Date(date);
+                return `${d.getMonth() + 1}/${d.getDate()}`;
+              }}
+              axisLine={false} tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
+              axisLine={false} tickLine={false}
+              label={{ value: 'Importance', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              onClick={(e) => handleLegendClick(e.dataKey as string)}
+              wrapperStyle={{ cursor: 'pointer', fontSize: '11px' }}
+              formatter={(value: string) => (
+                <span style={{ opacity: hiddenFeatures.has(value) ? 0.5 : 1 }}>
+                  {value}
+                  {significantChanges.has(value) && (
+                    <span className="legend-badge" title="Significant change">!</span>
+                  )}
+                </span>
+              )}
+            />
+            {topFeatures.map((feature, index) => (
+              <Line
+                key={feature}
+                type="monotone"
+                dataKey={feature}
+                stroke={FEATURE_COLORS[index % FEATURE_COLORS.length]}
+                strokeWidth={significantChanges.has(feature) ? 2.5 : 1.5}
+                dot={false}
+                hide={hiddenFeatures.has(feature)}
+                isAnimationActive={true}
+                animationDuration={300}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      )}
 
       {significantChanges.size > 0 && (
         <div className="feature-importance-note">

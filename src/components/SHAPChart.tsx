@@ -34,34 +34,36 @@ function extractShapData(
   const shap = outputsData['shap'] as Record<string, unknown> | undefined;
   if (!shap) return [];
 
-  // Model A: shap.mean_abs_shap + shap.regime_shap
+  // ── Model A: classification pipeline output ───────────────────────────────
+  // Structure: shap.mean_abs_shap (global), shap.regime_shap[regime].mean_abs_shap
   if (shap['mean_abs_shap']) {
-    const source =
-      regime === 'HEDGE' || regime === 'SPECULATIVE' || regime === 'PONZI'
-        ? ((shap['regime_shap'] as Record<string, Record<string, number>>)?.[
-            regime
-          ] ?? (shap['mean_abs_shap'] as Record<string, number>))
-        : (shap['mean_abs_shap'] as Record<string, number>);
+    const globalShap = shap['mean_abs_shap'] as Record<string, number>;
+    const regimeShap = shap['regime_shap'] as
+      | Record<string, { mean_abs_shap?: Record<string, number>; observations?: number }>
+      | undefined;
+
+    // Prefer the per-regime breakdown, but the value lives inside .mean_abs_shap
+    const perRegime = regimeShap?.[regime];
+    const source: Record<string, number> =
+      perRegime?.mean_abs_shap && Object.keys(perRegime.mean_abs_shap).length > 0
+        ? perRegime.mean_abs_shap
+        : globalShap;
 
     return Object.entries(source)
       .map(([feature, value]) => ({ feature, value: Math.abs(value as number) }))
       .sort((a, b) => b.value - a.value);
   }
 
-  // Model B: shap.regime_comparison - extract from nested mean_abs_shap object
+  // ── Model B: shap.regime_comparison ──────────────────────────────────────
   const regimeComp = shap['regime_comparison'] as
     | Record<string, Record<string, unknown>>
     | undefined;
   if (regimeComp?.[regime]) {
     const regimeData = regimeComp[regime];
-
-    // Extract features from nested mean_abs_shap object
     const meanAbsShap = regimeData['mean_abs_shap'] as Record<string, number> | undefined;
     if (!meanAbsShap) return [];
 
-    // Expected features from assignment (SP500 may be named 'SP' in data)
     const expectedFeatures = ['SP500', 'SP', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM'];
-
     return Object.entries(meanAbsShap)
       .filter(([feature]) => expectedFeatures.includes(feature))
       .map(([feature, value]) => ({ feature, value: Math.abs(value as number) }))
@@ -106,39 +108,35 @@ const SHAPChart: React.FC = () => {
     [currentModelData.outputsData, regime]
   );
 
-  // Calculate regime percentage from regime_comparison/regime_shap or features data
   const regimePercentage = useMemo(() => {
-    // First, try to get regime distribution from shap.regime_comparison (Model B) or shap.regime_shap (Model A)
     const shap = currentModelData.outputsData['shap'] as Record<string, unknown> | undefined;
-    const regimeComp = (shap?.['regime_comparison'] || shap?.['regime_shap']) as Record<string, Record<string, unknown>> | undefined;
-    
-    if (regimeComp) {
-      // Extract n_observations for each regime
-      const regimeCounts: Record<string, number> = {};
-      let totalObservations = 0;
-      
-      for (const [regimeName, regimeData] of Object.entries(regimeComp)) {
-        // Handle both 'n_observations' (Model A) and 'observations' (Model B)
-        const nObs = ((regimeData['n_observations'] || regimeData['observations']) as number) || 0;
-        regimeCounts[regimeName] = nObs;
-        totalObservations += nObs;
-      }
-      
-      if (totalObservations > 0) {
-        const regimeCount = regimeCounts[regime] || 0;
-        return ((regimeCount / totalObservations) * 100).toFixed(1);
-      }
+
+    // Model A: shap.regime_shap[regime].observations
+    const regimeShapA = shap?.['regime_shap'] as
+      | Record<string, { observations?: number }>
+      | undefined;
+    if (regimeShapA) {
+      let total = 0;
+      for (const rd of Object.values(regimeShapA)) total += rd.observations ?? 0;
+      const count = regimeShapA[regime]?.observations ?? 0;
+      if (total > 0) return ((count / total) * 100).toFixed(1);
     }
-    
-    // Fallback: calculate from non-null regime labels in features data
+
+    // Model B: shap.regime_comparison[regime].observations
+    const regimeComp = (shap?.['regime_comparison']) as Record<string, Record<string, unknown>> | undefined;
+    if (regimeComp) {
+      let total = 0;
+      for (const rd of Object.values(regimeComp)) total += ((rd['n_observations'] || rd['observations']) as number) ?? 0;
+      const count = ((regimeComp[regime]?.['n_observations'] || regimeComp[regime]?.['observations']) as number) ?? 0;
+      if (total > 0) return ((count / total) * 100).toFixed(1);
+    }
+
+    // Fallback: count from features data
     const rows = currentModelData.featuresData.data;
     const rowsWithRegime = rows.filter(row => row.regime != null);
-    const totalRows = rowsWithRegime.length;
-    
-    if (totalRows === 0) return '0.0';
-    
+    if (rowsWithRegime.length === 0) return '0.0';
     const regimeRows = rowsWithRegime.filter(row => row.regime === regime).length;
-    return ((regimeRows / totalRows) * 100).toFixed(1);
+    return ((regimeRows / rowsWithRegime.length) * 100).toFixed(1);
   }, [currentModelData.outputsData, currentModelData.featuresData.data, regime]);
 
   // Auto-generated caption

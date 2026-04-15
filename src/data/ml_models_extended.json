@@ -1,3343 +1,3333 @@
 {
   "metadata": {
-    "generated_at": "2026-04-14T23:56:46.096035",
+    "generated_at": "2026-04-15T01:19:18.020207",
     "models": [
       "GradientBoosting",
-      "LSTM",
-      "SVR",
-      "ElasticNet",
+      "SVC",
+      "ElasticNetLogistic",
       "Ensemble"
-    ]
+    ],
+    "pipeline": "classification_v2",
+    "target": "crash_in_next_30_days (ISE_USD < -5%)"
   },
   "predictions": {
     "GradientBoosting": [
       {
+        "date": "2010-08-26",
+        "crash_probability": 0.7521243653826971,
+        "fragility_score": 75.21243653826971,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-08-27",
+        "crash_probability": 0.7346098424130338,
+        "fragility_score": 73.46098424130338,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-08-31",
+        "crash_probability": 0.6157502194599368,
+        "fragility_score": 61.57502194599368,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-01",
+        "crash_probability": 0.9096628512763087,
+        "fragility_score": 90.96628512763087,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-02",
+        "crash_probability": 0.7735651579101152,
+        "fragility_score": 77.35651579101152,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-03",
+        "crash_probability": 0.8828894615301051,
+        "fragility_score": 88.2889461530105,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-06",
+        "crash_probability": 0.7818529267505212,
+        "fragility_score": 78.18529267505212,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-07",
+        "crash_probability": 0.11588889995144543,
+        "fragility_score": 11.588889995144543,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-08",
+        "crash_probability": 0.3638990453954018,
+        "fragility_score": 36.38990453954018,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-13",
+        "crash_probability": 0.9422044207186261,
+        "fragility_score": 94.2204420718626,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-14",
+        "crash_probability": 0.33449745126757563,
+        "fragility_score": 33.44974512675756,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-15",
+        "crash_probability": 0.23943251766679127,
+        "fragility_score": 23.943251766679126,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-16",
+        "crash_probability": 0.37153659946906625,
+        "fragility_score": 37.15365994690663,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-17",
+        "crash_probability": 0.5135890797786048,
+        "fragility_score": 51.35890797786048,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-20",
+        "crash_probability": 0.7560349274731076,
+        "fragility_score": 75.60349274731077,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-21",
+        "crash_probability": 0.2886546566976089,
+        "fragility_score": 28.865465669760894,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-22",
+        "crash_probability": 0.10637827355359115,
+        "fragility_score": 10.637827355359116,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-23",
+        "crash_probability": 0.10203749317005707,
+        "fragility_score": 10.203749317005707,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-24",
+        "crash_probability": 0.6884761263105162,
+        "fragility_score": 68.84761263105162,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-27",
+        "crash_probability": 0.24617912772955158,
+        "fragility_score": 24.617912772955158,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-28",
+        "crash_probability": 0.2538893139018354,
+        "fragility_score": 25.38893139018354,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-29",
+        "crash_probability": 0.5207425011433134,
+        "fragility_score": 52.07425011433134,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-30",
+        "crash_probability": 0.3934546347597302,
+        "fragility_score": 39.34546347597302,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-10-01",
+        "crash_probability": 0.7862657434956721,
+        "fragility_score": 78.6265743495672,
+        "regime": "PONZI"
+      },
+      {
         "date": "2010-10-04",
-        "fragility_score": 0.006014102178286112,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3562718011434373,
+        "fragility_score": 35.62718011434373,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-05",
-        "fragility_score": 0.014832145190350835,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.8835795613347933,
+        "fragility_score": 88.35795613347933,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-06",
-        "fragility_score": 0.004597115478748687,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.8240365253358621,
+        "fragility_score": 82.40365253358621,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-07",
-        "fragility_score": -0.0014488532811711321,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4564742920896413,
+        "fragility_score": 45.64742920896413,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-08",
-        "fragility_score": -0.007925196155249918,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.11538402091435093,
+        "fragility_score": 11.538402091435094,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-11",
-        "fragility_score": 0.005199487346435838,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5163182155502211,
+        "fragility_score": 51.63182155502211,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-12",
-        "fragility_score": -0.0036945213763528583,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.23195923367438456,
+        "fragility_score": 23.195923367438457,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-13",
-        "fragility_score": 0.02264260163394811,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.9418182043672325,
+        "fragility_score": 94.18182043672326,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-14",
-        "fragility_score": 0.008418662763757927,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6829670002786689,
+        "fragility_score": 68.29670002786689,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-15",
-        "fragility_score": -0.0019991314108118593,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2927665441131969,
+        "fragility_score": 29.27665441131969,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-18",
-        "fragility_score": 0.0016271125114018636,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6903502946785119,
+        "fragility_score": 69.03502946785119,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-19",
-        "fragility_score": -0.006872092429517138,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.21445702858447532,
+        "fragility_score": 21.445702858447532,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-20",
-        "fragility_score": 0.006342587019633038,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5949967873273706,
+        "fragility_score": 59.49967873273706,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-21",
-        "fragility_score": 0.010665274752182041,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7553303386677014,
+        "fragility_score": 75.53303386677014,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-22",
-        "fragility_score": -0.000872800913742564,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.40307161500417255,
+        "fragility_score": 40.30716150041725,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-25",
-        "fragility_score": 0.0037033834435037075,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6920104587109216,
+        "fragility_score": 69.20104587109216,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-26",
-        "fragility_score": -0.005597654378727757,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.13487457635214253,
+        "fragility_score": 13.487457635214254,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-27",
-        "fragility_score": -0.01066059168680499,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.1608497690143559,
+        "fragility_score": 16.084976901435592,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-01",
-        "fragility_score": 0.0064896135179908,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.581933316813831,
+        "fragility_score": 58.1933316813831,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-02",
-        "fragility_score": 0.005864146591347713,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.8641001251073912,
+        "fragility_score": 86.41001251073912,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-03",
-        "fragility_score": 0.012287839459939467,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5388179637934724,
+        "fragility_score": 53.881796379347236,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-04",
-        "fragility_score": 0.016278530020586237,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.8752207311909451,
+        "fragility_score": 87.52207311909451,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-05",
-        "fragility_score": 0.004505404449204231,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7605706564593718,
+        "fragility_score": 76.05706564593719,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-08",
-        "fragility_score": 0.009763520603563046,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5328355130309286,
+        "fragility_score": 53.28355130309286,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-09",
-        "fragility_score": 0.0010598196513768165,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6542229987107954,
+        "fragility_score": 65.42229987107953,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-10",
-        "fragility_score": -0.005682544356662137,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.19064842967201756,
+        "fragility_score": 19.064842967201756,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-11",
-        "fragility_score": -0.003570174308397809,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5952835500539868,
+        "fragility_score": 59.52835500539868,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-12",
-        "fragility_score": -0.010519889398616256,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.21840886060266101,
+        "fragility_score": 21.8408860602661,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-15",
-        "fragility_score": -0.0012762657806117985,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.1612550775650853,
+        "fragility_score": 16.12550775650853,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-22",
-        "fragility_score": -0.02245516642744486,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.31276954735963847,
+        "fragility_score": 31.276954735963848,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-23",
-        "fragility_score": -0.02827160802159873,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.060684129385488256,
+        "fragility_score": 6.068412938548826,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-24",
-        "fragility_score": 0.011402370753353541,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6720118457985457,
+        "fragility_score": 67.20118457985457,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-25",
-        "fragility_score": 0.008334933035944113,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4698579638633287,
+        "fragility_score": 46.985796386332865,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-26",
-        "fragility_score": -0.020214718822817994,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.167023763331507,
+        "fragility_score": 16.7023763331507,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-29",
-        "fragility_score": -0.020406291513342986,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.12742485583798566,
+        "fragility_score": 12.742485583798565,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-30",
-        "fragility_score": -0.020037118436626398,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.23021995503099588,
+        "fragility_score": 23.02199550309959,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-01",
-        "fragility_score": 0.03334558932613426,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.9119036039332774,
+        "fragility_score": 91.19036039332774,
+        "regime": "PONZI"
       },
       {
         "date": "2010-12-02",
-        "fragility_score": 0.03272581662483304,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.9288263530963252,
+        "fragility_score": 92.88263530963252,
+        "regime": "PONZI"
       },
       {
         "date": "2010-12-03",
-        "fragility_score": 0.003307327875402777,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5593554557204141,
+        "fragility_score": 55.93554557204141,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-06",
-        "fragility_score": 0.007585492750407856,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5920716234789551,
+        "fragility_score": 59.20716234789551,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-07",
-        "fragility_score": 0.002125044818679734,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.15492450559298065,
+        "fragility_score": 15.492450559298065,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-08",
-        "fragility_score": -0.0025677541833198604,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.47046075259224057,
+        "fragility_score": 47.046075259224054,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-09",
-        "fragility_score": -0.002331766536526884,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2844836317519697,
+        "fragility_score": 28.448363175196974,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-10",
-        "fragility_score": -0.007463577415382582,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.20763748281629896,
+        "fragility_score": 20.763748281629894,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-13",
-        "fragility_score": -0.0004779219359284278,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4478889928807889,
+        "fragility_score": 44.788899288078895,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-14",
-        "fragility_score": 0.0001424341649830916,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.602069751447008,
+        "fragility_score": 60.206975144700806,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-15",
-        "fragility_score": -0.015806478068529025,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.24869465145663017,
+        "fragility_score": 24.869465145663018,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-16",
-        "fragility_score": -0.013023660966523297,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.482717392009801,
+        "fragility_score": 48.2717392009801,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-17",
-        "fragility_score": -0.0009703986221093454,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.19529368035225733,
+        "fragility_score": 19.529368035225733,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-20",
-        "fragility_score": -0.012643686980094588,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.15039195559026444,
+        "fragility_score": 15.039195559026444,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-21",
-        "fragility_score": 0.013808837926219024,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6397298078616491,
+        "fragility_score": 63.97298078616491,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-22",
-        "fragility_score": -0.013083642612904567,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2763908223805829,
+        "fragility_score": 27.639082238058286,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-23",
-        "fragility_score": -0.014155226669744147,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.10396525479358712,
+        "fragility_score": 10.396525479358711,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-24",
-        "fragility_score": -0.01568023727986263,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.09221016058488123,
+        "fragility_score": 9.221016058488123,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-27",
-        "fragility_score": -0.014597757324388014,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.20353989200319828,
+        "fragility_score": 20.353989200319827,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-28",
-        "fragility_score": -0.011900170360037508,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.1581906113528665,
+        "fragility_score": 15.819061135286649,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-29",
-        "fragility_score": -0.0008818870499092271,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3480264827911487,
+        "fragility_score": 34.80264827911487,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-30",
-        "fragility_score": 0.004302602387459066,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.382905794743394,
+        "fragility_score": 38.290579474339395,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-31",
-        "fragility_score": -0.0024078087409338807,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.25700140294284135,
+        "fragility_score": 25.700140294284136,
+        "regime": "HEDGE"
       },
       {
         "date": "2011-01-03",
-        "fragility_score": 0.015523641844976852,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.8084145186964349,
+        "fragility_score": 80.84145186964349,
+        "regime": "PONZI"
       },
       {
         "date": "2011-01-04",
-        "fragility_score": 0.01352364189884934,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.39507496837949474,
+        "fragility_score": 39.507496837949475,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-05",
-        "fragility_score": -0.01197030713710091,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.32374039161354473,
+        "fragility_score": 32.374039161354474,
+        "regime": "HEDGE"
       },
       {
         "date": "2011-01-06",
-        "fragility_score": -0.008649841112634189,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.33411423595809137,
+        "fragility_score": 33.41142359580914,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-07",
-        "fragility_score": -0.011002472953452053,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4619793336727795,
+        "fragility_score": 46.19793336727795,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-10",
-        "fragility_score": -0.02212999080709352,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2776555246464432,
+        "fragility_score": 27.765552464644323,
+        "regime": "HEDGE"
       },
       {
         "date": "2011-01-11",
-        "fragility_score": 0.013083836642317298,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-12",
-        "fragility_score": 0.03248539175360363,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-13",
-        "fragility_score": -0.010762349984728404,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-14",
-        "fragility_score": -0.009726740028428302,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-17",
-        "fragility_score": -0.01193442990903002,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-18",
-        "fragility_score": 0.009621292816742476,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-19",
-        "fragility_score": -0.013642862297493289,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-20",
-        "fragility_score": -0.016778161517511308,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-21",
-        "fragility_score": -0.0006464737469953773,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-24",
-        "fragility_score": -0.0046088402971421714,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-25",
-        "fragility_score": -0.005681665954268712,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-26",
-        "fragility_score": 0.0073095914077880055,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-27",
-        "fragility_score": -0.004170557381812873,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-28",
-        "fragility_score": -0.016499550718095914,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-31",
-        "fragility_score": -0.0017186122539582533,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-01",
-        "fragility_score": 0.017922433231789735,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-02",
-        "fragility_score": 0.010540998151960693,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-03",
-        "fragility_score": -0.005673918466515936,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-04",
-        "fragility_score": -8.891859023392725e-05,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-07",
-        "fragility_score": 0.004749931517686307,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-08",
-        "fragility_score": -0.0025107394401130416,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-09",
-        "fragility_score": -0.010349421987706383,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-10",
-        "fragility_score": -0.01738925561303998,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-11",
-        "fragility_score": 0.00400046832480343,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-14",
-        "fragility_score": 0.00012964349089271594,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-15",
-        "fragility_score": -0.004064202488004416,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-16",
-        "fragility_score": 0.0016650731047517543,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-17",
-        "fragility_score": -0.0015636940249349673,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-18",
-        "fragility_score": 0.004226954188441641,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-21",
-        "fragility_score": -0.007867044549088051,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-22",
-        "fragility_score": -0.017594058583646037,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7535889734581067,
+        "fragility_score": 75.35889734581068,
+        "regime": "PONZI"
       }
     ],
-    "LSTM": [
+    "SVC": [
       {
-        "date": "2010-11-23",
-        "fragility_score": 0.0008849879959598184,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-08-26",
+        "crash_probability": 0.7939352383445931,
+        "fragility_score": 79.39352383445932,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-11-24",
-        "fragility_score": 0.0005760444328188896,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-08-27",
+        "crash_probability": 0.6501294401860565,
+        "fragility_score": 65.01294401860565,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-11-25",
-        "fragility_score": 0.0006941653555259109,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-08-31",
+        "crash_probability": 0.3113993622264709,
+        "fragility_score": 31.13993622264709,
+        "regime": "HEDGE"
       },
       {
-        "date": "2010-11-26",
-        "fragility_score": 0.0006595319136977196,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-01",
+        "crash_probability": 0.525569019795898,
+        "fragility_score": 52.556901979589796,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-11-29",
-        "fragility_score": 0.0005093154031783342,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-02",
+        "crash_probability": 0.7118732345802924,
+        "fragility_score": 71.18732345802924,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-11-30",
-        "fragility_score": 0.0004435814917087555,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-03",
+        "crash_probability": 0.7714005782455128,
+        "fragility_score": 77.14005782455128,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-12-01",
-        "fragility_score": 0.0004426258383318782,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-06",
+        "crash_probability": 0.7622300977885462,
+        "fragility_score": 76.22300977885462,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-12-02",
-        "fragility_score": 0.0007859264733269811,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-07",
+        "crash_probability": 0.34851081457087285,
+        "fragility_score": 34.85108145708728,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-03",
-        "fragility_score": 0.0010720564750954509,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-08",
+        "crash_probability": 0.347774147530719,
+        "fragility_score": 34.7774147530719,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-06",
-        "fragility_score": 0.0012966440990567207,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-13",
+        "crash_probability": 0.5764812096955888,
+        "fragility_score": 57.64812096955888,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-07",
-        "fragility_score": 0.0014515366638079286,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-14",
+        "crash_probability": 0.603000836439414,
+        "fragility_score": 60.300083643941406,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-08",
-        "fragility_score": 0.0015777575317770243,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-15",
+        "crash_probability": 0.3453143121201493,
+        "fragility_score": 34.53143121201493,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-09",
-        "fragility_score": 0.0013050949200987816,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-16",
+        "crash_probability": 0.45858496713529484,
+        "fragility_score": 45.85849671352948,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-10",
-        "fragility_score": 0.0010786749189719558,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-17",
+        "crash_probability": 0.48000356671507793,
+        "fragility_score": 48.000356671507795,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-13",
-        "fragility_score": 0.0010569652076810598,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-20",
+        "crash_probability": 0.6924934108356379,
+        "fragility_score": 69.24934108356379,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-12-14",
-        "fragility_score": 0.00116261700168252,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-21",
+        "crash_probability": 0.5121764843374673,
+        "fragility_score": 51.21764843374673,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-15",
-        "fragility_score": 0.0010598403168842196,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-22",
+        "crash_probability": 0.28293772944009427,
+        "fragility_score": 28.293772944009426,
+        "regime": "HEDGE"
       },
       {
-        "date": "2010-12-16",
-        "fragility_score": 0.0006983260391280055,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-23",
+        "crash_probability": 0.3480484505297247,
+        "fragility_score": 34.804845052972475,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-17",
-        "fragility_score": 0.00047030881978571415,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-24",
+        "crash_probability": 0.6740496719395039,
+        "fragility_score": 67.4049671939504,
+        "regime": "PONZI"
       },
       {
-        "date": "2010-12-20",
-        "fragility_score": 0.00040838110726326704,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-27",
+        "crash_probability": 0.31647801386589464,
+        "fragility_score": 31.647801386589464,
+        "regime": "HEDGE"
       },
       {
-        "date": "2010-12-21",
-        "fragility_score": 0.0003236073534935713,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-28",
+        "crash_probability": 0.425396550466856,
+        "fragility_score": 42.539655046685596,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-22",
-        "fragility_score": 0.00045177608262747526,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-29",
+        "crash_probability": 0.5163142520871493,
+        "fragility_score": 51.63142520871493,
+        "regime": "SPECULATIVE"
       },
       {
-        "date": "2010-12-23",
-        "fragility_score": 0.0005284110084176064,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-09-30",
+        "crash_probability": 0.2745474907174482,
+        "fragility_score": 27.45474907174482,
+        "regime": "HEDGE"
       },
       {
-        "date": "2010-12-24",
-        "fragility_score": 0.0005552629008889198,
-        "regime": "normal",
-        "confidence": 0.8
+        "date": "2010-10-01",
+        "crash_probability": 0.6970524791706321,
+        "fragility_score": 69.7052479170632,
+        "regime": "PONZI"
       },
-      {
-        "date": "2010-12-27",
-        "fragility_score": 0.0004155180649831891,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2010-12-28",
-        "fragility_score": 0.0002275544684380293,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2010-12-29",
-        "fragility_score": 0.00028460402972996235,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2010-12-30",
-        "fragility_score": 0.000538275926373899,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2010-12-31",
-        "fragility_score": 0.0007677027024328709,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-03",
-        "fragility_score": 0.0008734884904697537,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-04",
-        "fragility_score": 0.0010769765358418226,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-05",
-        "fragility_score": 0.00124070281162858,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-06",
-        "fragility_score": 0.0014060880057513714,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-07",
-        "fragility_score": 0.0012686413247138262,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-10",
-        "fragility_score": 0.0010768292704597116,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-11",
-        "fragility_score": 0.001010863110423088,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-12",
-        "fragility_score": 0.0010628962190821767,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-13",
-        "fragility_score": 0.001386913238093257,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-14",
-        "fragility_score": 0.0013217853847891092,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-17",
-        "fragility_score": 0.0014459732919931412,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-18",
-        "fragility_score": 0.0014372713631018996,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-19",
-        "fragility_score": 0.0014733474235981703,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-20",
-        "fragility_score": 0.0011013508774340153,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-21",
-        "fragility_score": 0.0008797189220786095,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-24",
-        "fragility_score": 0.0008778268238529563,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-25",
-        "fragility_score": 0.0009353901259601116,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-26",
-        "fragility_score": 0.0008387310663238168,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-27",
-        "fragility_score": 0.0009680299554020166,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-28",
-        "fragility_score": 0.0008552903309464455,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-31",
-        "fragility_score": 0.000583033892326057,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-01",
-        "fragility_score": 0.0006129364483058453,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-02",
-        "fragility_score": 0.0009345419239252806,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-03",
-        "fragility_score": 0.0008703544735908508,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-04",
-        "fragility_score": 0.0008371034637093544,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-07",
-        "fragility_score": 0.0007698453264310956,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-08",
-        "fragility_score": 0.0008754434529691935,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-09",
-        "fragility_score": 0.0010423911735415459,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-10",
-        "fragility_score": 0.0008513847133144736,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-11",
-        "fragility_score": 0.0008558039553463459,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-14",
-        "fragility_score": 0.0011285205837339163,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-15",
-        "fragility_score": 0.0012131347320973873,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-16",
-        "fragility_score": 0.0011273815762251616,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-17",
-        "fragility_score": 0.0013281360734254122,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-18",
-        "fragility_score": 0.001441212953068316,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-21",
-        "fragility_score": 0.0016092583537101746,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-22",
-        "fragility_score": 0.0014720135368406773,
-        "regime": "normal",
-        "confidence": 0.8
-      }
-    ],
-    "SVR": [
       {
         "date": "2010-10-04",
-        "fragility_score": 0.023128678009308824,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3370341887634795,
+        "fragility_score": 33.70341887634795,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-05",
-        "fragility_score": 0.03105835365949925,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7296836102075028,
+        "fragility_score": 72.96836102075028,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-06",
-        "fragility_score": 0.007076119639762825,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6933994828529039,
+        "fragility_score": 69.33994828529039,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-07",
-        "fragility_score": -0.0014331740460983493,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.35164486970533343,
+        "fragility_score": 35.164486970533346,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-08",
-        "fragility_score": -0.001465074201721837,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.40202856081003174,
+        "fragility_score": 40.202856081003176,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-11",
-        "fragility_score": 0.0025783525624062183,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3556167889033272,
+        "fragility_score": 35.56167889033272,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-12",
-        "fragility_score": 0.008037023671363032,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.36388128377306317,
+        "fragility_score": 36.388128377306316,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-13",
-        "fragility_score": 0.0330373754005314,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7450722294520675,
+        "fragility_score": 74.50722294520675,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-14",
-        "fragility_score": 0.004377629229950088,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5385206092600213,
+        "fragility_score": 53.85206092600213,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-15",
-        "fragility_score": 0.0006017527787574935,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3883473356714939,
+        "fragility_score": 38.834733567149385,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-18",
-        "fragility_score": 0.002837977665660498,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5950752268145554,
+        "fragility_score": 59.50752268145554,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-19",
-        "fragility_score": -0.0041728764297289875,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5336948470558136,
+        "fragility_score": 53.36948470558136,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-20",
-        "fragility_score": 0.004819576684595851,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.522124479724418,
+        "fragility_score": 52.2124479724418,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-21",
-        "fragility_score": 0.025946553119157036,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7199493832622722,
+        "fragility_score": 71.99493832622721,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-22",
-        "fragility_score": -0.0026321141299789,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5134757551454092,
+        "fragility_score": 51.34757551454092,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-25",
-        "fragility_score": 0.005986699597153457,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5996847236709186,
+        "fragility_score": 59.96847236709186,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-26",
-        "fragility_score": -0.003582527861358063,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.21076819811037192,
+        "fragility_score": 21.076819811037193,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-27",
-        "fragility_score": -0.011394563974255222,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.23559503978713237,
+        "fragility_score": 23.559503978713238,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-01",
-        "fragility_score": -0.00017681638019120078,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.38441914915567926,
+        "fragility_score": 38.44191491556793,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-02",
-        "fragility_score": 0.002403171385057947,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7215971006517313,
+        "fragility_score": 72.15971006517313,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-03",
-        "fragility_score": 0.0005951058248444348,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3915969243992871,
+        "fragility_score": 39.15969243992871,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-04",
-        "fragility_score": 0.037666130864802284,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.726772032636606,
+        "fragility_score": 72.6772032636606,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-05",
-        "fragility_score": 0.006593257193323911,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5974405373846579,
+        "fragility_score": 59.74405373846579,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-08",
-        "fragility_score": 0.004832505586421655,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.37198792355879806,
+        "fragility_score": 37.1987923558798,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-09",
-        "fragility_score": 0.0077702765890545825,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5063700603119979,
+        "fragility_score": 50.637006031199796,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-10",
-        "fragility_score": -0.021306303816468607,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2581390779824913,
+        "fragility_score": 25.81390779824913,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-11",
-        "fragility_score": -0.01453484945216079,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.46563903306639254,
+        "fragility_score": 46.563903306639254,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-12",
-        "fragility_score": -0.008162589784262285,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3699826212180011,
+        "fragility_score": 36.99826212180011,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-15",
-        "fragility_score": 0.0036650817076211224,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5078880931671136,
+        "fragility_score": 50.78880931671136,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-22",
-        "fragility_score": -0.01462729729012157,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2494186222548202,
+        "fragility_score": 24.94186222548202,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-23",
-        "fragility_score": -0.044253599607271814,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.27938145520512053,
+        "fragility_score": 27.93814552051205,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-24",
-        "fragility_score": -0.030153577451873546,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6034083327183486,
+        "fragility_score": 60.34083327183486,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-25",
-        "fragility_score": 0.023295696932014033,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5752163225815465,
+        "fragility_score": 57.52163225815465,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-26",
-        "fragility_score": -0.024309387368639655,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.38025847325623774,
+        "fragility_score": 38.02584732562377,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-29",
-        "fragility_score": -0.037132536213744925,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.45261805442852265,
+        "fragility_score": 45.261805442852264,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-30",
-        "fragility_score": -0.023215249776385748,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.44014437729486694,
+        "fragility_score": 44.014437729486694,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-01",
-        "fragility_score": 0.06177310108052101,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.649350318919826,
+        "fragility_score": 64.9350318919826,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-02",
-        "fragility_score": 0.02346819901477979,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6854928169482859,
+        "fragility_score": 68.5492816948286,
+        "regime": "PONZI"
       },
       {
         "date": "2010-12-03",
-        "fragility_score": 0.008814611898444548,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.39338215384751135,
+        "fragility_score": 39.33821538475114,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-06",
-        "fragility_score": 0.00754424409136676,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.47305817043139087,
+        "fragility_score": 47.305817043139086,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-07",
-        "fragility_score": 0.004556547965056425,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3920844852811068,
+        "fragility_score": 39.20844852811068,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-08",
-        "fragility_score": -0.020749490870832908,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4052621634408999,
+        "fragility_score": 40.52621634408999,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-09",
-        "fragility_score": -0.0042431564785977635,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.43375448948915507,
+        "fragility_score": 43.375448948915505,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-10",
-        "fragility_score": -0.00516601124706819,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5481917571734422,
+        "fragility_score": 54.819175717344216,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-13",
-        "fragility_score": -0.014071985789484785,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4417708845566633,
+        "fragility_score": 44.17708845566633,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-14",
-        "fragility_score": -0.015357976889986545,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.17679404612614952,
+        "fragility_score": 17.679404612614952,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-15",
-        "fragility_score": -0.025972972974753837,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.27275680439908473,
+        "fragility_score": 27.275680439908474,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-16",
-        "fragility_score": -0.028311302450500973,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3353635362981331,
+        "fragility_score": 33.536353629813306,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-17",
-        "fragility_score": -0.03827921221487631,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2210702406047905,
+        "fragility_score": 22.10702406047905,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-20",
-        "fragility_score": -0.019947018268972848,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2524526087624343,
+        "fragility_score": 25.24526087624343,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-21",
-        "fragility_score": 0.016770258742764922,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.38256481845944357,
+        "fragility_score": 38.25648184594436,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-22",
-        "fragility_score": -0.039099167456318716,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.13541945225158367,
+        "fragility_score": 13.541945225158367,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-23",
-        "fragility_score": -0.03492301807663203,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.13054066830390554,
+        "fragility_score": 13.054066830390553,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-24",
-        "fragility_score": -0.07085827942266078,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.12330678008622874,
+        "fragility_score": 12.330678008622874,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-27",
-        "fragility_score": -0.02939333247759037,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2438626366890416,
+        "fragility_score": 24.38626366890416,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-28",
-        "fragility_score": -0.011256247119475725,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3805696339813215,
+        "fragility_score": 38.05696339813215,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-29",
-        "fragility_score": -0.0008284158838686366,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5112407559225192,
+        "fragility_score": 51.12407559225191,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-30",
-        "fragility_score": -0.012679173123161157,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6021129166129764,
+        "fragility_score": 60.211291661297636,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-31",
-        "fragility_score": -0.025818122822081423,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.21551127206751236,
+        "fragility_score": 21.551127206751236,
+        "regime": "HEDGE"
       },
       {
         "date": "2011-01-03",
-        "fragility_score": 0.039191221601091654,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5592734160977534,
+        "fragility_score": 55.92734160977534,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-04",
-        "fragility_score": 0.029962738745606822,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.41075429158068394,
+        "fragility_score": 41.075429158068395,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-05",
-        "fragility_score": -0.04085088312022924,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7059482730805462,
+        "fragility_score": 70.59482730805462,
+        "regime": "PONZI"
       },
       {
         "date": "2011-01-06",
-        "fragility_score": -0.012307827250600333,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3625170099757302,
+        "fragility_score": 36.251700997573025,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-07",
-        "fragility_score": -0.011581551920802145,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.42357351444932284,
+        "fragility_score": 42.357351444932284,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-10",
-        "fragility_score": -0.04095424159294927,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5920179933157483,
+        "fragility_score": 59.20179933157483,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-11",
-        "fragility_score": 0.03216623032535002,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-12",
-        "fragility_score": 0.061316250897400094,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-13",
-        "fragility_score": -0.007940021301760546,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-14",
-        "fragility_score": -0.0026639329790079306,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-17",
-        "fragility_score": -0.017294945389143022,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-18",
-        "fragility_score": -0.009129009584355273,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-19",
-        "fragility_score": 0.0021232860435916674,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-20",
-        "fragility_score": 0.0028152150957429308,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-21",
-        "fragility_score": 0.0028663346608588177,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-24",
-        "fragility_score": -0.01781767641387568,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-25",
-        "fragility_score": -0.02262212985489067,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-26",
-        "fragility_score": 0.03568482745666466,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-27",
-        "fragility_score": -0.007036945546457195,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-28",
-        "fragility_score": -0.0051845737885154106,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-31",
-        "fragility_score": 0.004348077074911562,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-01",
-        "fragility_score": -0.014280578206572157,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-02",
-        "fragility_score": -0.02666835239900913,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-03",
-        "fragility_score": -0.030871617981746,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-04",
-        "fragility_score": -0.010971490370359403,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-07",
-        "fragility_score": -0.006958980966380278,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-08",
-        "fragility_score": -0.0117842925248818,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-09",
-        "fragility_score": -0.007918391282174773,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-10",
-        "fragility_score": -0.009261178919401057,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-11",
-        "fragility_score": -0.028967758237712048,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-14",
-        "fragility_score": 0.0031895803937001884,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-15",
-        "fragility_score": -0.0129670264105042,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-16",
-        "fragility_score": -0.026072463709054937,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-17",
-        "fragility_score": -0.005674088321238856,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-18",
-        "fragility_score": 0.025051615833091213,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-21",
-        "fragility_score": 0.02131454276334447,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-22",
-        "fragility_score": -0.0034167451031563915,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5894315168023536,
+        "fragility_score": 58.94315168023536,
+        "regime": "SPECULATIVE"
       }
     ],
-    "ElasticNet": [
+    "ElasticNetLogistic": [
+      {
+        "date": "2010-08-26",
+        "crash_probability": 0.5028373289555086,
+        "fragility_score": 50.283732895550855,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-08-27",
+        "crash_probability": 0.5095561785974947,
+        "fragility_score": 50.955617859749466,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-08-31",
+        "crash_probability": 0.4958385472881623,
+        "fragility_score": 49.58385472881623,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-01",
+        "crash_probability": 0.5262543237948389,
+        "fragility_score": 52.6254323794839,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-02",
+        "crash_probability": 0.5020603404591493,
+        "fragility_score": 50.206034045914926,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-03",
+        "crash_probability": 0.508118451999708,
+        "fragility_score": 50.8118451999708,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-06",
+        "crash_probability": 0.5034183644667322,
+        "fragility_score": 50.34183644667321,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-07",
+        "crash_probability": 0.4929543764580504,
+        "fragility_score": 49.29543764580504,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-08",
+        "crash_probability": 0.5011313701823755,
+        "fragility_score": 50.11313701823755,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-13",
+        "crash_probability": 0.5233289733458034,
+        "fragility_score": 52.332897334580345,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-14",
+        "crash_probability": 0.49927101202799135,
+        "fragility_score": 49.927101202799136,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-15",
+        "crash_probability": 0.5009153154394503,
+        "fragility_score": 50.09153154394503,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-16",
+        "crash_probability": 0.4959956118873686,
+        "fragility_score": 49.599561188736864,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-17",
+        "crash_probability": 0.49618851239446504,
+        "fragility_score": 49.618851239446506,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-20",
+        "crash_probability": 0.5128368661084115,
+        "fragility_score": 51.28368661084115,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-21",
+        "crash_probability": 0.4961255409617186,
+        "fragility_score": 49.61255409617186,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-22",
+        "crash_probability": 0.4929567398346936,
+        "fragility_score": 49.295673983469364,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-23",
+        "crash_probability": 0.49568259560096484,
+        "fragility_score": 49.568259560096486,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-24",
+        "crash_probability": 0.5103816430698015,
+        "fragility_score": 51.03816430698015,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-27",
+        "crash_probability": 0.49859629361627783,
+        "fragility_score": 49.85962936162778,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-28",
+        "crash_probability": 0.4987063086949289,
+        "fragility_score": 49.870630869492885,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-29",
+        "crash_probability": 0.49802454890043885,
+        "fragility_score": 49.80245489004388,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-30",
+        "crash_probability": 0.4953503277978403,
+        "fragility_score": 49.535032779784025,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-10-01",
+        "crash_probability": 0.5024102527249763,
+        "fragility_score": 50.24102527249763,
+        "regime": "SPECULATIVE"
+      },
       {
         "date": "2010-10-04",
-        "fragility_score": -0.00256879728751282,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49234244055102755,
+        "fragility_score": 49.23424405510276,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-05",
-        "fragility_score": 0.012523178282845078,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5140122611232805,
+        "fragility_score": 51.40122611232805,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-06",
-        "fragility_score": 0.00928755356990986,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5068223059039821,
+        "fragility_score": 50.68223059039821,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-07",
-        "fragility_score": 0.0006894328721841971,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4971053939702523,
+        "fragility_score": 49.71053939702523,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-08",
-        "fragility_score": 0.0014868630522033269,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4998073381942681,
+        "fragility_score": 49.98073381942681,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-11",
-        "fragility_score": 0.002415611218236747,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4995038636006385,
+        "fragility_score": 49.950386360063845,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-12",
-        "fragility_score": 5.4783903513987674e-05,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49826645511450707,
+        "fragility_score": 49.82664551145071,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-13",
-        "fragility_score": 0.014774609232787757,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5141376800637695,
+        "fragility_score": 51.41376800637695,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-14",
-        "fragility_score": 0.004290173758353643,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5009745360344274,
+        "fragility_score": 50.097453603442744,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-15",
-        "fragility_score": 0.0009370633733161305,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49838528324986214,
+        "fragility_score": 49.838528324986214,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-18",
-        "fragility_score": 0.0034631472194725944,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5023204203617032,
+        "fragility_score": 50.23204203617032,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-19",
-        "fragility_score": -0.0016229242999542246,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49208789222005445,
+        "fragility_score": 49.20878922200544,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-20",
-        "fragility_score": 0.0032619352813321604,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5021225808569061,
+        "fragility_score": 50.21225808569061,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-21",
-        "fragility_score": 0.008377517918550853,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5057253451726561,
+        "fragility_score": 50.57253451726561,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-22",
-        "fragility_score": 0.0013822488546866608,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49833865121574394,
+        "fragility_score": 49.83386512157439,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-25",
-        "fragility_score": 0.00503571666914083,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5022982284866364,
+        "fragility_score": 50.229822848663645,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-26",
-        "fragility_score": -0.0009318262890931125,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4961091678383913,
+        "fragility_score": 49.61091678383913,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-27",
-        "fragility_score": -0.004608812014046134,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4914250326879143,
+        "fragility_score": 49.14250326879143,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-01",
-        "fragility_score": 0.0058347573787296825,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5038384971138734,
+        "fragility_score": 50.38384971138734,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-02",
-        "fragility_score": 0.007003335013535476,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.506494537072646,
+        "fragility_score": 50.649453707264605,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-03",
-        "fragility_score": 0.0025545046991621414,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4994868115499457,
+        "fragility_score": 49.94868115499457,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-04",
-        "fragility_score": 0.014243179124598075,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5159391543193158,
+        "fragility_score": 51.59391543193158,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-05",
-        "fragility_score": 0.0059442249074476185,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5036158354400736,
+        "fragility_score": 50.36158354400736,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-08",
-        "fragility_score": 0.00251698089221589,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4989855666266834,
+        "fragility_score": 49.89855666266834,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-09",
-        "fragility_score": 0.004450939814143797,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5007432761245372,
+        "fragility_score": 50.074327612453715,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-10",
-        "fragility_score": -0.0030569706336862072,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4932581953205886,
+        "fragility_score": 49.325819532058865,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-11",
-        "fragility_score": -0.0001384527773916149,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4969584094977531,
+        "fragility_score": 49.69584094977531,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-12",
-        "fragility_score": -0.002364824606611923,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4935034378931582,
+        "fragility_score": 49.35034378931582,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-15",
-        "fragility_score": 0.006618230689661825,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5039659583622356,
+        "fragility_score": 50.396595836223554,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-22",
-        "fragility_score": -0.0013648848334600547,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4943705788887011,
+        "fragility_score": 49.437057888870115,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-23",
-        "fragility_score": -0.012635555893590425,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4802087746789117,
+        "fragility_score": 48.02087746789117,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-24",
-        "fragility_score": 0.010782748972354315,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5126827158669014,
+        "fragility_score": 51.26827158669014,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-25",
-        "fragility_score": 0.006468990390102193,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5039965448616769,
+        "fragility_score": 50.39965448616769,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-26",
-        "fragility_score": -0.0032443538676273248,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4926442565935654,
+        "fragility_score": 49.26442565935654,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-29",
-        "fragility_score": -0.009129866615278242,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.48441942236214036,
+        "fragility_score": 48.44194223621404,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-30",
-        "fragility_score": -0.0029833162124486344,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4931738376657992,
+        "fragility_score": 49.31738376657992,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-01",
-        "fragility_score": 0.01907366156938628,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5217584871798814,
+        "fragility_score": 52.17584871798814,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-02",
-        "fragility_score": 0.016255047303822257,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5166788766188057,
+        "fragility_score": 51.66788766188057,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-03",
-        "fragility_score": 0.001490082389322168,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49839089295212513,
+        "fragility_score": 49.83908929521251,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-06",
-        "fragility_score": 0.0031520458471659216,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5003059681910776,
+        "fragility_score": 50.030596819107764,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-07",
-        "fragility_score": 0.006279911924373546,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5040343960844953,
+        "fragility_score": 50.40343960844953,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-08",
-        "fragility_score": 0.0007652997134258573,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49709536400979243,
+        "fragility_score": 49.709536400979246,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-09",
-        "fragility_score": 0.003307454692561059,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5004855131203364,
+        "fragility_score": 50.04855131203364,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-10",
-        "fragility_score": 0.002583814223895759,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.501070612133263,
+        "fragility_score": 50.1070612133263,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-13",
-        "fragility_score": 0.006940817780253034,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5055243662361033,
+        "fragility_score": 50.55243662361033,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-14",
-        "fragility_score": 0.0041962035846998865,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5012853995289495,
+        "fragility_score": 50.12853995289495,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-15",
-        "fragility_score": -0.00046179710712619887,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49560338040358926,
+        "fragility_score": 49.56033804035893,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-16",
-        "fragility_score": 0.0013105704355693116,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4987549031711994,
+        "fragility_score": 49.87549031711994,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-17",
-        "fragility_score": 0.00043588593858709954,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4975351158332791,
+        "fragility_score": 49.75351158332791,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-20",
-        "fragility_score": 0.0028873202886904427,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5002233667365111,
+        "fragility_score": 50.02233667365111,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-21",
-        "fragility_score": 0.010994750907644832,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5104117722110882,
+        "fragility_score": 51.041177221108825,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-22",
-        "fragility_score": 0.0027387964055359667,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5006990951822937,
+        "fragility_score": 50.06990951822937,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-23",
-        "fragility_score": 0.0016058518696108318,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.498623379650119,
+        "fragility_score": 49.862337965011896,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-24",
-        "fragility_score": -0.00047531214596511617,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49553730043585703,
+        "fragility_score": 49.5537300435857,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-27",
-        "fragility_score": 0.0003562117235169221,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4977392901895844,
+        "fragility_score": 49.77392901895844,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-28",
-        "fragility_score": 0.001524058875430933,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4988540989963895,
+        "fragility_score": 49.88540989963895,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-29",
-        "fragility_score": 0.0052701963971551035,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5030195024973063,
+        "fragility_score": 50.30195024973063,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-30",
-        "fragility_score": -0.003511534605223033,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49245490288974125,
+        "fragility_score": 49.245490288974125,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-31",
-        "fragility_score": 0.0010661275146472437,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4976865021157267,
+        "fragility_score": 49.76865021157267,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-03",
-        "fragility_score": 0.010542785724878531,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5105544233684837,
+        "fragility_score": 51.055442336848365,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-04",
-        "fragility_score": 0.004360370445347424,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5009892465719193,
+        "fragility_score": 50.09892465719194,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-05",
-        "fragility_score": 0.0010974190696074317,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4996172136530099,
+        "fragility_score": 49.96172136530099,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-06",
-        "fragility_score": 0.003280592442687218,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.500121485434086,
+        "fragility_score": 50.0121485434086,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-07",
-        "fragility_score": -0.002336582324458701,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4938262008585961,
+        "fragility_score": 49.38262008585961,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-10",
-        "fragility_score": -0.005308056668802335,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4911037873223755,
+        "fragility_score": 49.11037873223755,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-11",
-        "fragility_score": 0.009877798330346169,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-12",
-        "fragility_score": 0.012543009317573914,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-13",
-        "fragility_score": 0.0018399612441300432,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-14",
-        "fragility_score": 0.0006907369134428951,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-17",
-        "fragility_score": 0.00029254960739223375,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-18",
-        "fragility_score": 0.008744379773510613,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-19",
-        "fragility_score": -0.003428996612198434,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-20",
-        "fragility_score": -0.0075573273474202705,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-21",
-        "fragility_score": 0.00305679523306884,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-24",
-        "fragility_score": 0.0046255902701184855,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-25",
-        "fragility_score": 0.0010592677926361924,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-26",
-        "fragility_score": 0.007240753510771372,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-27",
-        "fragility_score": 0.0036639546798470394,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-28",
-        "fragility_score": -0.006914110325491224,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-31",
-        "fragility_score": -0.0019995375300460943,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-01",
-        "fragility_score": 0.012408187096812273,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-02",
-        "fragility_score": 0.005631621332965797,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-03",
-        "fragility_score": 0.0010449396246962157,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-04",
-        "fragility_score": 0.003974052656221954,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-07",
-        "fragility_score": 0.006769493838001213,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-08",
-        "fragility_score": 0.004342376569064461,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-09",
-        "fragility_score": -0.0026730137717654924,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-10",
-        "fragility_score": -0.0022603893491619366,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-11",
-        "fragility_score": 0.00676558022889291,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-14",
-        "fragility_score": 0.005435680968574696,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-15",
-        "fragility_score": 0.0014298313582277202,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-16",
-        "fragility_score": 0.0063741125993545065,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-17",
-        "fragility_score": 0.002147987717089981,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-18",
-        "fragility_score": 0.004124813844670314,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-21",
-        "fragility_score": -0.005440380191804189,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-22",
-        "fragility_score": -0.004501957225659594,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5087039762101133,
+        "fragility_score": 50.870397621011335,
+        "regime": "SPECULATIVE"
       }
     ],
     "Ensemble": [
       {
+        "date": "2010-08-26",
+        "crash_probability": 0.6829656442275995,
+        "fragility_score": 68.29656442275996,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-08-27",
+        "crash_probability": 0.6314318203988617,
+        "fragility_score": 63.14318203988617,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-08-31",
+        "crash_probability": 0.47432937632485667,
+        "fragility_score": 47.43293763248567,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-01",
+        "crash_probability": 0.6538287316223486,
+        "fragility_score": 65.38287316223486,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-02",
+        "crash_probability": 0.6624995776498522,
+        "fragility_score": 66.24995776498523,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-03",
+        "crash_probability": 0.7208028305917753,
+        "fragility_score": 72.08028305917753,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-06",
+        "crash_probability": 0.6825004630019332,
+        "fragility_score": 68.25004630019332,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-07",
+        "crash_probability": 0.31911803032678954,
+        "fragility_score": 31.911803032678954,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-08",
+        "crash_probability": 0.4042681877028322,
+        "fragility_score": 40.42681877028322,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-13",
+        "crash_probability": 0.6806715345866728,
+        "fragility_score": 68.06715345866728,
+        "regime": "PONZI"
+      },
+      {
+        "date": "2010-09-14",
+        "crash_probability": 0.4789230999116603,
+        "fragility_score": 47.89230999116603,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-15",
+        "crash_probability": 0.36188738174213037,
+        "fragility_score": 36.188738174213036,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-16",
+        "crash_probability": 0.44203905949724326,
+        "fragility_score": 44.20390594972432,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-17",
+        "crash_probability": 0.4965937196293826,
+        "fragility_score": 49.65937196293826,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-20",
+        "crash_probability": 0.6537884014723857,
+        "fragility_score": 65.37884014723858,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-21",
+        "crash_probability": 0.4323188939989316,
+        "fragility_score": 43.231889399893156,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-22",
+        "crash_probability": 0.2940909142761263,
+        "fragility_score": 29.409091427612633,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-23",
+        "crash_probability": 0.31525617976691556,
+        "fragility_score": 31.525617976691557,
+        "regime": "HEDGE"
+      },
+      {
+        "date": "2010-09-24",
+        "crash_probability": 0.6243024804399405,
+        "fragility_score": 62.430248043994055,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-27",
+        "crash_probability": 0.35375114507057465,
+        "fragility_score": 35.37511450705747,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-28",
+        "crash_probability": 0.39266405768787344,
+        "fragility_score": 39.266405768787344,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-29",
+        "crash_probability": 0.5116937673769671,
+        "fragility_score": 51.169376737696716,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-09-30",
+        "crash_probability": 0.38778415109167286,
+        "fragility_score": 38.778415109167284,
+        "regime": "SPECULATIVE"
+      },
+      {
+        "date": "2010-10-01",
+        "crash_probability": 0.6619094917970935,
+        "fragility_score": 66.19094917970935,
+        "regime": "SPECULATIVE"
+      },
+      {
         "date": "2010-10-04",
-        "fragility_score": 0.008857994300027372,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3952161434859815,
+        "fragility_score": 39.52161434859815,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-05",
-        "fragility_score": 0.019471225710898387,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7090918108885256,
+        "fragility_score": 70.90918108885256,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-06",
-        "fragility_score": 0.006986929562807123,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6747527713642495,
+        "fragility_score": 67.47527713642495,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-07",
-        "fragility_score": -0.0007308648183617614,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4350748519217424,
+        "fragility_score": 43.50748519217424,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-08",
-        "fragility_score": -0.0026344691015894764,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3390733066395502,
+        "fragility_score": 33.90733066395502,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-11",
-        "fragility_score": 0.0033978170423596015,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.45714628935139556,
+        "fragility_score": 45.71462893513956,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-12",
-        "fragility_score": 0.0014657620661747207,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.36470232418731824,
+        "fragility_score": 36.470232418731825,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-13",
-        "fragility_score": 0.02348486208908909,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7336760379610232,
+        "fragility_score": 73.36760379610232,
+        "regime": "PONZI"
       },
       {
         "date": "2010-10-14",
-        "fragility_score": 0.005695488584020553,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5741540485243726,
+        "fragility_score": 57.415404852437256,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-15",
-        "fragility_score": -0.00015343841957941176,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3931663876781843,
+        "fragility_score": 39.31663876781843,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-18",
-        "fragility_score": 0.002642745798844985,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5959153139515903,
+        "fragility_score": 59.59153139515902,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-19",
-        "fragility_score": -0.004222631053066783,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4134132559534478,
+        "fragility_score": 41.34132559534478,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-20",
-        "fragility_score": 0.004808032995187016,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5397479493028983,
+        "fragility_score": 53.974794930289825,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-21",
-        "fragility_score": 0.014996448596629977,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6603350223675433,
+        "fragility_score": 66.03350223675433,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-22",
-        "fragility_score": -0.0007075553963449343,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.47162867378844187,
+        "fragility_score": 47.16286737884418,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-25",
-        "fragility_score": 0.004908599903265998,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5979978036228255,
+        "fragility_score": 59.79978036228255,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-10-26",
-        "fragility_score": -0.003370669509726311,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2805839807669686,
+        "fragility_score": 28.05839807669686,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-10-27",
-        "fragility_score": -0.00888798922503545,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2959566138298009,
+        "fragility_score": 29.595661382980087,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-01",
-        "fragility_score": 0.004049184838843094,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49006365436112787,
+        "fragility_score": 49.00636543611279,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-02",
-        "fragility_score": 0.005090217663313711,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6973972542772562,
+        "fragility_score": 69.73972542772562,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-03",
-        "fragility_score": 0.005145816661315347,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.47663389991423505,
+        "fragility_score": 47.66338999142351,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-04",
-        "fragility_score": 0.022729280003328866,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.7059773060489557,
+        "fragility_score": 70.59773060489557,
+        "regime": "PONZI"
       },
       {
         "date": "2010-11-05",
-        "fragility_score": 0.005680962183325253,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.620542343094701,
+        "fragility_score": 62.054234309470104,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-08",
-        "fragility_score": 0.005704335694066864,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.46793633440547006,
+        "fragility_score": 46.793633440547005,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-09",
-        "fragility_score": 0.004427012018191732,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5537787783824435,
+        "fragility_score": 55.37787783824435,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-10",
-        "fragility_score": -0.010015272935605649,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3140152343250325,
+        "fragility_score": 31.401523432503247,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-11",
-        "fragility_score": -0.0060811588459834046,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5192936642060441,
+        "fragility_score": 51.9293664206044,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-12",
-        "fragility_score": -0.007015767929830154,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3606316399046068,
+        "fragility_score": 36.06316399046068,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-15",
-        "fragility_score": 0.0030023488722237166,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3910363763648115,
+        "fragility_score": 39.103637636481146,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-22",
-        "fragility_score": -0.012815782850342163,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.35218624950105326,
+        "fragility_score": 35.21862495010532,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-23",
-        "fragility_score": -0.02838692117415366,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.2734247864231735,
+        "fragility_score": 27.342478642317353,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-11-24",
-        "fragility_score": -0.0026561525753885633,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5960342981279318,
+        "fragility_score": 59.60342981279319,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-25",
-        "fragility_score": 0.012699873452686779,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5163569437688507,
+        "fragility_score": 51.63569437688507,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-26",
-        "fragility_score": -0.01592282001969499,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.34664216439377005,
+        "fragility_score": 34.66421643937701,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-29",
-        "fragility_score": -0.02222289811412205,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3548207775428829,
+        "fragility_score": 35.48207775428829,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-11-30",
-        "fragility_score": -0.015411894808486927,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.38784605666388733,
+        "fragility_score": 38.784605666388735,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-01",
-        "fragility_score": 0.03806411732534718,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.694337470010995,
+        "fragility_score": 69.4337470010995,
+        "regime": "PONZI"
       },
       {
         "date": "2010-12-02",
-        "fragility_score": 0.024149687647811696,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.710332682221139,
+        "fragility_score": 71.0332682221139,
+        "regime": "PONZI"
       },
       {
         "date": "2010-12-03",
-        "fragility_score": 0.0045373407210564974,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4837095008400169,
+        "fragility_score": 48.37095008400169,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-06",
-        "fragility_score": 0.00609392756298018,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5218119207004746,
+        "fragility_score": 52.18119207004746,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-07",
-        "fragility_score": 0.004320501569369902,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3503477956528609,
+        "fragility_score": 35.03477956528609,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-08",
-        "fragility_score": -0.007517315113575638,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4576060933476443,
+        "fragility_score": 45.76060933476443,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-09",
-        "fragility_score": -0.0010891561075211964,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.40624121145382047,
+        "fragility_score": 40.62412114538205,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-10",
-        "fragility_score": -0.0033485914795183375,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.41896661737433466,
+        "fragility_score": 41.89666173743347,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-13",
-        "fragility_score": -0.002536363315053393,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4650614145578518,
+        "fragility_score": 46.50614145578518,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-14",
-        "fragility_score": -0.0036731130467678556,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4267163990340357,
+        "fragility_score": 42.671639903403566,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-15",
-        "fragility_score": -0.014080416050136352,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.33901827875310137,
+        "fragility_score": 33.90182787531014,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-16",
-        "fragility_score": -0.013341464327151652,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.43894527715971116,
+        "fragility_score": 43.894527715971115,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-17",
-        "fragility_score": -0.012937908299466186,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3046330122634423,
+        "fragility_score": 30.46330122634423,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-20",
-        "fragility_score": -0.009901128320125666,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3010226436964033,
+        "fragility_score": 30.10226436964033,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-21",
-        "fragility_score": 0.013857949192209592,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5109021328440604,
+        "fragility_score": 51.09021328440604,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-22",
-        "fragility_score": -0.016481337887895773,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3041697899381534,
+        "fragility_score": 30.41697899381534,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-23",
-        "fragility_score": -0.01582413095892178,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.24437643424920388,
+        "fragility_score": 24.437643424920388,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-24",
-        "fragility_score": -0.029004609616162844,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.237018080368989,
+        "fragility_score": 23.7018080368989,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-27",
-        "fragility_score": -0.014544959359487153,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3150472729606081,
+        "fragility_score": 31.504727296060807,
+        "regime": "HEDGE"
       },
       {
         "date": "2010-12-28",
-        "fragility_score": -0.007210786201360766,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.3458714481101925,
+        "fragility_score": 34.58714481101925,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-29",
-        "fragility_score": 0.00118663115445908,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.454095580403658,
+        "fragility_score": 45.4095580403658,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-30",
-        "fragility_score": -0.003962701780308375,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.49249120474870384,
+        "fragility_score": 49.24912047487038,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2010-12-31",
-        "fragility_score": -0.009053268016122686,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.32339972570869346,
+        "fragility_score": 32.33997257086935,
+        "regime": "HEDGE"
       },
       {
         "date": "2011-01-03",
-        "fragility_score": 0.021752549723649012,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.626080786054224,
+        "fragility_score": 62.6080786054224,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-04",
-        "fragility_score": 0.015948917029934527,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.43560616884403264,
+        "fragility_score": 43.56061688440327,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-05",
-        "fragility_score": -0.017241257062574237,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.5097686261157003,
+        "fragility_score": 50.97686261157003,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-06",
-        "fragility_score": -0.005892358640182434,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.39891757712263587,
+        "fragility_score": 39.89175771226358,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-07",
-        "fragility_score": -0.008306869066237633,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.45979301632689945,
+        "fragility_score": 45.979301632689946,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-10",
-        "fragility_score": -0.022797429689615043,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.4535924350948557,
+        "fragility_score": 45.359243509485566,
+        "regime": "SPECULATIVE"
       },
       {
         "date": "2011-01-11",
-        "fragility_score": 0.01837595509933783,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-12",
-        "fragility_score": 0.035448217322859216,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-13",
-        "fragility_score": -0.005620803347452969,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-14",
-        "fragility_score": -0.0038999786979977795,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-17",
-        "fragility_score": -0.009645608563593604,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-18",
-        "fragility_score": 0.003078887668632605,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-19",
-        "fragility_score": -0.004982857622033352,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-20",
-        "fragility_score": -0.00717342458972955,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-21",
-        "fragility_score": 0.00175888538231076,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-24",
-        "fragility_score": -0.005933642146966456,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-25",
-        "fragility_score": -0.009081509338841063,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-26",
-        "fragility_score": 0.016745057458408014,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-27",
-        "fragility_score": -0.002514516082807676,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-28",
-        "fragility_score": -0.009532744944034182,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-01-31",
-        "fragility_score": 0.0002099757636357381,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-01",
-        "fragility_score": 0.005350014040676618,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-02",
-        "fragility_score": -0.0034985776380275467,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-03",
-        "fragility_score": -0.011833532274521908,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-04",
-        "fragility_score": -0.0023621187681237923,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-07",
-        "fragility_score": 0.0015201481297690807,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-08",
-        "fragility_score": -0.00331755179864346,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-09",
-        "fragility_score": -0.006980275680548883,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-10",
-        "fragility_score": -0.009636941293867657,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-11",
-        "fragility_score": -0.0060672365613385695,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-14",
-        "fragility_score": 0.002918301617722533,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-15",
-        "fragility_score": -0.0052004658467602995,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-16",
-        "fragility_score": -0.006011092668316224,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-17",
-        "fragility_score": -0.001696598209694614,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-18",
-        "fragility_score": 0.01113446128873439,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-21",
-        "fragility_score": 0.00266903934081741,
-        "regime": "normal",
-        "confidence": 0.8
-      },
-      {
-        "date": "2011-02-22",
-        "fragility_score": -0.008504253637487342,
-        "regime": "normal",
-        "confidence": 0.8
+        "crash_probability": 0.6172414888235246,
+        "fragility_score": 61.72414888235246,
+        "regime": "SPECULATIVE"
       }
     ]
   },
   "performance": {
     "GradientBoosting": {
-      "train_r2": 0.9400483726337475,
-      "train_rmse": 0.004999420896328124,
-      "train_mae": 0.004055504160867692,
-      "test_r2": 0.39448690363189576,
-      "test_rmse": 0.013210120357236343,
-      "test_mae": 0.010487099146504775,
-      "accuracy": 1.0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1_score": 0.0,
-      "roc_auc": null,
+      "accuracy": 0.6333333333333333,
+      "precision": 0.6410256410256411,
+      "recall": 0.5681818181818182,
+      "f1_score": 0.6024096385542169,
+      "roc_auc": 0.6393280632411068,
       "roc_curve": [
         {
           "fpr": 0.0,
-          "tpr": null
+          "tpr": 0.0
         },
         {
-          "fpr": 0.010416666666666666,
-          "tpr": null
+          "fpr": 0.0,
+          "tpr": 0.022727272727272728
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.022727272727272728
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.2727272727272727
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.2727272727272727
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.3409090909090909
+        },
+        {
+          "fpr": 0.10869565217391304,
+          "tpr": 0.3409090909090909
+        },
+        {
+          "fpr": 0.10869565217391304,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.38636363636363635
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.38636363636363635
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.4090909090909091
+        },
+        {
+          "fpr": 0.2608695652173913,
+          "tpr": 0.4090909090909091
+        },
+        {
+          "fpr": 0.2608695652173913,
+          "tpr": 0.5
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.5
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.391304347826087,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.391304347826087,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.6818181818181818
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.6818181818181818
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.7045454545454546
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.7045454545454546
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.7391304347826086,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.7391304347826086,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.8260869565217391,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.8260869565217391,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.8695652173913043,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.8695652173913043,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.8913043478260869,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.8913043478260869,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9347826086956522,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9347826086956522,
+          "tpr": 1.0
         },
         {
           "fpr": 1.0,
-          "tpr": null
+          "tpr": 1.0
         }
       ]
     },
-    "LSTM": {
-      "train_r2": 0.01156771183013916,
-      "train_rmse": 0.019208360262110064,
-      "train_mae": 0.014208443462848663,
-      "test_r2": -0.043813228607177734,
-      "test_rmse": 0.016778271930319087,
-      "test_mae": 0.013275623321533203,
-      "accuracy": 1.0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1_score": 0.0,
-      "roc_auc": null,
+    "SVC": {
+      "accuracy": 0.5888888888888889,
+      "precision": 0.5897435897435898,
+      "recall": 0.5227272727272727,
+      "f1_score": 0.5542168674698795,
+      "roc_auc": 0.6279644268774703,
       "roc_curve": [
         {
           "fpr": 0.0,
-          "tpr": null
+          "tpr": 0.0
         },
         {
-          "fpr": 0.015151515151515152,
-          "tpr": null
+          "fpr": 0.0,
+          "tpr": 0.022727272727272728
+        },
+        {
+          "fpr": 0.0,
+          "tpr": 0.06818181818181818
+        },
+        {
+          "fpr": 0.021739130434782608,
+          "tpr": 0.06818181818181818
+        },
+        {
+          "fpr": 0.021739130434782608,
+          "tpr": 0.18181818181818182
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.18181818181818182
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.22727272727272727
+        },
+        {
+          "fpr": 0.13043478260869565,
+          "tpr": 0.22727272727272727
+        },
+        {
+          "fpr": 0.13043478260869565,
+          "tpr": 0.25
+        },
+        {
+          "fpr": 0.15217391304347827,
+          "tpr": 0.25
+        },
+        {
+          "fpr": 0.15217391304347827,
+          "tpr": 0.3181818181818182
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.3181818181818182
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.38636363636363635
+        },
+        {
+          "fpr": 0.2826086956521739,
+          "tpr": 0.38636363636363635
+        },
+        {
+          "fpr": 0.2826086956521739,
+          "tpr": 0.4772727272727273
+        },
+        {
+          "fpr": 0.34782608695652173,
+          "tpr": 0.4772727272727273
+        },
+        {
+          "fpr": 0.34782608695652173,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.43478260869565216,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.43478260869565216,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.6590909090909091
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.6590909090909091
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.5217391304347826,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.5217391304347826,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.7391304347826086,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.7391304347826086,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.7608695652173914,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.7608695652173914,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9130434782608695,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9130434782608695,
+          "tpr": 0.9545454545454546
+        },
+        {
+          "fpr": 0.9347826086956522,
+          "tpr": 0.9545454545454546
+        },
+        {
+          "fpr": 0.9347826086956522,
+          "tpr": 0.9772727272727273
+        },
+        {
+          "fpr": 0.9782608695652174,
+          "tpr": 0.9772727272727273
+        },
+        {
+          "fpr": 0.9782608695652174,
+          "tpr": 1.0
         },
         {
           "fpr": 1.0,
-          "tpr": null
+          "tpr": 1.0
         }
       ]
     },
-    "SVR": {
-      "train_r2": 0.8260845428828101,
-      "train_rmse": 0.00851507160190554,
-      "train_mae": 0.007890685790539649,
-      "test_r2": -0.7956843293420135,
-      "test_rmse": 0.022748878984966987,
-      "test_mae": 0.01715751634605818,
-      "accuracy": 1.0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1_score": 0.0,
-      "roc_auc": null,
+    "ElasticNetLogistic": {
+      "accuracy": 0.5777777777777777,
+      "precision": 0.5681818181818182,
+      "recall": 0.5681818181818182,
+      "f1_score": 0.5681818181818182,
+      "roc_auc": 0.6175889328063241,
       "roc_curve": [
         {
           "fpr": 0.0,
-          "tpr": null
+          "tpr": 0.0
         },
-        {
-          "fpr": 0.010416666666666666,
-          "tpr": null
-        },
-        {
-          "fpr": 1.0,
-          "tpr": null
-        }
-      ]
-    },
-    "ElasticNet": {
-      "train_r2": 0.47209802489997965,
-      "train_rmse": 0.01483528371654105,
-      "train_mae": 0.011144009980996497,
-      "test_r2": 0.2849971085102495,
-      "test_rmse": 0.014354858079517734,
-      "test_mae": 0.010884032613837538,
-      "accuracy": 1.0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1_score": 0.0,
-      "roc_auc": null,
-      "roc_curve": [
         {
           "fpr": 0.0,
-          "tpr": null
+          "tpr": 0.022727272727272728
         },
         {
-          "fpr": 0.010416666666666666,
-          "tpr": null
+          "fpr": 0.0,
+          "tpr": 0.06818181818181818
+        },
+        {
+          "fpr": 0.021739130434782608,
+          "tpr": 0.06818181818181818
+        },
+        {
+          "fpr": 0.021739130434782608,
+          "tpr": 0.09090909090909091
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.09090909090909091
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.11363636363636363
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.11363636363636363
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.13636363636363635
+        },
+        {
+          "fpr": 0.15217391304347827,
+          "tpr": 0.13636363636363635
+        },
+        {
+          "fpr": 0.15217391304347827,
+          "tpr": 0.29545454545454547
+        },
+        {
+          "fpr": 0.17391304347826086,
+          "tpr": 0.29545454545454547
+        },
+        {
+          "fpr": 0.17391304347826086,
+          "tpr": 0.3409090909090909
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.3409090909090909
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.21739130434782608,
+          "tpr": 0.4090909090909091
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.4090909090909091
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.4772727272727273
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.4772727272727273
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.5
+        },
+        {
+          "fpr": 0.32608695652173914,
+          "tpr": 0.5
+        },
+        {
+          "fpr": 0.32608695652173914,
+          "tpr": 0.5454545454545454
+        },
+        {
+          "fpr": 0.3695652173913043,
+          "tpr": 0.5454545454545454
+        },
+        {
+          "fpr": 0.3695652173913043,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.41304347826086957,
+          "tpr": 0.5909090909090909
+        },
+        {
+          "fpr": 0.43478260869565216,
+          "tpr": 0.5909090909090909
+        },
+        {
+          "fpr": 0.43478260869565216,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.45652173913043476,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.5217391304347826,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.5217391304347826,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.5869565217391305,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.5869565217391305,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6304347826086957,
+          "tpr": 0.75
+        },
+        {
+          "fpr": 0.6304347826086957,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.7954545454545454
+        },
+        {
+          "fpr": 0.6739130434782609,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.782608695652174,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.8695652173913043,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.8695652173913043,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9130434782608695,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9130434782608695,
+          "tpr": 1.0
         },
         {
           "fpr": 1.0,
-          "tpr": null
+          "tpr": 1.0
         }
       ]
     },
     "Ensemble": {
-      "test_r2": 0.2679613674767838,
-      "test_rmse": 0.014524861658139019,
-      "test_mae": 0.011491019269724687,
-      "accuracy": 1.0,
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1_score": 0.0,
-      "roc_auc": null,
+      "accuracy": 0.5888888888888889,
+      "precision": 0.6060606060606061,
+      "recall": 0.45454545454545453,
+      "f1_score": 0.5194805194805194,
+      "roc_auc": 0.6497035573122529,
       "roc_curve": [
         {
           "fpr": 0.0,
-          "tpr": null
+          "tpr": 0.0
         },
         {
-          "fpr": 0.010416666666666666,
-          "tpr": null
+          "fpr": 0.021739130434782608,
+          "tpr": 0.0
+        },
+        {
+          "fpr": 0.021739130434782608,
+          "tpr": 0.022727272727272728
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.022727272727272728
+        },
+        {
+          "fpr": 0.043478260869565216,
+          "tpr": 0.29545454545454547
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.29545454545454547
+        },
+        {
+          "fpr": 0.08695652173913043,
+          "tpr": 0.3181818181818182
+        },
+        {
+          "fpr": 0.13043478260869565,
+          "tpr": 0.3181818181818182
+        },
+        {
+          "fpr": 0.13043478260869565,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.36363636363636365
+        },
+        {
+          "fpr": 0.1956521739130435,
+          "tpr": 0.4318181818181818
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.4318181818181818
+        },
+        {
+          "fpr": 0.2391304347826087,
+          "tpr": 0.45454545454545453
+        },
+        {
+          "fpr": 0.2826086956521739,
+          "tpr": 0.45454545454545453
+        },
+        {
+          "fpr": 0.2826086956521739,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.5681818181818182
+        },
+        {
+          "fpr": 0.30434782608695654,
+          "tpr": 0.5909090909090909
+        },
+        {
+          "fpr": 0.34782608695652173,
+          "tpr": 0.5909090909090909
+        },
+        {
+          "fpr": 0.34782608695652173,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.391304347826087,
+          "tpr": 0.6136363636363636
+        },
+        {
+          "fpr": 0.391304347826087,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.6363636363636364
+        },
+        {
+          "fpr": 0.4782608695652174,
+          "tpr": 0.6818181818181818
+        },
+        {
+          "fpr": 0.5434782608695652,
+          "tpr": 0.6818181818181818
+        },
+        {
+          "fpr": 0.5434782608695652,
+          "tpr": 0.7045454545454546
+        },
+        {
+          "fpr": 0.6086956521739131,
+          "tpr": 0.7045454545454546
+        },
+        {
+          "fpr": 0.6086956521739131,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.6304347826086957,
+          "tpr": 0.7272727272727273
+        },
+        {
+          "fpr": 0.6304347826086957,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.6521739130434783,
+          "tpr": 0.8181818181818182
+        },
+        {
+          "fpr": 0.6521739130434783,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.8409090909090909
+        },
+        {
+          "fpr": 0.6956521739130435,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.8636363636363636
+        },
+        {
+          "fpr": 0.717391304347826,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.7608695652173914,
+          "tpr": 0.8863636363636364
+        },
+        {
+          "fpr": 0.7608695652173914,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.8913043478260869,
+          "tpr": 0.9090909090909091
+        },
+        {
+          "fpr": 0.8913043478260869,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9565217391304348,
+          "tpr": 0.9318181818181818
+        },
+        {
+          "fpr": 0.9565217391304348,
+          "tpr": 0.9772727272727273
+        },
+        {
+          "fpr": 0.9782608695652174,
+          "tpr": 0.9772727272727273
+        },
+        {
+          "fpr": 0.9782608695652174,
+          "tpr": 1.0
         },
         {
           "fpr": 1.0,
-          "tpr": null
+          "tpr": 1.0
         }
       ]
     }
   },
   "GradientBoosting": {
     "predictions": [
-      0.006014102178286112,
-      0.014832145190350835,
-      0.004597115478748687,
-      -0.0014488532811711321,
-      -0.007925196155249918,
-      0.005199487346435838,
-      -0.0036945213763528583,
-      0.02264260163394811,
-      0.008418662763757927,
-      -0.0019991314108118593,
-      0.0016271125114018636,
-      -0.006872092429517138,
-      0.006342587019633038,
-      0.010665274752182041,
-      -0.000872800913742564,
-      0.0037033834435037075,
-      -0.005597654378727757,
-      -0.01066059168680499,
-      0.0064896135179908,
-      0.005864146591347713,
-      0.012287839459939467,
-      0.016278530020586237,
-      0.004505404449204231,
-      0.009763520603563046,
-      0.0010598196513768165,
-      -0.005682544356662137,
-      -0.003570174308397809,
-      -0.010519889398616256,
-      -0.0012762657806117985,
-      -0.02245516642744486,
-      -0.02827160802159873,
-      0.011402370753353541,
-      0.008334933035944113,
-      -0.020214718822817994,
-      -0.020406291513342986,
-      -0.020037118436626398,
-      0.03334558932613426,
-      0.03272581662483304,
-      0.003307327875402777,
-      0.007585492750407856,
-      0.002125044818679734,
-      -0.0025677541833198604,
-      -0.002331766536526884,
-      -0.007463577415382582,
-      -0.0004779219359284278,
-      0.0001424341649830916,
-      -0.015806478068529025,
-      -0.013023660966523297,
-      -0.0009703986221093454,
-      -0.012643686980094588,
-      0.013808837926219024,
-      -0.013083642612904567,
-      -0.014155226669744147,
-      -0.01568023727986263,
-      -0.014597757324388014,
-      -0.011900170360037508,
-      -0.0008818870499092271,
-      0.004302602387459066,
-      -0.0024078087409338807,
-      0.015523641844976852,
-      0.01352364189884934,
-      -0.01197030713710091,
-      -0.008649841112634189,
-      -0.011002472953452053,
-      -0.02212999080709352,
-      0.013083836642317298,
-      0.03248539175360363,
-      -0.010762349984728404,
-      -0.009726740028428302,
-      -0.01193442990903002,
-      0.009621292816742476,
-      -0.013642862297493289,
-      -0.016778161517511308,
-      -0.0006464737469953773,
-      -0.0046088402971421714,
-      -0.005681665954268712,
-      0.0073095914077880055,
-      -0.004170557381812873,
-      -0.016499550718095914,
-      -0.0017186122539582533,
-      0.017922433231789735,
-      0.010540998151960693,
-      -0.005673918466515936,
-      -8.891859023392725e-05,
-      0.004749931517686307,
-      -0.0025107394401130416,
-      -0.010349421987706383,
-      -0.01738925561303998,
-      0.00400046832480343,
-      0.00012964349089271594,
-      -0.004064202488004416,
-      0.0016650731047517543,
-      -0.0015636940249349673,
-      0.004226954188441641,
-      -0.007867044549088051,
-      -0.017594058583646037
+      75.21243653826971,
+      73.46098424130338,
+      61.57502194599368,
+      90.96628512763087,
+      77.35651579101152,
+      88.2889461530105,
+      78.18529267505212,
+      11.588889995144543,
+      36.38990453954018,
+      94.2204420718626,
+      33.44974512675756,
+      23.943251766679126,
+      37.15365994690663,
+      51.35890797786048,
+      75.60349274731077,
+      28.865465669760894,
+      10.637827355359116,
+      10.203749317005707,
+      68.84761263105162,
+      24.617912772955158,
+      25.38893139018354,
+      52.07425011433134,
+      39.34546347597302,
+      78.6265743495672,
+      35.62718011434373,
+      88.35795613347933,
+      82.40365253358621,
+      45.64742920896413,
+      11.538402091435094,
+      51.63182155502211,
+      23.195923367438457,
+      94.18182043672326,
+      68.29670002786689,
+      29.27665441131969,
+      69.03502946785119,
+      21.445702858447532,
+      59.49967873273706,
+      75.53303386677014,
+      40.30716150041725,
+      69.20104587109216,
+      13.487457635214254,
+      16.084976901435592,
+      58.1933316813831,
+      86.41001251073912,
+      53.881796379347236,
+      87.52207311909451,
+      76.05706564593719,
+      53.28355130309286,
+      65.42229987107953,
+      19.064842967201756,
+      59.52835500539868,
+      21.8408860602661,
+      16.12550775650853,
+      31.276954735963848,
+      6.068412938548826,
+      67.20118457985457,
+      46.985796386332865,
+      16.7023763331507,
+      12.742485583798565,
+      23.02199550309959,
+      91.19036039332774,
+      92.88263530963252,
+      55.93554557204141,
+      59.20716234789551,
+      15.492450559298065,
+      47.046075259224054,
+      28.448363175196974,
+      20.763748281629894,
+      44.788899288078895,
+      60.206975144700806,
+      24.869465145663018,
+      48.2717392009801,
+      19.529368035225733,
+      15.039195559026444,
+      63.97298078616491,
+      27.639082238058286,
+      10.396525479358711,
+      9.221016058488123,
+      20.353989200319827,
+      15.819061135286649,
+      34.80264827911487,
+      38.290579474339395,
+      25.700140294284136,
+      80.84145186964349,
+      39.507496837949475,
+      32.374039161354474,
+      33.41142359580914,
+      46.19793336727795,
+      27.765552464644323,
+      75.35889734581068
     ],
-    "rmse": 0.013210120357236343,
-    "mae": 0.010487099146504775,
-    "r2": 0.39448690363189576
+    "roc_auc": 0.6393280632411068,
+    "accuracy": 0.6333333333333333,
+    "f1_score": 0.6024096385542169
   },
-  "LSTM": {
+  "SVC": {
     "predictions": [
-      0.0008849879959598184,
-      0.0005760444328188896,
-      0.0006941653555259109,
-      0.0006595319136977196,
-      0.0005093154031783342,
-      0.0004435814917087555,
-      0.0004426258383318782,
-      0.0007859264733269811,
-      0.0010720564750954509,
-      0.0012966440990567207,
-      0.0014515366638079286,
-      0.0015777575317770243,
-      0.0013050949200987816,
-      0.0010786749189719558,
-      0.0010569652076810598,
-      0.00116261700168252,
-      0.0010598403168842196,
-      0.0006983260391280055,
-      0.00047030881978571415,
-      0.00040838110726326704,
-      0.0003236073534935713,
-      0.00045177608262747526,
-      0.0005284110084176064,
-      0.0005552629008889198,
-      0.0004155180649831891,
-      0.0002275544684380293,
-      0.00028460402972996235,
-      0.000538275926373899,
-      0.0007677027024328709,
-      0.0008734884904697537,
-      0.0010769765358418226,
-      0.00124070281162858,
-      0.0014060880057513714,
-      0.0012686413247138262,
-      0.0010768292704597116,
-      0.001010863110423088,
-      0.0010628962190821767,
-      0.001386913238093257,
-      0.0013217853847891092,
-      0.0014459732919931412,
-      0.0014372713631018996,
-      0.0014733474235981703,
-      0.0011013508774340153,
-      0.0008797189220786095,
-      0.0008778268238529563,
-      0.0009353901259601116,
-      0.0008387310663238168,
-      0.0009680299554020166,
-      0.0008552903309464455,
-      0.000583033892326057,
-      0.0006129364483058453,
-      0.0009345419239252806,
-      0.0008703544735908508,
-      0.0008371034637093544,
-      0.0007698453264310956,
-      0.0008754434529691935,
-      0.0010423911735415459,
-      0.0008513847133144736,
-      0.0008558039553463459,
-      0.0011285205837339163,
-      0.0012131347320973873,
-      0.0011273815762251616,
-      0.0013281360734254122,
-      0.001441212953068316,
-      0.0016092583537101746,
-      0.0014720135368406773
+      79.39352383445932,
+      65.01294401860565,
+      31.13993622264709,
+      52.556901979589796,
+      71.18732345802924,
+      77.14005782455128,
+      76.22300977885462,
+      34.85108145708728,
+      34.7774147530719,
+      57.64812096955888,
+      60.300083643941406,
+      34.53143121201493,
+      45.85849671352948,
+      48.000356671507795,
+      69.24934108356379,
+      51.21764843374673,
+      28.293772944009426,
+      34.804845052972475,
+      67.4049671939504,
+      31.647801386589464,
+      42.539655046685596,
+      51.63142520871493,
+      27.45474907174482,
+      69.7052479170632,
+      33.70341887634795,
+      72.96836102075028,
+      69.33994828529039,
+      35.164486970533346,
+      40.202856081003176,
+      35.56167889033272,
+      36.388128377306316,
+      74.50722294520675,
+      53.85206092600213,
+      38.834733567149385,
+      59.50752268145554,
+      53.36948470558136,
+      52.2124479724418,
+      71.99493832622721,
+      51.34757551454092,
+      59.96847236709186,
+      21.076819811037193,
+      23.559503978713238,
+      38.44191491556793,
+      72.15971006517313,
+      39.15969243992871,
+      72.6772032636606,
+      59.74405373846579,
+      37.1987923558798,
+      50.637006031199796,
+      25.81390779824913,
+      46.563903306639254,
+      36.99826212180011,
+      50.78880931671136,
+      24.94186222548202,
+      27.93814552051205,
+      60.34083327183486,
+      57.52163225815465,
+      38.02584732562377,
+      45.261805442852264,
+      44.014437729486694,
+      64.9350318919826,
+      68.5492816948286,
+      39.33821538475114,
+      47.305817043139086,
+      39.20844852811068,
+      40.52621634408999,
+      43.375448948915505,
+      54.819175717344216,
+      44.17708845566633,
+      17.679404612614952,
+      27.275680439908474,
+      33.536353629813306,
+      22.10702406047905,
+      25.24526087624343,
+      38.25648184594436,
+      13.541945225158367,
+      13.054066830390553,
+      12.330678008622874,
+      24.38626366890416,
+      38.05696339813215,
+      51.12407559225191,
+      60.211291661297636,
+      21.551127206751236,
+      55.92734160977534,
+      41.075429158068395,
+      70.59482730805462,
+      36.251700997573025,
+      42.357351444932284,
+      59.20179933157483,
+      58.94315168023536
     ],
-    "rmse": 0.016778271930319087,
-    "mae": 0.013275623321533203,
-    "r2": -0.043813228607177734
+    "roc_auc": 0.6279644268774703,
+    "accuracy": 0.5888888888888889,
+    "f1_score": 0.5542168674698795
   },
-  "SVR": {
+  "ElasticNetLogistic": {
     "predictions": [
-      0.023128678009308824,
-      0.03105835365949925,
-      0.007076119639762825,
-      -0.0014331740460983493,
-      -0.001465074201721837,
-      0.0025783525624062183,
-      0.008037023671363032,
-      0.0330373754005314,
-      0.004377629229950088,
-      0.0006017527787574935,
-      0.002837977665660498,
-      -0.0041728764297289875,
-      0.004819576684595851,
-      0.025946553119157036,
-      -0.0026321141299789,
-      0.005986699597153457,
-      -0.003582527861358063,
-      -0.011394563974255222,
-      -0.00017681638019120078,
-      0.002403171385057947,
-      0.0005951058248444348,
-      0.037666130864802284,
-      0.006593257193323911,
-      0.004832505586421655,
-      0.0077702765890545825,
-      -0.021306303816468607,
-      -0.01453484945216079,
-      -0.008162589784262285,
-      0.0036650817076211224,
-      -0.01462729729012157,
-      -0.044253599607271814,
-      -0.030153577451873546,
-      0.023295696932014033,
-      -0.024309387368639655,
-      -0.037132536213744925,
-      -0.023215249776385748,
-      0.06177310108052101,
-      0.02346819901477979,
-      0.008814611898444548,
-      0.00754424409136676,
-      0.004556547965056425,
-      -0.020749490870832908,
-      -0.0042431564785977635,
-      -0.00516601124706819,
-      -0.014071985789484785,
-      -0.015357976889986545,
-      -0.025972972974753837,
-      -0.028311302450500973,
-      -0.03827921221487631,
-      -0.019947018268972848,
-      0.016770258742764922,
-      -0.039099167456318716,
-      -0.03492301807663203,
-      -0.07085827942266078,
-      -0.02939333247759037,
-      -0.011256247119475725,
-      -0.0008284158838686366,
-      -0.012679173123161157,
-      -0.025818122822081423,
-      0.039191221601091654,
-      0.029962738745606822,
-      -0.04085088312022924,
-      -0.012307827250600333,
-      -0.011581551920802145,
-      -0.04095424159294927,
-      0.03216623032535002,
-      0.061316250897400094,
-      -0.007940021301760546,
-      -0.0026639329790079306,
-      -0.017294945389143022,
-      -0.009129009584355273,
-      0.0021232860435916674,
-      0.0028152150957429308,
-      0.0028663346608588177,
-      -0.01781767641387568,
-      -0.02262212985489067,
-      0.03568482745666466,
-      -0.007036945546457195,
-      -0.0051845737885154106,
-      0.004348077074911562,
-      -0.014280578206572157,
-      -0.02666835239900913,
-      -0.030871617981746,
-      -0.010971490370359403,
-      -0.006958980966380278,
-      -0.0117842925248818,
-      -0.007918391282174773,
-      -0.009261178919401057,
-      -0.028967758237712048,
-      0.0031895803937001884,
-      -0.0129670264105042,
-      -0.026072463709054937,
-      -0.005674088321238856,
-      0.025051615833091213,
-      0.02131454276334447,
-      -0.0034167451031563915
+      50.283732895550855,
+      50.955617859749466,
+      49.58385472881623,
+      52.6254323794839,
+      50.206034045914926,
+      50.8118451999708,
+      50.34183644667321,
+      49.29543764580504,
+      50.11313701823755,
+      52.332897334580345,
+      49.927101202799136,
+      50.09153154394503,
+      49.599561188736864,
+      49.618851239446506,
+      51.28368661084115,
+      49.61255409617186,
+      49.295673983469364,
+      49.568259560096486,
+      51.03816430698015,
+      49.85962936162778,
+      49.870630869492885,
+      49.80245489004388,
+      49.535032779784025,
+      50.24102527249763,
+      49.23424405510276,
+      51.40122611232805,
+      50.68223059039821,
+      49.71053939702523,
+      49.98073381942681,
+      49.950386360063845,
+      49.82664551145071,
+      51.41376800637695,
+      50.097453603442744,
+      49.838528324986214,
+      50.23204203617032,
+      49.20878922200544,
+      50.21225808569061,
+      50.57253451726561,
+      49.83386512157439,
+      50.229822848663645,
+      49.61091678383913,
+      49.14250326879143,
+      50.38384971138734,
+      50.649453707264605,
+      49.94868115499457,
+      51.59391543193158,
+      50.36158354400736,
+      49.89855666266834,
+      50.074327612453715,
+      49.325819532058865,
+      49.69584094977531,
+      49.35034378931582,
+      50.396595836223554,
+      49.437057888870115,
+      48.02087746789117,
+      51.26827158669014,
+      50.39965448616769,
+      49.26442565935654,
+      48.44194223621404,
+      49.31738376657992,
+      52.17584871798814,
+      51.66788766188057,
+      49.83908929521251,
+      50.030596819107764,
+      50.40343960844953,
+      49.709536400979246,
+      50.04855131203364,
+      50.1070612133263,
+      50.55243662361033,
+      50.12853995289495,
+      49.56033804035893,
+      49.87549031711994,
+      49.75351158332791,
+      50.02233667365111,
+      51.041177221108825,
+      50.06990951822937,
+      49.862337965011896,
+      49.5537300435857,
+      49.77392901895844,
+      49.88540989963895,
+      50.30195024973063,
+      49.245490288974125,
+      49.76865021157267,
+      51.055442336848365,
+      50.09892465719194,
+      49.96172136530099,
+      50.0121485434086,
+      49.38262008585961,
+      49.11037873223755,
+      50.870397621011335
     ],
-    "rmse": 0.022748878984966987,
-    "mae": 0.01715751634605818,
-    "r2": -0.7956843293420135
-  },
-  "ElasticNet": {
-    "predictions": [
-      -0.00256879728751282,
-      0.012523178282845078,
-      0.00928755356990986,
-      0.0006894328721841971,
-      0.0014868630522033269,
-      0.002415611218236747,
-      5.4783903513987674e-05,
-      0.014774609232787757,
-      0.004290173758353643,
-      0.0009370633733161305,
-      0.0034631472194725944,
-      -0.0016229242999542246,
-      0.0032619352813321604,
-      0.008377517918550853,
-      0.0013822488546866608,
-      0.00503571666914083,
-      -0.0009318262890931125,
-      -0.004608812014046134,
-      0.0058347573787296825,
-      0.007003335013535476,
-      0.0025545046991621414,
-      0.014243179124598075,
-      0.0059442249074476185,
-      0.00251698089221589,
-      0.004450939814143797,
-      -0.0030569706336862072,
-      -0.0001384527773916149,
-      -0.002364824606611923,
-      0.006618230689661825,
-      -0.0013648848334600547,
-      -0.012635555893590425,
-      0.010782748972354315,
-      0.006468990390102193,
-      -0.0032443538676273248,
-      -0.009129866615278242,
-      -0.0029833162124486344,
-      0.01907366156938628,
-      0.016255047303822257,
-      0.001490082389322168,
-      0.0031520458471659216,
-      0.006279911924373546,
-      0.0007652997134258573,
-      0.003307454692561059,
-      0.002583814223895759,
-      0.006940817780253034,
-      0.0041962035846998865,
-      -0.00046179710712619887,
-      0.0013105704355693116,
-      0.00043588593858709954,
-      0.0028873202886904427,
-      0.010994750907644832,
-      0.0027387964055359667,
-      0.0016058518696108318,
-      -0.00047531214596511617,
-      0.0003562117235169221,
-      0.001524058875430933,
-      0.0052701963971551035,
-      -0.003511534605223033,
-      0.0010661275146472437,
-      0.010542785724878531,
-      0.004360370445347424,
-      0.0010974190696074317,
-      0.003280592442687218,
-      -0.002336582324458701,
-      -0.005308056668802335,
-      0.009877798330346169,
-      0.012543009317573914,
-      0.0018399612441300432,
-      0.0006907369134428951,
-      0.00029254960739223375,
-      0.008744379773510613,
-      -0.003428996612198434,
-      -0.0075573273474202705,
-      0.00305679523306884,
-      0.0046255902701184855,
-      0.0010592677926361924,
-      0.007240753510771372,
-      0.0036639546798470394,
-      -0.006914110325491224,
-      -0.0019995375300460943,
-      0.012408187096812273,
-      0.005631621332965797,
-      0.0010449396246962157,
-      0.003974052656221954,
-      0.006769493838001213,
-      0.004342376569064461,
-      -0.0026730137717654924,
-      -0.0022603893491619366,
-      0.00676558022889291,
-      0.005435680968574696,
-      0.0014298313582277202,
-      0.0063741125993545065,
-      0.002147987717089981,
-      0.004124813844670314,
-      -0.005440380191804189,
-      -0.004501957225659594
-    ],
-    "rmse": 0.014354858079517734,
-    "mae": 0.010884032613837538,
-    "r2": 0.2849971085102495
+    "roc_auc": 0.6175889328063241,
+    "accuracy": 0.5777777777777777,
+    "f1_score": 0.5681818181818182
   },
   "Ensemble": {
     "predictions": [
-      0.008857994300027372,
-      0.019471225710898387,
-      0.006986929562807123,
-      -0.0007308648183617614,
-      -0.0026344691015894764,
-      0.0033978170423596015,
-      0.0014657620661747207,
-      0.02348486208908909,
-      0.005695488584020553,
-      -0.00015343841957941176,
-      0.002642745798844985,
-      -0.004222631053066783,
-      0.004808032995187016,
-      0.014996448596629977,
-      -0.0007075553963449343,
-      0.004908599903265998,
-      -0.003370669509726311,
-      -0.00888798922503545,
-      0.004049184838843094,
-      0.005090217663313711,
-      0.005145816661315347,
-      0.022729280003328866,
-      0.005680962183325253,
-      0.005704335694066864,
-      0.004427012018191732,
-      -0.010015272935605649,
-      -0.0060811588459834046,
-      -0.007015767929830154,
-      0.0030023488722237166,
-      -0.012815782850342163,
-      -0.02838692117415366,
-      -0.0026561525753885633,
-      0.012699873452686779,
-      -0.01592282001969499,
-      -0.02222289811412205,
-      -0.015411894808486927,
-      0.03806411732534718,
-      0.024149687647811696,
-      0.0045373407210564974,
-      0.00609392756298018,
-      0.004320501569369902,
-      -0.007517315113575638,
-      -0.0010891561075211964,
-      -0.0033485914795183375,
-      -0.002536363315053393,
-      -0.0036731130467678556,
-      -0.014080416050136352,
-      -0.013341464327151652,
-      -0.012937908299466186,
-      -0.009901128320125666,
-      0.013857949192209592,
-      -0.016481337887895773,
-      -0.01582413095892178,
-      -0.029004609616162844,
-      -0.014544959359487153,
-      -0.007210786201360766,
-      0.00118663115445908,
-      -0.003962701780308375,
-      -0.009053268016122686,
-      0.021752549723649012,
-      0.015948917029934527,
-      -0.017241257062574237,
-      -0.005892358640182434,
-      -0.008306869066237633,
-      -0.022797429689615043,
-      0.01837595509933783,
-      0.035448217322859216,
-      -0.005620803347452969,
-      -0.0038999786979977795,
-      -0.009645608563593604,
-      0.003078887668632605,
-      -0.004982857622033352,
-      -0.00717342458972955,
-      0.00175888538231076,
-      -0.005933642146966456,
-      -0.009081509338841063,
-      0.016745057458408014,
-      -0.002514516082807676,
-      -0.009532744944034182,
-      0.0002099757636357381,
-      0.005350014040676618,
-      -0.0034985776380275467,
-      -0.011833532274521908,
-      -0.0023621187681237923,
-      0.0015201481297690807,
-      -0.00331755179864346,
-      -0.006980275680548883,
-      -0.009636941293867657,
-      -0.0060672365613385695,
-      0.002918301617722533,
-      -0.0052004658467602995,
-      -0.006011092668316224,
-      -0.001696598209694614,
-      0.01113446128873439,
-      0.00266903934081741,
-      -0.008504253637487342
+      68.29656442275996,
+      63.14318203988617,
+      47.43293763248567,
+      65.38287316223486,
+      66.24995776498523,
+      72.08028305917753,
+      68.25004630019332,
+      31.911803032678954,
+      40.42681877028322,
+      68.06715345866728,
+      47.89230999116603,
+      36.188738174213036,
+      44.20390594972432,
+      49.65937196293826,
+      65.37884014723858,
+      43.231889399893156,
+      29.409091427612633,
+      31.525617976691557,
+      62.430248043994055,
+      35.37511450705747,
+      39.266405768787344,
+      51.169376737696716,
+      38.778415109167284,
+      66.19094917970935,
+      39.52161434859815,
+      70.90918108885256,
+      67.47527713642495,
+      43.50748519217424,
+      33.90733066395502,
+      45.71462893513956,
+      36.470232418731825,
+      73.36760379610232,
+      57.415404852437256,
+      39.31663876781843,
+      59.59153139515902,
+      41.34132559534478,
+      53.974794930289825,
+      66.03350223675433,
+      47.16286737884418,
+      59.79978036228255,
+      28.05839807669686,
+      29.595661382980087,
+      49.00636543611279,
+      69.73972542772562,
+      47.66338999142351,
+      70.59773060489557,
+      62.054234309470104,
+      46.793633440547005,
+      55.37787783824435,
+      31.401523432503247,
+      51.9293664206044,
+      36.06316399046068,
+      39.103637636481146,
+      35.21862495010532,
+      27.342478642317353,
+      59.60342981279319,
+      51.63569437688507,
+      34.66421643937701,
+      35.48207775428829,
+      38.784605666388735,
+      69.4337470010995,
+      71.0332682221139,
+      48.37095008400169,
+      52.18119207004746,
+      35.03477956528609,
+      45.76060933476443,
+      40.62412114538205,
+      41.89666173743347,
+      46.50614145578518,
+      42.671639903403566,
+      33.90182787531014,
+      43.894527715971115,
+      30.46330122634423,
+      30.10226436964033,
+      51.09021328440604,
+      30.41697899381534,
+      24.437643424920388,
+      23.7018080368989,
+      31.504727296060807,
+      34.58714481101925,
+      45.4095580403658,
+      49.24912047487038,
+      32.33997257086935,
+      62.6080786054224,
+      43.56061688440327,
+      50.97686261157003,
+      39.89175771226358,
+      45.979301632689946,
+      45.359243509485566,
+      61.72414888235246
     ],
-    "rmse": 0.014524861658139019,
-    "mae": 0.011491019269724687,
-    "r2": 0.2679613674767838
+    "roc_auc": 0.6497035573122529,
+    "accuracy": 0.5888888888888889,
+    "f1_score": 0.5194805194805194
   }
 }
