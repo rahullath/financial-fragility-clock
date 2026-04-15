@@ -346,6 +346,7 @@ class HistoricallyVerifiedRegimeClassifier:
         regimes = []
         confidences = []
         signal_details_list = []
+        signals_used = []  # how many non-NaN signals were used per row
         
         for date, row in df.iterrows():
             adaptive_thresh = adaptive_thresholds_df.loc[date] if adaptive_thresholds_df is not None else None
@@ -355,6 +356,10 @@ class HistoricallyVerifiedRegimeClassifier:
             regimes.append(regime)
             confidences.append(confidence)
             signal_details_list.append(signal_details)
+            # Extract how many non-NaN signals the classifier saw for this row.
+            # For the 2009-11 dataset VIX and TED_SPREAD will be absent, so
+            # this will typically be 2 (mean_corr + eigenvalue_ratio).
+            signals_used.append(signal_details.get('total_signals', 0) if signal_details else 0)
         
         # Add results to DataFrame
         result_df = df.copy()
@@ -367,6 +372,9 @@ class HistoricallyVerifiedRegimeClassifier:
             str(details.get('votes', {})) if details else None 
             for details in signal_details_list
         ]
+        # Number of non-NaN signals used per observation (diagnostic for
+        # datasets with missing macro columns, e.g. 2009-11 ISE dataset).
+        result_df['regime_signals_used'] = signals_used
         
         # Print summary statistics
         print("\n" + "=" * 60)
@@ -398,6 +406,30 @@ class HistoricallyVerifiedRegimeClassifier:
         
         if len(low_confidence_obs) > 0:
             print(f"  Date range: {low_confidence_obs.index.min()} to {low_confidence_obs.index.max()}")
+        
+        # ── Signal availability audit ─────────────────────────────────────
+        # This is especially important for datasets that lack VIX/TED_SPREAD
+        # (e.g. the 2009-11 ISE assignment dataset), where the classifier
+        # silently falls back to 2 signals (mean_corr + eigenvalue_ratio).
+        import collections as _col
+        sig_counts = _col.Counter(signals_used)
+        max_possible = 4  # mean_corr, eigenvalue_ratio, VIX, TED_SPREAD
+        low_signal_obs = sum(v for k, v in sig_counts.items() if k < max_possible)
+        very_low_obs   = sum(v for k, v in sig_counts.items() if k <= 2)
+        print(f"\nSignal availability audit:")
+        print(f"  Max possible signals per observation: {max_possible}")
+        print(f"  Distribution of signals used:")
+        for n_sig in sorted(sig_counts):
+            pct = 100 * sig_counts[n_sig] / total_obs if total_obs > 0 else 0
+            label = '  ← all crisis-period overrides' if n_sig == 0 else ''
+            print(f"    {n_sig} signals: {sig_counts[n_sig]:5d} obs ({pct:5.1f}%){label}")
+        if low_signal_obs > 0:
+            print(f"  ⚠  {low_signal_obs} observations used fewer than {max_possible} signals.")
+            print(f"     This is expected if VIX and/or TED_SPREAD are absent in this dataset.")
+        if very_low_obs > 0 and very_low_obs < total_obs:
+            print(f"  ⚠  {very_low_obs} observations ran on ≤2 signals — regime labels are")
+            print(f"     based on mean_corr + eigenvalue_ratio only. Document this limitation.")
+        # ─────────────────────────────────────────────────────────────────
         
         # Print crisis period verification
         print(f"\nCrisis period verification:")

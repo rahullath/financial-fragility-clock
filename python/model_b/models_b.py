@@ -73,7 +73,7 @@ def compute_regime_metrics(
 
 
 def train_random_forest_walk_forward(df: pd.DataFrame, 
-                                     target_col: str = 'SP500',
+                                     target_col: str = 'ISE_USD',
                                      feature_cols: List[str] = None) -> Dict:
     """
     Train Random Forest with walk-forward validation using expanding windows.
@@ -120,12 +120,11 @@ def train_random_forest_walk_forward(df: pd.DataFrame,
             if col in df.columns:
                 feature_cols.append(col)
         
-        # Regime encoding
-        if 'regime' in df.columns:
-            # Encode regime as numeric
-            regime_encoding = {'HEDGE': 0, 'SPECULATIVE': 1, 'PONZI': 2}
-            df['regime_encoded'] = df['regime'].map(regime_encoding)
-            feature_cols.append('regime_encoded')
+        # NOTE: regime_encoded is intentionally excluded from features.
+        # It is derived from the same signals already in X (mean_corr,
+        # eigenvalue_ratio, VIX, TED_SPREAD), so including it creates implicit
+        # data leakage and makes SHAP uninterpretable. Regime stays as a
+        # grouping variable for per-regime RMSE evaluation only.
     
     print(f"\nTarget: {target_col}")
     print(f"Features ({len(feature_cols)}): {feature_cols}")
@@ -461,7 +460,7 @@ def validate_crisis_prediction(df: pd.DataFrame) -> Dict:
 
 
 def compute_shap_values_b(df: pd.DataFrame, 
-                         target_col: str = 'SP500',
+                         target_col: str = 'ISE_USD',
                          feature_cols: List[str] = None) -> Dict:
     """
     Compute SHAP values for crisis periods to identify important macro signals.
@@ -515,11 +514,8 @@ def compute_shap_values_b(df: pd.DataFrame,
             if col in df.columns:
                 feature_cols.append(col)
         
-        # Regime encoding
-        if 'regime' in df.columns:
-            regime_encoding = {'HEDGE': 0, 'SPECULATIVE': 1, 'PONZI': 2}
-            df['regime_encoded'] = df['regime'].map(regime_encoding)
-            feature_cols.append('regime_encoded')
+        # NOTE: regime_encoded is intentionally excluded from features.
+        # See train_random_forest_walk_forward for rationale.
     
     print(f"\nTarget: {target_col}")
     print(f"Features ({len(feature_cols)}): {feature_cols}")
@@ -848,7 +844,7 @@ if __name__ == "__main__":
     
     # 1. Walk-forward validation
     print("\n[1/3] Walk-forward validation...")
-    walk_forward_results = train_random_forest_walk_forward(df, target_col='SP500')
+    walk_forward_results = train_random_forest_walk_forward(df, target_col='ISE_USD')
     
     # 2. Crisis prediction validation
     print("\n[2/3] Crisis prediction validation...")
@@ -856,7 +852,7 @@ if __name__ == "__main__":
     
     # 3. SHAP analysis
     print("\n[3/3] SHAP analysis...")
-    shap_results = compute_shap_values_b(df, target_col='SP500')
+    shap_results = compute_shap_values_b(df, target_col='ISE_USD')
     
     # Export results
     print("\n[4/4] Exporting results...")

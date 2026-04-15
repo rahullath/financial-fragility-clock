@@ -904,24 +904,28 @@ if __name__ == "__main__":
         if col in df_features.columns:
             df_rf[col] = df_features[col]
     
-    # Encode regime as numeric (HEDGE=0, SPECULATIVE=1, PONZI=2)
-    regime_encoding = {'HEDGE': 0, 'SPECULATIVE': 1, 'PONZI': 2}
-    df_rf['regime_encoded'] = df_rf['regime'].map(regime_encoding)
+    # NOTE: regime_encoded is intentionally excluded from model features.
+    # regime is derived from the same rolling signals already in X (mean_corr,
+    # eigenvalue_ratio) so including the encoded label creates implicit data
+    # leakage and makes SHAP uninterpretable. The 'regime' column is kept in
+    # df_rf solely to supply regimes_rf_test for per-regime RMSE evaluation.
     
-    # Remove rows with NaN values
-    rf_valid_mask = df_rf.notna().all(axis=1)
+    # Remove rows with NaN values (on numeric model columns only; regime NaN
+    # is allowed since it is only used as a grouping variable post-prediction)
+    rf_model_cols = rf_feature_cols + ['mean_corr', 'permutation_entropy']
+    rf_valid_mask = df_rf[rf_model_cols + [target_col]].notna().all(axis=1)
     df_rf_clean = df_rf[rf_valid_mask].copy()
     
     print(f"\nValid observations for Random Forest: {len(df_rf_clean)}")
-    print(f"Features: {rf_feature_cols + ['mean_corr', 'permutation_entropy', 'regime_encoded']}")
+    print(f"Features: {rf_model_cols}")
     
     # Split into train/test (same time-based split)
     # Find the split date from original split
     split_date = X_train.index.max()
     
-    X_rf_train = df_rf_clean[df_rf_clean.index <= split_date][rf_feature_cols + ['mean_corr', 'permutation_entropy', 'regime_encoded']]
+    X_rf_train = df_rf_clean[df_rf_clean.index <= split_date][rf_model_cols]
     y_rf_train = df_rf_clean[df_rf_clean.index <= split_date][target_col]
-    X_rf_test = df_rf_clean[df_rf_clean.index > split_date][rf_feature_cols + ['mean_corr', 'permutation_entropy', 'regime_encoded']]
+    X_rf_test = df_rf_clean[df_rf_clean.index > split_date][rf_model_cols]
     y_rf_test = df_rf_clean[df_rf_clean.index > split_date][target_col]
     regimes_rf_test = df_rf_clean[df_rf_clean.index > split_date]['regime']
     

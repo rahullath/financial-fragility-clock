@@ -171,32 +171,61 @@ def train_lstm(X_train, y_train, X_test, y_test, regimes_test=None, sequence_len
     print(f"Train sequences: {X_train_seq.shape}")
     print(f"Test sequences: {X_test_seq.shape}")
     
-    # Build LSTM model
+    # Normalize the sequences for better LSTM training
+    from sklearn.preprocessing import StandardScaler
+    scaler_X = StandardScaler()
+    scaler_y = StandardScaler()
+    
+    # Reshape for scaling
+    n_samples_train, n_timesteps, n_features = X_train_seq.shape
+    X_train_flat = X_train_seq.reshape(-1, n_features)
+    X_train_scaled = scaler_X.fit_transform(X_train_flat).reshape(n_samples_train, n_timesteps, n_features)
+    
+    n_samples_test = X_test_seq.shape[0]
+    X_test_flat = X_test_seq.reshape(-1, n_features)
+    X_test_scaled = scaler_X.transform(X_test_flat).reshape(n_samples_test, n_timesteps, n_features)
+    
+    # Scale target
+    y_train_scaled = scaler_y.fit_transform(y_train_seq.reshape(-1, 1)).flatten()
+    
+    # Build LSTM model with better architecture
     model = keras.Sequential([
-        layers.LSTM(64, activation='relu', return_sequences=True, 
+        layers.LSTM(64, activation='tanh', return_sequences=True, 
                    input_shape=(sequence_length, X_train.shape[1])),
         layers.Dropout(0.2),
-        layers.LSTM(32, activation='relu'),
+        layers.LSTM(32, activation='tanh'),
         layers.Dropout(0.2),
         layers.Dense(16, activation='relu'),
-        layers.Dense(1)
+        layers.Dense(1, activation='linear')  # Linear activation for regression
     ])
     
-    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+    # Use better optimizer settings
+    optimizer = keras.optimizers.Adam(learning_rate=0.001)
+    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
     
-    # Train
+    # Train with early stopping
     print("\nTraining LSTM...")
+    early_stop = keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=10,
+        restore_best_weights=True
+    )
+    
     history = model.fit(
-        X_train_seq, y_train_seq,
-        epochs=50,
-        batch_size=32,
+        X_train_scaled, y_train_scaled,
+        epochs=100,
+        batch_size=16,
         validation_split=0.2,
+        callbacks=[early_stop],
         verbose=0
     )
     
-    # Predictions
-    y_train_pred = model.predict(X_train_seq, verbose=0).flatten()
-    y_test_pred = model.predict(X_test_seq, verbose=0).flatten()
+    # Predictions (inverse transform to original scale)
+    y_train_pred_scaled = model.predict(X_train_scaled, verbose=0).flatten()
+    y_train_pred = scaler_y.inverse_transform(y_train_pred_scaled.reshape(-1, 1)).flatten()
+    
+    y_test_pred_scaled = model.predict(X_test_scaled, verbose=0).flatten()
+    y_test_pred = scaler_y.inverse_transform(y_test_pred_scaled.reshape(-1, 1)).flatten()
     
     # Metrics
     metrics = {
@@ -251,10 +280,11 @@ def train_svr(X_train, y_train, X_test, y_test, regimes_test=None):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
+    # Use more flexible hyperparameters to allow the model to learn
     model = SVR(
         kernel='rbf',
-        C=1.0,
-        epsilon=0.1,
+        C=10.0,  # Increased from 1.0 to allow more flexibility
+        epsilon=0.01,  # Decreased from 0.1 for tighter fit
         gamma='scale'
     )
     
@@ -311,8 +341,9 @@ def train_elastic_net(X_train, y_train, X_test, y_test, regimes_test=None):
     print("TRAINING ELASTIC NET MODEL")
     print("=" * 60)
     
+    # Use weaker regularization to prevent all coefficients from being zero
     model = ElasticNet(
-        alpha=0.01,
+        alpha=0.0001,  # Decreased from 0.01 to allow features to have non-zero coefficients
         l1_ratio=0.5,
         random_state=42,
         max_iter=10000

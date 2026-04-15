@@ -1,0 +1,75 @@
+The pipeline is structurally sound but has two serious problems, one fatal for the 2009–11 dataset specifically.
+
+Problem 1 (FATAL for the assignment dataset): Regime labelling is circular for 2009–11
+regime_labeling_b.py hard-codes crisis periods as 2008-09-01 → 2009-03-31 and 2020-03-01 → 2020-03-31. Your assignment dataset runs Jan 2009 → Feb 2011. That means:
+
+Jan–Mar 2009 gets hard-coded PONZI labels (fine, that's the tail of the GFC)
+Everything after March 2009 falls into the adaptive threshold path using mean_corr, VIX, TED_SPREAD, eigenvalue_ratio
+
+But here's the problem: feature_engineering_b.py references 13 indices including BIST100, SHANGHAI, HANGSENG, KOSPI, ASX200, VIX — none of which exist in your Group_5.csv. The CSV has only 8 columns: ISE_TL, ISE_USD, SP500, DAX, FTSE, NIKKEI, BOVESPA, EU, EM.
+When compute_rolling_correlation checks available_indices, it silently drops the missing ones and proceeds with however many it finds. The VIX column won't exist, so regime_labeling_b.py gets NaN for the VIX signal, and the TED_SPREAD column also won't exist (that comes from fetch_macro_data.py, not the CSV). This means for most of the 2009–11 dataset, regime classification is running on 1–2 signals at most, not 4, and the confidence scores are inflated nonsense.
+
+Problem 2 (SIGNIFICANT): The fragility score is closed-loop normalized
+In compute_fragility_score_b, every component is min-max normalized within the dataset itself:
+pythondef normalize(series):
+    min_val = series.min()
+    max_val = series.max()
+    return (series - min_val) / (max_val - min_val)
+This means the fragility score always spans 0–100 regardless of actual severity. The calmest period in your dataset gets score ~0, the most volatile gets ~100, by construction. You can't compare across time windows or claim the score means anything absolute. For a Minsky clock that's supposed to tell you "how close to midnight" — this is a problem. If your dataset was entirely calm, the worst day would still score 80.
+
+What's actually working fine
+preprocessing.py is clean. The zero-handling (forward-fill up to 3 days), date parsing, and export are all correct. The feature logic itself — rolling correlations, eigenvalue ratio, permutation entropy — is conceptually legitimate and grounded in the data.
+
+What you need to fix
+For the 2009–11 dataset specifically:
+The regime labelling needs to work with only the 8 columns you actually have. You need a fallback path that labels regimes purely from the ISE dataset using:
+
+Rolling 30-day std of ISE_USD (volatility regime)
+Rolling 60-day mean pairwise correlation across the 8 available indices
+Eigenvalue ratio from those 8
+
+That's enough for a defensible 3-regime classification with no external data dependency.
+For the fragility score:
+Replace the within-sample min-max with percentile-based thresholds calibrated on the full 2003–2025 Model B dataset, then apply those same thresholds to the 2009–11 window. That way a score of 70 means the same thing in both datasets.
+For the SHAP features:
+The features going into the ML models are mean_corr, eigenvalue_ratio, permutation_entropy, rolling_volatility, and macro signals if available. These are all real computed values from the return data — not invented. The problem isn't the features, it's that some of them (VIX, TED_SPREAD) will be silently NaN for Model A.
+The Three Problems, Ranked by Severity
+🔴 Problem 1 (CRITICAL): Wrong target variable in Model B
+models_b.py line 76 and 851: target_col: str = 'SP500'
+Model B is predicting SP500 returns, not ISE_USD. Your dashboard is supposed to measure Turkish market fragility. The entire Model B pipeline — walk-forward splits, SHAP values, regime RMSE — is built around predicting the US market. This is the most serious issue and needs to be fixed before anything else matters.
+Model A (models.py) correctly uses ISE_USD as the target. Model B doesn't.
+
+🟠 Problem 2 (SIGNIFICANT): regime_encoded is a feature inside the model that predicts the target
+In both models, regime_encoded (HEDGE=0, SPECULATIVE=1, PONZI=2) is included as a feature in X:
+python# models.py ~line 428
+rf_feature_cols + ['mean_corr', 'permutation_entropy', 'regime_encoded']
+
+# models_b.py ~line 128
+feature_cols.append('regime_encoded')
+The regime label is derived from mean_corr, eigenvalue_ratio, VIX, TED_SPREAD. Those same signals are also features. So the model sees both the raw signals and the categorical summary of those signals simultaneously. This creates implicit data leakage — the regime label encodes information the model already has, but in a pre-digested form that gives the RF an unfair shortcut. It also makes SHAP uninterpretable: if regime_encoded shows up as a top SHAP feature, it means nothing because it's a derived label, not a real market observable.
+Fix: Remove regime_encoded from X. Keep it only for stratified evaluation (the per-regime RMSE tables), which is its legitimate use.
+
+🟡 Problem 3 (MODERATE): Walk-forward splits in Model B are hardcoded to 2008/2020 crisis dates
+pythonsplits = [
+    {'name': 'split_2008', ...},
+    {'name': 'split_2020', ...}
+]
+This means the walk-forward validation is not actually walk-forward in the general sense — it's two specific crisis-anchored splits. For the 2009–11 dataset, split_2020 will produce empty test sets (no data after 2011). Only split_2008 will run, and its test period starts March 2009, giving you roughly 2 years of test data out of 2.1 years total. The 80/20 temporal split in models.py is actually better-calibrated for the assignment dataset.
+
+What's Actually Solid
+To be clear about what's working correctly:
+
+TimeSeriesSplit for CV in the RF (models.py) — correct, no look-ahead
+The 80/20 temporal split (not random) — correct
+OLS diagnostics (Durbin-Watson, Breusch-Pagan) — legitimate and academically useful, especially since you'll almost certainly find heteroskedasticity (returns in crisis periods have different variance)
+SHAP via TreeExplainer — technically correct, the problem is only which features go in
+Per-regime RMSE tables — genuinely interesting and defensible analytically
+
+
+Concrete Fixes Required
+Fix 1 — In models_b.py, change the default target:
+python# Line 76: was target_col: str = 'SP500'
+target_col: str = 'ISE_USD'
+# Line 851 and 859: same change
+Fix 2 — Remove regime_encoded from feature construction in both files. The line feature_cols.append('regime_encoded') and the equivalent in models.py should be deleted. Regime stays only as a grouping variable for evaluation.
+Fix 3 — For the 2009–11 dataset specifically, confirm regime_labeling_b.py isn't silently running with 1–2 signals. Add a print statement after classification showing how many signals were non-NaN per observation. If VIX and TED_SPREAD are all NaN (likely), you need to document that Model A regime labels are correlation + eigenvalue only, which is still defensible — just be explicit about it.

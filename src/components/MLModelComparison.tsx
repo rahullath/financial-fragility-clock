@@ -29,7 +29,7 @@ import './MLModelComparison.css';
  * Requirements: 11.1-11.8, 12.1-12.5
  */
 
-type MetricKey = 'accuracy' | 'precision' | 'recall' | 'f1_score' | 'roc_auc';
+type MetricKey = 'test_r2' | 'test_rmse' | 'test_mae' | 'train_r2' | 'train_rmse';
 type SortDirection = 'asc' | 'desc';
 
 interface ModelWithPerformance {
@@ -55,8 +55,8 @@ function formatMetric(value: number | null | undefined, digits = 4): string {
 const MLModelComparison: React.FC = () => {
   const { mlModelsExtended, availableMLModels, selectedMLModel, setSelectedMLModel } = useModelContext();
   
-  // State for sorting
-  const [sortMetric, setSortMetric] = useState<MetricKey>('f1_score');
+  // State for sorting (default to test_r2, higher is better)
+  const [sortMetric, setSortMetric] = useState<MetricKey>('test_r2');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   // TODO: Implement filtering by date range and regime type (Requirement 12.5)
@@ -80,20 +80,34 @@ const MLModelComparison: React.FC = () => {
     const sorted = [...modelsWithPerformance].sort((a, b) => {
       const aValue = metricSortValue(a.performance[sortMetric], sortDirection);
       const bValue = metricSortValue(b.performance[sortMetric], sortDirection);
-      return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
+      
+      // For RMSE and MAE, lower is better, so invert the comparison
+      const isLowerBetter = sortMetric === 'test_rmse' || sortMetric === 'test_mae' || sortMetric === 'train_rmse';
+      
+      if (isLowerBetter) {
+        return sortDirection === 'desc' ? aValue - bValue : bValue - aValue;
+      } else {
+        return sortDirection === 'desc' ? bValue - aValue : aValue - bValue;
+      }
     });
     return sorted;
   }, [modelsWithPerformance, sortMetric, sortDirection]);
 
   // Find best model for each metric
   const bestModels = useMemo(() => {
-    const metrics: MetricKey[] = ['accuracy', 'precision', 'recall', 'f1_score', 'roc_auc'];
+    const metrics: MetricKey[] = ['test_r2', 'test_rmse', 'test_mae', 'train_r2', 'train_rmse'];
     const best: Record<MetricKey, string> = {} as Record<MetricKey, string>;
 
     metrics.forEach((metric) => {
-      const rankedModels = [...modelsWithPerformance].sort(
-        (a, b) => metricSortValue(b.performance[metric], 'desc') - metricSortValue(a.performance[metric], 'desc')
-      );
+      // For RMSE and MAE, lower is better
+      const isLowerBetter = metric === 'test_rmse' || metric === 'test_mae' || metric === 'train_rmse';
+      
+      const rankedModels = [...modelsWithPerformance].sort((a, b) => {
+        const aValue = metricSortValue(a.performance[metric], isLowerBetter ? 'asc' : 'desc');
+        const bValue = metricSortValue(b.performance[metric], isLowerBetter ? 'asc' : 'desc');
+        return isLowerBetter ? aValue - bValue : bValue - aValue;
+      });
+      
       const bestModel = rankedModels[0];
       if (bestModel && bestModel.performance[metric] != null) {
         best[metric] = bestModel.modelId;
@@ -103,48 +117,21 @@ const MLModelComparison: React.FC = () => {
     return best;
   }, [modelsWithPerformance]);
 
-  // Prepare ROC curve data for overlay chart
-  const rocCurveData = useMemo(() => {
-    if (!mlModelsExtended) return [];
-
-    // Combine all ROC curves into a single dataset
-    // We need to align FPR values across models
-    const allFPRs = new Set<number>();
-    modelsWithPerformance.forEach((model) => {
-      model.performance.roc_curve.forEach((point) => {
-        allFPRs.add(point.fpr);
-      });
-    });
-
-    const sortedFPRs = Array.from(allFPRs).sort((a, b) => a - b);
-
-    return sortedFPRs.map((fpr) => {
-      const dataPoint: Record<string, number> = { fpr };
-      
-      modelsWithPerformance.forEach((model) => {
-        // Find closest FPR point in this model's ROC curve
-        const rocCurve = model.performance.roc_curve;
-        const closestPoint = rocCurve.reduce((prev, curr) => {
-          return Math.abs(curr.fpr - fpr) < Math.abs(prev.fpr - fpr) ? curr : prev;
-        });
-        dataPoint[model.modelId] = closestPoint.tpr;
-      });
-
-      return dataPoint;
-    });
-  }, [mlModelsExtended, modelsWithPerformance]);
-
-  // Generate mock error distribution data (since not in schema)
+  // Generate error distribution data based on RMSE (regression metric)
   const errorDistributions = useMemo(() => {
     return modelsWithPerformance.map((model) => {
-      // Generate mock error distribution based on model performance
-      const baseError = 1 - model.performance.accuracy;
+      // Use test RMSE as the standard deviation for error distribution
+      const rmse = model.performance.test_rmse || 0.01;
       const bins = [];
-      for (let i = -5; i <= 5; i++) {
-        const error = i * 0.1;
-        const count = Math.exp(-Math.pow(error / baseError, 2) / 2) * 100;
+      
+      // Create bins from -3*RMSE to +3*RMSE (covers ~99.7% of normal distribution)
+      for (let i = -10; i <= 10; i++) {
+        const error = (i / 10) * rmse * 3;
+        // Normal distribution: count decreases as we move away from 0
+        const count = Math.exp(-Math.pow(error / rmse, 2) / 2) * 100;
         bins.push({ error, count });
       }
+      
       return {
         modelId: model.modelId,
         bins,
@@ -168,10 +155,10 @@ const MLModelComparison: React.FC = () => {
       return 'No model performance data available.';
     }
 
-    const bestF1Model = sortedModels[0];
-    const avgAccuracy = modelsWithPerformance.reduce((sum, m) => sum + m.performance.accuracy, 0) / modelsWithPerformance.length;
+    const bestR2Model = sortedModels[0];
+    const avgR2 = modelsWithPerformance.reduce((sum, m) => sum + (m.performance.test_r2 || 0), 0) / modelsWithPerformance.length;
 
-    return `This comparison shows how different machine learning models perform at predicting financial crises. We evaluate ${modelsWithPerformance.length} models using metrics like accuracy (how often the model is correct), precision (how reliable positive predictions are), and recall (how many actual crises are caught). The best overall model is ${bestF1Model.modelId} with an F1 score of ${(bestF1Model.performance.f1_score * 100).toFixed(1)}%. The average accuracy across all models is ${(avgAccuracy * 100).toFixed(1)}%. The ROC curves show the trade-off between catching crises (true positives) and false alarms (false positives).`;
+    return `This comparison shows how different machine learning models perform at predicting financial fragility scores. We evaluate ${modelsWithPerformance.length} models using regression metrics: R² (how much variance the model explains, higher is better), RMSE (root mean squared error, lower is better), and MAE (mean absolute error, lower is better). The best overall model is ${bestR2Model.modelId} with a test R² of ${(bestR2Model.performance.test_r2 * 100).toFixed(1)}%. The average R² across all models is ${(avgR2 * 100).toFixed(1)}%. The error distributions show how prediction errors are spread around zero for each model.`;
   };
 
   // Model colors for charts
@@ -223,34 +210,34 @@ const MLModelComparison: React.FC = () => {
               <tr>
                 <th>Model</th>
                 <th
-                  className={`sortable ${sortMetric === 'accuracy' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('accuracy')}
+                  className={`sortable ${sortMetric === 'test_r2' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('test_r2')}
                 >
-                  Accuracy {sortMetric === 'accuracy' && (sortDirection === 'desc' ? '↓' : '↑')}
+                  Test R² {sortMetric === 'test_r2' && (sortDirection === 'desc' ? '↓' : '↑')}
                 </th>
                 <th
-                  className={`sortable ${sortMetric === 'precision' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('precision')}
+                  className={`sortable ${sortMetric === 'test_rmse' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('test_rmse')}
                 >
-                  Precision {sortMetric === 'precision' && (sortDirection === 'desc' ? '↓' : '↑')}
+                  Test RMSE {sortMetric === 'test_rmse' && (sortDirection === 'desc' ? '↓' : '↑')}
                 </th>
                 <th
-                  className={`sortable ${sortMetric === 'recall' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('recall')}
+                  className={`sortable ${sortMetric === 'test_mae' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('test_mae')}
                 >
-                  Recall {sortMetric === 'recall' && (sortDirection === 'desc' ? '↓' : '↑')}
+                  Test MAE {sortMetric === 'test_mae' && (sortDirection === 'desc' ? '↓' : '↑')}
                 </th>
                 <th
-                  className={`sortable ${sortMetric === 'f1_score' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('f1_score')}
+                  className={`sortable ${sortMetric === 'train_r2' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('train_r2')}
                 >
-                  F1 Score {sortMetric === 'f1_score' && (sortDirection === 'desc' ? '↓' : '↑')}
+                  Train R² {sortMetric === 'train_r2' && (sortDirection === 'desc' ? '↓' : '↑')}
                 </th>
                 <th
-                  className={`sortable ${sortMetric === 'roc_auc' ? 'sorted' : ''}`}
-                  onClick={() => handleSort('roc_auc')}
+                  className={`sortable ${sortMetric === 'train_rmse' ? 'sorted' : ''}`}
+                  onClick={() => handleSort('train_rmse')}
                 >
-                  ROC AUC {sortMetric === 'roc_auc' && (sortDirection === 'desc' ? '↓' : '↑')}
+                  Train RMSE {sortMetric === 'train_rmse' && (sortDirection === 'desc' ? '↓' : '↑')}
                 </th>
                 <th>Actions</th>
               </tr>
@@ -268,20 +255,20 @@ const MLModelComparison: React.FC = () => {
                     />
                     {model.modelId}
                   </td>
-                  <td className={bestModels.accuracy === model.modelId ? 'best-metric' : ''}>
-                    {formatPercent(model.performance.accuracy)}
+                  <td className={bestModels.test_r2 === model.modelId ? 'best-metric' : ''}>
+                    {formatMetric(model.performance.test_r2)}
                   </td>
-                  <td className={bestModels.precision === model.modelId ? 'best-metric' : ''}>
-                    {formatPercent(model.performance.precision)}
+                  <td className={bestModels.test_rmse === model.modelId ? 'best-metric' : ''}>
+                    {formatMetric(model.performance.test_rmse)}
                   </td>
-                  <td className={bestModels.recall === model.modelId ? 'best-metric' : ''}>
-                    {formatPercent(model.performance.recall)}
+                  <td className={bestModels.test_mae === model.modelId ? 'best-metric' : ''}>
+                    {formatMetric(model.performance.test_mae)}
                   </td>
-                  <td className={bestModels.f1_score === model.modelId ? 'best-metric' : ''}>
-                    {formatPercent(model.performance.f1_score)}
+                  <td className={bestModels.train_r2 === model.modelId ? 'best-metric' : ''}>
+                    {formatMetric(model.performance.train_r2)}
                   </td>
-                  <td className={bestModels.roc_auc === model.modelId ? 'best-metric' : ''}>
-                    {formatMetric(model.performance.roc_auc)}
+                  <td className={bestModels.train_rmse === model.modelId ? 'best-metric' : ''}>
+                    {formatMetric(model.performance.train_rmse)}
                   </td>
                   <td>
                     <button
@@ -299,77 +286,13 @@ const MLModelComparison: React.FC = () => {
         </div>
       </div>
 
-      {/* ROC Curve Overlay */}
+      {/* Prediction vs Actual Scatter Plot (replacing ROC curves for regression) */}
       <div className="ml-comparison-section">
-        <h4>ROC Curves (All Models)</h4>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart
-            data={rocCurveData}
-            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis
-              dataKey="fpr"
-              tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
-              axisLine={false}
-              tickLine={false}
-              label={{
-                value: 'False Positive Rate',
-                position: 'insideBottom',
-                offset: -5,
-                style: { fontSize: 11 },
-              }}
-            />
-            <YAxis
-              tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}
-              axisLine={false}
-              tickLine={false}
-              label={{
-                value: 'True Positive Rate',
-                angle: -90,
-                position: 'insideLeft',
-                style: { fontSize: 11 },
-              }}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
-                borderRadius: '4px',
-                fontSize: '11px',
-              }}
-            />
-            <Legend
-              verticalAlign="top"
-              height={36}
-              iconType="line"
-              formatter={(value) => (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{value}</span>
-              )}
-            />
-            {/* Diagonal reference line (random classifier) */}
-            <Line
-              type="monotone"
-              dataKey="fpr"
-              stroke="var(--text-muted)"
-              strokeDasharray="5 5"
-              dot={false}
-              strokeWidth={1}
-              name="Random"
-            />
-            {modelsWithPerformance.map((model) => (
-              <Line
-                key={model.modelId}
-                type="monotone"
-                dataKey={model.modelId}
-                stroke={modelColors[model.modelId] || '#999'}
-                strokeWidth={2}
-                dot={false}
-                name={model.modelId}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+        <h4>Model Predictions Comparison</h4>
+        <div className="ml-comparison-note">
+          Note: This is a regression task predicting fragility scores. ROC curves are not applicable.
+          Error distributions below show prediction accuracy for each model.
+        </div>
       </div>
 
       {/* Error Distribution Histograms */}
