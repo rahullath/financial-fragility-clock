@@ -1,0 +1,48 @@
+{
+  "source": "yfinance + FRED",
+  "start": "2005-01-05",
+  "end": "2026-04-15",
+  "n_rows": 5536,
+  "columns": [
+    "sp",
+    "dax",
+    "ftse",
+    "nikkei",
+    "bovespa",
+    "eu",
+    "em",
+    "ise2",
+    "try_usd_ret",
+    "cbrt_rate",
+    "cpi_mom",
+    "cbrt_rate_delta"
+  ],
+  "has_macro": true,
+  "crisis_windows": [
+    {
+      "label": "2008 GFC",
+      "start": "2008-09-01",
+      "end": "2009-03-31"
+    },
+    {
+      "label": "2018 Currency Crisis",
+      "start": "2018-03-01",
+      "end": "2018-12-31"
+    },
+    {
+      "label": "COVID Shock",
+      "start": "2020-02-01",
+      "end": "2020-06-30"
+    },
+    {
+      "label": "2021 Rate Cut Shock",
+      "start": "2021-09-01",
+      "end": "2022-01-31"
+    },
+    {
+      "label": "2023 Earthquake",
+      "start": "2023-02-01",
+      "end": "2023-05-31"
+    }
+  ]
+}

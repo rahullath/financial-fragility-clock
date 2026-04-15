@@ -6,7 +6,7 @@ xgboost>=2.0
 statsmodels>=0.14
 yfinance>=0.2.40
 python-dotenv>=1.0
-fredapi>=3.0
+fredapi
 shap>=0.44
 # TensorFlow optional (LSTM model):
-# tensorflow>=2.15
+tensorflow>=2.15
