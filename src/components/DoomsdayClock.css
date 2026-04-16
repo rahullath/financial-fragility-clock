@@ -1,1 +1,124 @@
-/* REPLACED — use --k-* tokens from variables.css */
+/*
+ * DoomsdayClock.css — Kraken design system
+ * The clock face stays dark (intentional: it IS a clock face)
+ * Kraken Purple (#7132f5) replaces indigo as the brand colour
+ * on rings, glow, and interactive elements around the face.
+ */
+
+.doomsday-clock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--k-space-8) var(--k-space-6);
+  /* Background: dark card that contrasts the white page — intentional */
+  background: #0d0d14;
+  border-radius: var(--k-radius-lg);
+  border: 1px solid var(--k-border);
+  box-shadow: var(--k-shadow-panel);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Purple outer glow ring — Kraken brand */
+.clock-glow-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse 60% 40% at 50% 30%,
+    rgba(113, 50, 245, 0.12) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  transition: opacity var(--k-transition-slow);
+}
+
+/* Pulse animation driven by --fragility-score CSS variable */
+@property --fragility-score {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.doomsday-svg {
+  width: 100%;
+  max-width: 320px;
+  display: block;
+  filter: drop-shadow(0 2px 12px rgba(113, 50, 245, 0.15));
+}
+
+/* Time display below the clock face */
+.doomsday-time {
+  margin-top: var(--k-space-8);
+  font-family: var(--k-font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  text-align: center;
+  line-height: 1.1;
+}
+
+/* Regime label */
+.doomsday-regime {
+  margin-top: var(--k-space-3);
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-sm);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* Historical analogue panel */
+.doomsday-analogue {
+  margin-top: var(--k-space-8);
+  width: 100%;
+  padding: var(--k-space-8) var(--k-space-8);
+  border-radius: var(--k-radius-md);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.doomsday-analogue-period {
+  display: flex;
+  align-items: baseline;
+  gap: var(--k-space-6);
+  margin-bottom: var(--k-space-3);
+}
+
+.doomsday-analogue-label {
+  font-size: var(--k-text-sm);
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--k-font-data);
+}
+
+.doomsday-analogue-value {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-md);
+  font-weight: 600;
+}
+
+.doomsday-analogue-event {
+  font-size: var(--k-text-md);
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.doomsday-analogue-consequence {
+  font-size: var(--k-text-sm);
+  color: rgba(255,255,255,0.45);
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .doomsday-clock { padding: var(--k-space-6) var(--k-space-3); }
+  .doomsday-svg   { max-width: 260px; }
+  .doomsday-time  { font-size: 1.4rem; }
+}

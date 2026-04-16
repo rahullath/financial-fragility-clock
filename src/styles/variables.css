@@ -1,110 +1,186 @@
 /*
- * KRAKEN DESIGN SYSTEM — Financial Fragility Clock
- * Art direction: financial data terminal → dark, precise, authoritative
- * Palette: deep navy-black surfaces, indigo-purple primary, red crisis accent
- * Typography: Inter (UI) + JetBrains Mono (data/numbers)
- * Density: dense — dashboard context, data-heavy
+ * FRAGILITY CLOCK — Design tokens from DESIGN.md (Kraken-inspired)
+ *
+ * Light default. Dark mode via [data-theme="dark"] on <html>.
+ * All --k-* names preserved so zero changes needed in existing components.
+ *
+ * Kraken Purple: #7132f5  |  Purple Dark: #5741d8  |  Purple Deep: #5b1ecf
+ * Near Black text: #101114  |  Cool Gray: #686b82  |  Silver Blue: #9497a9
+ * Green (success): #149e61
  */
 
-:root {
-  /* ── Surfaces ────────────────────────────────────────────── */
-  --k-bg:              #0C0E14;
-  --k-surface:         #131620;
-  --k-surface-raised:  #1A1D2E;
-  --k-surface-overlay: #1F2235;
-  --k-border:          #252840;
-  --k-border-subtle:   #1C1F32;
-  --k-divider:         #1E2136;
+/* ─────────────────────────────────────────────────────────────
+   LIGHT (default)
+───────────────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  /* Surfaces */
+  --k-bg:              #ffffff;
+  --k-surface:         #ffffff;
+  --k-surface-raised:  #f6f6f9;
+  --k-surface-overlay: #f0f0f5;
+  --k-border:          #dedee5;
+  --k-border-subtle:   #ebebf0;
+  --k-divider:         #ebebf0;
 
-  /* ── Text ────────────────────────────────────────────────── */
-  --k-text:            #E8EAF6;
-  --k-text-muted:      #9094B8;
-  --k-text-faint:      #4A4E72;
-  --k-text-inverse:    #0C0E14;
+  /* Text */
+  --k-text:            #101114;
+  --k-text-muted:      #686b82;
+  --k-text-faint:      #9497a9;
+  --k-text-inverse:    #ffffff;
 
-  /* ── Primary accent (Kraken Indigo) ─────────────────────── */
-  --k-primary:         #5C6BC0;
-  --k-primary-hover:   #7986CB;
-  --k-primary-active:  #3F51B5;
-  --k-primary-dim:     rgba(92, 107, 192, 0.15);
-  --k-primary-glow:    rgba(92, 107, 192, 0.08);
+  /* Primary — Kraken Purple */
+  --k-primary:         #7132f5;
+  --k-primary-hover:   #5741d8;
+  --k-primary-active:  #5b1ecf;
+  --k-primary-dim:     rgba(113, 50, 245, 0.10);
+  --k-primary-glow:    rgba(113, 50, 245, 0.06);
 
-  /* ── Crisis / Danger (Turkey Red) ───────────────────────── */
-  --k-crisis:          #EF5350;
-  --k-crisis-hover:    #E53935;
-  --k-crisis-dim:      rgba(239, 83, 80, 0.12);
-  --k-crisis-band:     rgba(239, 83, 80, 0.08);
+  /* Purple subtle button bg */
+  --k-primary-subtle:  rgba(133, 91, 251, 0.12);
 
-  /* ── Warning / Stress (Amber) ───────────────────────────── */
-  --k-warning:         #FFA726;
-  --k-warning-dim:     rgba(255, 167, 38, 0.12);
+  /* Crisis / Danger */
+  --k-crisis:          #dc2626;
+  --k-crisis-hover:    #b91c1c;
+  --k-crisis-dim:      rgba(220, 38, 38, 0.10);
+  --k-crisis-band:     rgba(220, 38, 38, 0.06);
 
-  /* ── Success / Stable (Green) ───────────────────────────── */
-  --k-success:         #4CAF50;
-  --k-success-dim:     rgba(76, 175, 80, 0.12);
+  /* Warning */
+  --k-warning:         #d97706;
+  --k-warning-dim:     rgba(217, 119, 6, 0.10);
 
-  /* ── Chart palette (7 indices + ISE) ────────────────────── */
-  --k-chart-ise:       #7986CB;   /* ISE² — primary target, indigo */
-  --k-chart-sp:        #4FC3F7;   /* S&P 500 — sky blue */
-  --k-chart-dax:       #FFD54F;   /* DAX — amber */
-  --k-chart-ftse:      #81C784;   /* FTSE — green */
-  --k-chart-nikkei:    #FF8A65;   /* Nikkei — coral */
-  --k-chart-bovespa:   #CE93D8;   /* Bovespa — lavender */
-  --k-chart-eu:        #4DD0E1;   /* EU — cyan */
-  --k-chart-em:        #A5D6A7;   /* EM — mint */
+  /* Success — Kraken Green */
+  --k-success:         #149e61;
+  --k-success-dim:     rgba(20, 158, 97, 0.12);
 
-  /* ── Typography ─────────────────────────────────────────── */
-  --k-font-ui:         'Inter', 'Helvetica Neue', sans-serif;
-  --k-font-data:       'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', monospace;
+  /* Chart palette — same in both modes */
+  --k-chart-ise:       #7132f5;
+  --k-chart-sp:        #0284c7;
+  --k-chart-dax:       #d97706;
+  --k-chart-ftse:      #059669;
+  --k-chart-nikkei:    #db2777;
+  --k-chart-bovespa:   #7c3aed;
+  --k-chart-eu:        #0891b2;
+  --k-chart-em:        #16a34a;
 
-  /* ── Type scale ─────────────────────────────────────────── */
-  --k-text-xs:         0.6875rem;  /* 11px — axis labels, tiny badges */
-  --k-text-sm:         0.75rem;    /* 12px — table cells, metadata */
-  --k-text-base:       0.875rem;   /* 14px — body, sidebar items */
-  --k-text-md:         1rem;       /* 16px — section headings */
-  --k-text-lg:         1.125rem;   /* 18px — page titles */
-  --k-text-xl:         1.5rem;     /* 24px — hero stat numbers */
-  --k-text-2xl:        2rem;       /* 32px — KPI big numbers */
+  /* Typography — IBM Plex Sans (Kraken fallback) */
+  --k-font-ui:         'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --k-font-display:    'IBM Plex Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --k-font-data:       'IBM Plex Mono', 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ── Spacing (4px base) ─────────────────────────────────── */
-  --k-space-1:  0.25rem;   /* 4px */
-  --k-space-2:  0.5rem;    /* 8px */
-  --k-space-3:  0.75rem;   /* 12px */
-  --k-space-4:  1rem;      /* 16px */
-  --k-space-5:  1.25rem;   /* 20px */
-  --k-space-6:  1.5rem;    /* 24px */
-  --k-space-8:  2rem;      /* 32px */
-  --k-space-10: 2.5rem;    /* 40px */
-  --k-space-12: 3rem;      /* 48px */
-  --k-space-16: 4rem;      /* 64px */
+  /* Type scale (from DESIGN.md) */
+  --k-text-xs:    0.4375rem;  /* 7px  — micro labels */
+  --k-text-sm:    0.75rem;    /* 12px — small / caption */
+  --k-text-base:  0.875rem;   /* 14px — caption medium */
+  --k-text-md:    1rem;       /* 16px — body */
+  --k-text-lg:    1.375rem;   /* 22px — feature title */
+  --k-text-xl:    1.75rem;    /* 28px — sub-heading */
+  --k-text-2xl:   2.25rem;    /* 36px — section heading */
+  --k-text-hero:  3rem;       /* 48px — display hero */
 
-  /* ── Layout ─────────────────────────────────────────────── */
-  --k-sidebar-width:        220px;
-  --k-sidebar-collapsed:    56px;
-  --k-topbar-height:        48px;
-  --k-content-max:          1400px;
+  /* Spacing */
+  --k-space-1:  0.0625rem;  /* 1px */
+  --k-space-2:  0.125rem;   /* 2px */
+  --k-space-3:  0.25rem;    /* 4px */
+  --k-space-4:  0.5rem;     /* 8px */
+  --k-space-5:  0.625rem;   /* 10px */
+  --k-space-6:  0.75rem;    /* 12px */
+  --k-space-8:  1rem;       /* 16px */
+  --k-space-10: 1.25rem;    /* 20px */
+  --k-space-12: 1.5rem;     /* 24px */
+  --k-space-16: 2rem;       /* 32px */
+  --k-space-20: 2.5rem;     /* 40px */
+  --k-space-24: 3rem;       /* 48px */
 
-  /* ── Radius ─────────────────────────────────────────────── */
-  --k-radius-sm:   3px;
-  --k-radius-md:   6px;
-  --k-radius-lg:   10px;
-  --k-radius-full: 9999px;
+  /* Layout */
+  --k-navbar-height:   56px;
+  --k-sidebar-width:   220px;      /* kept for any legacy ref */
+  --k-sidebar-collapsed: 56px;
+  --k-topbar-height:   48px;
+  --k-content-max:     1280px;
 
-  /* ── Shadows ─────────────────────────────────────────────── */
-  --k-shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
-  --k-shadow-md:  0 4px 16px rgba(0,0,0,0.5);
-  --k-shadow-lg:  0 12px 40px rgba(0,0,0,0.6);
-  --k-shadow-panel: 0 0 0 1px var(--k-border), 0 4px 20px rgba(0,0,0,0.4);
+  /* Radius (from DESIGN.md) */
+  --k-radius-sm:    6px;
+  --k-radius-md:    8px;
+  --k-radius-btn:   12px;   /* Kraken: 12px max on buttons */
+  --k-radius-lg:    16px;
+  --k-radius-full:  9999px;
 
-  /* ── Transitions ─────────────────────────────────────────── */
-  --k-transition:      150ms cubic-bezier(0.16, 1, 0.3, 1);
-  --k-transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Shadows (from DESIGN.md — whisper level) */
+  --k-shadow-sm:    rgba(16,24,40,0.04) 0px 1px 4px;
+  --k-shadow-md:    rgba(0,0,0,0.03) 0px 4px 24px;
+  --k-shadow-lg:    rgba(0,0,0,0.06) 0px 12px 40px;
+  --k-shadow-panel: 0 0 0 1px var(--k-border), rgba(0,0,0,0.03) 0px 4px 24px;
 
-  /* ── Regime colours (for timeline bands) ─────────────────── */
-  --k-regime-stable:  #1B3A2D;  /* dark green bg */
-  --k-regime-stress:  #3A2E0F;  /* dark amber bg */
-  --k-regime-crisis:  #3A1212;  /* dark red bg */
-  --k-regime-stable-text:  #4CAF50;
-  --k-regime-stress-text:  #FFA726;
-  --k-regime-crisis-text:  #EF5350;
+  /* Transitions */
+  --k-transition:       160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --k-transition-slow:  320ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Regime */
+  --k-regime-stable:       #dcfce7;
+  --k-regime-stress:       #fef9c3;
+  --k-regime-crisis:       #fee2e2;
+  --k-regime-stable-text:  #026b3f;
+  --k-regime-stress-text:  #92400e;
+  --k-regime-crisis-text:  #991b1b;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DARK
+   Near-black surfaces, Kraken Purple shifts brighter,
+   regime colours invert to dark bg / light text
+───────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --k-bg:              #0d0d10;
+  --k-surface:         #141417;
+  --k-surface-raised:  #1a1a1f;
+  --k-surface-overlay: #1f1f26;
+  --k-border:          #2a2a35;
+  --k-border-subtle:   #222229;
+  --k-divider:         #222229;
+
+  --k-text:            #f4f4f6;
+  --k-text-muted:      #8b8ea8;
+  --k-text-faint:      #52546a;
+  --k-text-inverse:    #0d0d10;
+
+  --k-primary:         #9b6eff;
+  --k-primary-hover:   #b490ff;
+  --k-primary-active:  #7132f5;
+  --k-primary-dim:     rgba(155, 110, 255, 0.12);
+  --k-primary-glow:    rgba(155, 110, 255, 0.08);
+  --k-primary-subtle:  rgba(155, 110, 255, 0.14);
+
+  --k-crisis:          #f87171;
+  --k-crisis-hover:    #ef4444;
+  --k-crisis-dim:      rgba(248, 113, 113, 0.12);
+  --k-crisis-band:     rgba(248, 113, 113, 0.07);
+
+  --k-warning:         #fbbf24;
+  --k-warning-dim:     rgba(251, 191, 36, 0.12);
+
+  --k-success:         #34d399;
+  --k-success-dim:     rgba(52, 211, 153, 0.12);
+
+  /* Charts same hue family, brighter for dark bg */
+  --k-chart-ise:       #9b6eff;
+  --k-chart-sp:        #38bdf8;
+  --k-chart-dax:       #fbbf24;
+  --k-chart-ftse:      #34d399;
+  --k-chart-nikkei:    #f472b6;
+  --k-chart-bovespa:   #c084fc;
+  --k-chart-eu:        #22d3ee;
+  --k-chart-em:        #4ade80;
+
+  --k-shadow-sm:    rgba(0,0,0,0.35) 0px 1px 4px;
+  --k-shadow-md:    rgba(0,0,0,0.50) 0px 4px 24px;
+  --k-shadow-lg:    rgba(0,0,0,0.65) 0px 12px 40px;
+  --k-shadow-panel: 0 0 0 1px var(--k-border), rgba(0,0,0,0.50) 0px 4px 24px;
+
+  --k-regime-stable:       #052e16;
+  --k-regime-stress:       #1c1003;
+  --k-regime-crisis:       #1c0707;
+  --k-regime-stable-text:  #34d399;
+  --k-regime-stress-text:  #fbbf24;
+  --k-regime-crisis-text:  #f87171;
 }
