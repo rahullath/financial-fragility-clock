@@ -213,7 +213,7 @@ interface ModelProviderProps {
  * Requirements: 36.1, 36.2, 11.6, 5.1, 6.1, 7.1, 8.1, 9.1
  */
 export const ModelProvider: React.FC<ModelProviderProps> = ({ children }) => {
-  const [selectedModel, setSelectedModel] = useState<ModelSelection>('A');
+  const [selectedModel, setSelectedModel] = useState<ModelSelection>('B');
   
   // ML model selection state
   const [selectedMLModel, setSelectedMLModel] = useState<string>('RandomForest');
