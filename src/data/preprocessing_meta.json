@@ -1,0 +1,31 @@
+{
+  "csv": "Group_5.csv",
+  "n_rows": 536,
+  "n_features": 7,
+  "feature_cols": [
+    "sp",
+    "dax",
+    "ftse",
+    "nikkei",
+    "bovespa",
+    "eu",
+    "em"
+  ],
+  "target_col": "ise2",
+  "dropped_cols": [
+    "ISE"
+  ],
+  "scaler": "RobustScaler",
+  "date_range": [
+    "2009-01-05",
+    "2011-02-22"
+  ],
+  "target_stats": {
+    "mean": 0.0015522254216417909,
+    "std": 0.021121925335134243,
+    "min": -0.084715902,
+    "max": 0.100620694,
+    "kurtosis": 1.8240945012117153,
+    "skewness": -0.08016816751910208
+  }
+}

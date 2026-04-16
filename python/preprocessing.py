@@ -146,6 +146,8 @@ def _load_csv(csv_path: Path) -> pd.DataFrame:
     - Extra whitespace in column names
     """
     df = pd.read_csv(csv_path)
+    if len(df) > 0 and str(df.iloc[0, 0]).strip().lower() in ["date", "fecha", "datum"]:
+        df = pd.read_csv(csv_path, header=1)
     df.columns = [c.strip().lower() for c in df.columns]
 
     # Find the date column
@@ -155,11 +157,13 @@ def _load_csv(csv_path: Path) -> pd.DataFrame:
             date_col = candidate
             break
 
-    df[date_col] = pd.to_datetime(df[date_col], infer_datetime_format=True)
+    df[date_col] = pd.to_datetime(df[date_col])
     df = df.set_index(date_col).sort_index()
 
     # Normalise column names: lowercase + strip
     df.columns = [c.strip().lower() for c in df.columns]
+    if "ise.1" in df.columns:
+        df = df.rename(columns={"ise.1": "ise2"})
 
     # Convert all columns to numeric (non-numeric become NaN)
     df = df.apply(pd.to_numeric, errors="coerce")

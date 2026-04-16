@@ -232,7 +232,10 @@ def train_random_forest_classifier(X_train, y_train, X_test, y_test) -> dict:
             class_weight="balanced", random_state=42, n_jobs=-1
         )
         clf.fit(X_train.iloc[tr_idx], y_train.iloc[tr_idx])
-        va_proba = clf.predict_proba(X_train.iloc[va_idx])[:, 1]
+        if len(clf.classes_) == 1:
+            va_proba = np.zeros(len(va_idx)) if clf.classes_[0] == 0 else np.ones(len(va_idx))
+        else:
+            va_proba = clf.predict_proba(X_train.iloc[va_idx])[:, 1]
         try:
             cv_aucs.append(float(roc_auc_score(y_train.iloc[va_idx], va_proba)))
         except Exception:

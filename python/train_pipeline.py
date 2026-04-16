@@ -50,7 +50,7 @@ from models import (
 )
 
 DATA_DIR   = Path(__file__).parent.parent / "src" / "data"
-CSV_PATH_A = Path(__file__).parent.parent / "data" / "Group_5.csv"
+CSV_PATH_A = Path(__file__).parent / "data" / "Group_5.csv"
 EXT_CSV    = Path(__file__).parent / "data" / "extended_dataset.csv"
 
 
