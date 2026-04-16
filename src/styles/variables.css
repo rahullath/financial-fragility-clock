@@ -1,0 +1,110 @@
+/*
+ * KRAKEN DESIGN SYSTEM — Financial Fragility Clock
+ * Art direction: financial data terminal → dark, precise, authoritative
+ * Palette: deep navy-black surfaces, indigo-purple primary, red crisis accent
+ * Typography: Inter (UI) + JetBrains Mono (data/numbers)
+ * Density: dense — dashboard context, data-heavy
+ */
+
+:root {
+  /* ── Surfaces ────────────────────────────────────────────── */
+  --k-bg:              #0C0E14;
+  --k-surface:         #131620;
+  --k-surface-raised:  #1A1D2E;
+  --k-surface-overlay: #1F2235;
+  --k-border:          #252840;
+  --k-border-subtle:   #1C1F32;
+  --k-divider:         #1E2136;
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --k-text:            #E8EAF6;
+  --k-text-muted:      #9094B8;
+  --k-text-faint:      #4A4E72;
+  --k-text-inverse:    #0C0E14;
+
+  /* ── Primary accent (Kraken Indigo) ─────────────────────── */
+  --k-primary:         #5C6BC0;
+  --k-primary-hover:   #7986CB;
+  --k-primary-active:  #3F51B5;
+  --k-primary-dim:     rgba(92, 107, 192, 0.15);
+  --k-primary-glow:    rgba(92, 107, 192, 0.08);
+
+  /* ── Crisis / Danger (Turkey Red) ───────────────────────── */
+  --k-crisis:          #EF5350;
+  --k-crisis-hover:    #E53935;
+  --k-crisis-dim:      rgba(239, 83, 80, 0.12);
+  --k-crisis-band:     rgba(239, 83, 80, 0.08);
+
+  /* ── Warning / Stress (Amber) ───────────────────────────── */
+  --k-warning:         #FFA726;
+  --k-warning-dim:     rgba(255, 167, 38, 0.12);
+
+  /* ── Success / Stable (Green) ───────────────────────────── */
+  --k-success:         #4CAF50;
+  --k-success-dim:     rgba(76, 175, 80, 0.12);
+
+  /* ── Chart palette (7 indices + ISE) ────────────────────── */
+  --k-chart-ise:       #7986CB;   /* ISE² — primary target, indigo */
+  --k-chart-sp:        #4FC3F7;   /* S&P 500 — sky blue */
+  --k-chart-dax:       #FFD54F;   /* DAX — amber */
+  --k-chart-ftse:      #81C784;   /* FTSE — green */
+  --k-chart-nikkei:    #FF8A65;   /* Nikkei — coral */
+  --k-chart-bovespa:   #CE93D8;   /* Bovespa — lavender */
+  --k-chart-eu:        #4DD0E1;   /* EU — cyan */
+  --k-chart-em:        #A5D6A7;   /* EM — mint */
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --k-font-ui:         'Inter', 'Helvetica Neue', sans-serif;
+  --k-font-data:       'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', monospace;
+
+  /* ── Type scale ─────────────────────────────────────────── */
+  --k-text-xs:         0.6875rem;  /* 11px — axis labels, tiny badges */
+  --k-text-sm:         0.75rem;    /* 12px — table cells, metadata */
+  --k-text-base:       0.875rem;   /* 14px — body, sidebar items */
+  --k-text-md:         1rem;       /* 16px — section headings */
+  --k-text-lg:         1.125rem;   /* 18px — page titles */
+  --k-text-xl:         1.5rem;     /* 24px — hero stat numbers */
+  --k-text-2xl:        2rem;       /* 32px — KPI big numbers */
+
+  /* ── Spacing (4px base) ─────────────────────────────────── */
+  --k-space-1:  0.25rem;   /* 4px */
+  --k-space-2:  0.5rem;    /* 8px */
+  --k-space-3:  0.75rem;   /* 12px */
+  --k-space-4:  1rem;      /* 16px */
+  --k-space-5:  1.25rem;   /* 20px */
+  --k-space-6:  1.5rem;    /* 24px */
+  --k-space-8:  2rem;      /* 32px */
+  --k-space-10: 2.5rem;    /* 40px */
+  --k-space-12: 3rem;      /* 48px */
+  --k-space-16: 4rem;      /* 64px */
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  --k-sidebar-width:        220px;
+  --k-sidebar-collapsed:    56px;
+  --k-topbar-height:        48px;
+  --k-content-max:          1400px;
+
+  /* ── Radius ─────────────────────────────────────────────── */
+  --k-radius-sm:   3px;
+  --k-radius-md:   6px;
+  --k-radius-lg:   10px;
+  --k-radius-full: 9999px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --k-shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --k-shadow-md:  0 4px 16px rgba(0,0,0,0.5);
+  --k-shadow-lg:  0 12px 40px rgba(0,0,0,0.6);
+  --k-shadow-panel: 0 0 0 1px var(--k-border), 0 4px 20px rgba(0,0,0,0.4);
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --k-transition:      150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --k-transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Regime colours (for timeline bands) ─────────────────── */
+  --k-regime-stable:  #1B3A2D;  /* dark green bg */
+  --k-regime-stress:  #3A2E0F;  /* dark amber bg */
+  --k-regime-crisis:  #3A1212;  /* dark red bg */
+  --k-regime-stable-text:  #4CAF50;
+  --k-regime-stress-text:  #FFA726;
+  --k-regime-crisis-text:  #EF5350;
+}

@@ -1,465 +1,108 @@
-/**
- * App.css — Financial Fragility Clock · Spec v3
- * Mission control / SOC dashboard aesthetic.
- * Amber gold accent, Instrument Serif for hero numbers.
+/*
+ * App.css — global layout grid only
+ * Component styles live in styles/components.css
+ * Token source: styles/variables.css
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import './styles/base.css';
+@import './styles/components.css';
 
-/* ── Fragility-driven CSS custom property (set by DoomsdayClock.tsx) ────────── */
-/* document.documentElement.style.setProperty('--fragility-score', score) */
-:root {
-  --fragility-score: 50; /* default mid */
-}
-
-/* ── Design tokens ─────────────────────────────────────────────────────────── */
-:root {
-  /* Backgrounds */
-  --bg:            #0a0b0e;   /* near-black, blue undertone */
-  --bg-surface:    #111318;   /* card / panel surface */
-  --bg-elevated:   #191c24;   /* elevated elements, dropdowns */
-  --bg-border:     rgba(255, 255, 255, 0.07);
-
-  /* Text */
-  --text-primary:  #e8eaf0;
-  --text-secondary:#8b92a8;
-  --text-faint:    #3d4357;
-
-  /* Accent — amber gold, the primary UI interaction colour */
-  --accent:        #e8a045;
-  --accent-muted:  rgba(232, 160, 69, 0.10);
-  --accent-dim:    rgba(232, 160, 69, 0.25);
-
-  /* Fragility palette — data signals by threshold */
-  --color-stable:    #16a34a;    /* 0–30  */
-  --color-elevated:  #d97706;    /* 30–60 */
-  --color-critical:  #dc2626;    /* 60–80 */
-  --color-systemic:  #7f1d1d;    /* 80–100 */
-
-  /* Regime — Minsky labels */
-  --hedge:        #22c55e;
-  --speculative:  #f59e0b;
-  --ponzi:        #ef4444;
-
-  /* Charts */
-  --data-blue:    #3b82f6;
-  --data-teal:    #14b8a6;
-
-  /* Typography */
-  --font-display: 'Instrument Serif', Georgia, serif;  /* clock hero, big numbers */
-  --font-body:    'Inter', system-ui, sans-serif;       /* everything else */
-  --font-mono:    'JetBrains Mono', 'Menlo', monospace; /* labels, axes, code */
-
-  /* Geometry */
-  --radius: 3px;
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
-
-  /* Sidebar */
-  --sidebar-w-collapsed: 52px;
-  --sidebar-w-expanded:  210px;
-
-  /* Legacy aliases — keep old components from breaking */
-  --bg-card:     var(--bg-surface);
-  --bg-inset:    var(--bg-elevated);
-  --border:      var(--bg-border);
-  --border-dark: var(--bg-border);
-  --text-muted:  var(--text-secondary);
-}
-
-/* ── Reset ─────────────────────────────────────────────────────────────────── */
-*, *::before, *::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html { color-scheme: dark; }
-
-body {
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: var(--bg);
-  color: var(--text-primary);
-  min-height: 100vh;
-  /* All numeric data aligns perfectly as values change */
-  font-variant-numeric: tabular-nums;
-}
-
-/* ── Custom scrollbar ──────────────────────────────────────────────────────── */
-::-webkit-scrollbar          { width: 5px; height: 5px; }
-::-webkit-scrollbar-track    { background: transparent; }
-::-webkit-scrollbar-thumb    { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
-
-/* ── App shell with sidebar layout ────────────────────────────────────────── */
-.app-shell {
+/* App root */
+#root {
+  min-height: 100dvh;
   display: flex;
-  min-height: 100vh;
+  flex-direction: column;
 }
 
-/* Main area shifts based on sidebar state */
-.app-content {
+/* Page content area (used inside Layout) */
+.page-content {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  transition: margin-left 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* ── Page content wrapper ──────────────────────────────────────────────────── */
-.page-main {
-  flex: 1;
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  overflow-y: auto;
-}
-
-/* ── Card shell ────────────────────────────────────────────────────────────── */
-.panel-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.55rem 0.85rem;
-  border-bottom: 1px solid var(--bg-border);
-}
-
-.panel-title {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-faint);
-}
-
-.panel-body {
-  padding: 0.85rem;
-}
-
-/* ── Export button (appears on panel hover) ────────────────────────────────── */
-.btn-export {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  color: var(--text-faint);
-  background: transparent;
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-  padding: 0.18rem 0.45rem;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s, color 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-.panel-card:hover .btn-export { opacity: 1; }
-.btn-export:hover {
-  color: var(--text-secondary);
-  border-color: rgba(255,255,255,0.2);
-}
-
-/* ── Dashboard grid rows ───────────────────────────────────────────────────── */
-.dash-row         { display: grid; gap: 1rem; }
-.dash-row--full   { grid-template-columns: 1fr; }
-.dash-row--top    { grid-template-columns: 380px 1fr; align-items: start; }
-.dash-row--trio   { grid-template-columns: repeat(3, 1fr); align-items: start; }
-.dash-row--bottom { grid-template-columns: 1.2fr 1fr; align-items: start; }
-.dash-cell        { min-width: 0; }
-
-/* ── Clock landing specific ─────────────────────────────────────────────────── */
-.clock-landing {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: var(--k-space-6);
+  max-width: var(--k-content-max);
   width: 100%;
+  margin: 0 auto;
 }
 
-.clock-landing-hero {
+/* Grid utilities */
+.grid-2 {
   display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--k-space-4);
 }
 
-/* ── Fragility-driven clock glow animation ─────────────────────────────────── */
-/* DoomsdayClock sets --fragility-score on :root */
-@keyframes clock-pulse {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50%       { opacity: 1;   transform: scale(1.01); }
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--k-space-4);
 }
 
-.clock-glow-ring {
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  pointer-events: none;
-  /* glow radius and opacity driven by --fragility-score */
-  box-shadow: 0 0 calc(var(--fragility-score, 50) * 0.5px)
-              rgba(220, 85, 0, calc(var(--fragility-score, 50) / 200));
-  /* pulse speed: 4s at score=0, 1.5s at score=100 */
-  animation: clock-pulse calc(4s - var(--fragility-score, 50) * 0.025s) ease-in-out infinite;
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--k-space-4);
 }
 
-/* ── Advanced dropdown ─────────────────────────────────────────────────────── */
-.adv-dropdown { position: relative; }
-
-.btn-adv {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  background: transparent;
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-  padding: 0.3rem 0.7rem;
-  cursor: pointer;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-.btn-adv:hover,
-.btn-adv[aria-expanded="true"] {
-  color: var(--accent);
-  background: var(--accent-muted);
-  border-color: var(--accent-dim);
+.grid-6040 {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: var(--k-space-4);
 }
 
-.adv-panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 280px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-md);
-  padding: 1rem;
-  z-index: 300;
-}
-.adv-panel-section      { margin-bottom: 1rem; }
-.adv-panel-section:last-child { margin-bottom: 0; }
-.adv-panel-label {
-  font-family: var(--font-mono);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-  margin-bottom: 0.4rem;
-  display: block;
+.grid-7030 {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: var(--k-space-4);
 }
 
-/* ── Loading ───────────────────────────────────────────────────────────────── */
-.loading-msg {
-  font-family: var(--font-mono);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
-  animation: pulse-opacity 1.5s ease-in-out infinite;
-}
-@keyframes pulse-opacity {
-  0%, 100% { opacity: 0.3; }
-  50%       { opacity: 1;   }
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4, .grid-6040, .grid-7030 {
+    grid-template-columns: 1fr;
+  }
 }
 
-/* ── Skeleton shimmer — for loading states ─────────────────────────────────── */
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
-}
-.skeleton {
-  background: linear-gradient(90deg,
-    var(--bg-surface) 25%,
-    var(--bg-elevated) 50%,
-    var(--bg-surface) 75%
-  );
-  background-size: 800px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+/* Flex utils */
+.flex-row   { display: flex; flex-direction: row; align-items: center; }
+.flex-col   { display: flex; flex-direction: column; }
+.flex-gap-2 { gap: var(--k-space-2); }
+.flex-gap-4 { gap: var(--k-space-4); }
+.gap-4      { gap: var(--k-space-4); }
+
+/* Page header */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--k-space-6);
+  gap: var(--k-space-4);
+  flex-wrap: wrap;
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .dash-row--top,
-  .clock-landing-hero { grid-template-columns: 1fr; }
-  .dash-row--trio      { grid-template-columns: 1fr 1fr; }
+.page-header-left h1 {
+  font-size: var(--k-text-lg);
+  font-weight: 700;
+  color: var(--k-text);
+  line-height: 1.2;
+}
+
+.page-header-left p {
+  font-size: var(--k-text-sm);
+  color: var(--k-text-muted);
+  margin-top: var(--k-space-1);
+}
+
+/* Stat strip row */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--k-space-3);
+  margin-bottom: var(--k-space-6);
 }
 
 @media (max-width: 768px) {
-  /* ── Mobile layout adjustments ──────────────────────────────────────────── */
-  .page-main { 
-    padding: 0.75rem; 
-    gap: 0.75rem; 
-  }
-  
-  .dash-row--top,
-  .dash-row--trio,
-  .dash-row--bottom { 
-    grid-template-columns: 1fr; 
-  }
-
-  /* ── Mobile font scaling for readability ────────────────────────────────── */
-  body {
-    font-size: 0.9rem;
-  }
-
-  h1 {
-    font-size: 1.3rem;
-  }
-
-  h2 {
-    font-size: 1.1rem;
-  }
-
-  h3 {
-    font-size: 0.95rem;
-  }
-
-  .panel-title {
-    font-size: 0.55rem;
-  }
-
-  .page-header-title h1 {
-    font-size: 1.4rem;
-  }
-
-  .page-header-title p {
-    font-size: 0.55rem;
-  }
-
-  /* ── Touch target sizing (minimum 44x44px) ──────────────────────────────── */
-  button,
-  a,
-  input[type="checkbox"],
-  input[type="radio"],
-  input[type="range"],
-  select,
-  .clickable {
-    min-width: 44px;
-    min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Adjust small buttons to meet touch target size */
-  .btn-export,
-  .btn-adv {
-    padding: 0.6rem 0.8rem;
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  /* ── Remove hover-only features on mobile ───────────────────────────────── */
-  .btn-export {
-    /* Always show export buttons on mobile (no hover state) */
-    opacity: 1;
-  }
-
-  /* ── Mobile-specific optimizations ──────────────────────────────────────── */
-  /* Reduce gap in stat strip for mobile */
   .stat-strip {
-    gap: 0.5rem;
+    grid-template-columns: repeat(2, 1fr);
   }
-
-  /* Make panels more compact on mobile */
-  .panel-body {
-    padding: 0.65rem;
-  }
-
-  .panel-header {
-    padding: 0.45rem 0.65rem;
-  }
-
-  /* Adjust advanced dropdown for mobile */
-  .adv-panel {
-    min-width: 240px;
-    right: -0.5rem;
-  }
-
-  /* Make sidebar narrower on mobile when expanded */
-  :root {
-    --sidebar-w-expanded: 180px;
-  }
-
-  /* Hide status bar hints on very small screens */
-  .statusbar-hint {
-    display: none;
-  }
-
-  /* Stack app header controls vertically on very small screens */
-  .app-header-controls {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: stretch;
-  }
-
-  .app-header-controls nav {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .app-header-controls nav .nav-link {
-    flex: 1;
-    text-align: center;
-  }
-}
-
-/* ── Extra small screens (< 480px) ──────────────────────────────────────── */
-@media (max-width: 480px) {
-  .page-main {
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-
-  .app-header-inner {
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: stretch;
-  }
-
-  .app-title-block h1 {
-    font-size: 1.1rem;
-  }
-
-  .app-title-block p {
-    font-size: 0.5rem;
-  }
-
-  /* Further reduce panel padding */
-  .panel-body {
-    padding: 0.5rem;
-  }
-
-  .panel-header {
-    padding: 0.35rem 0.5rem;
-  }
-
-  /* Make footer text smaller */
-  .app-footer {
-    font-size: 0.5rem;
-    padding: 0.35rem 0.5rem;
-  }
-}
-
-/* ── Disable hover effects on touch devices ─────────────────────────────── */
-@media (hover: none) and (pointer: coarse) {
-  /* Prevent hover styles from sticking on touch */
-  *:hover {
-    /* Reset hover states that might stick */
-  }
-  
-  /* Remove hover-dependent features */
-  .panel-card .btn-export {
-    opacity: 1;
+  .page-content {
+    padding: var(--k-space-4);
   }
 }
