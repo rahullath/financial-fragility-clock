@@ -1,174 +1,209 @@
 """
 preprocessing.py — Turkey ISE2 Pipeline (turkey branch)
 
-Loads Group_5.csv, cleans and scales for ISE2 (USD-based BIST100 return).
-Target: ise2  (ISE in USD terms)
-Features: sp, dax, ftse, nikkei, bovespa, eu, em
+Handles everything from raw CSV → scaled feature matrix ready for modelling.
 
-Design notes
-------------
-- RobustScaler instead of StandardScaler: financial return distributions have
-  fat tails; median/IQR scaling is more appropriate than mean/stdev.
-- Time-aware 80/20 split: NO shuffling — this is a time-series.
-- Forward-fill then mean-imputation for market-holiday gaps.
-- ISE TL column dropped — we predict USD returns (ise2) exclusively.
+Key design decisions
+---------------------
+1.  TARGET = ise2 (USD-based ISE return).  ISE (TL-based) is DROPPED to
+    prevent data leakage: ise ≈ ise2 × forex, so including it would make
+    predictions trivially easy but useless for the crisis narrative.
+
+2.  RobustScaler instead of StandardScaler.  Daily equity returns are
+    fat-tailed (kurtosis >> 3).  StandardScaler is distorted by crisis
+    outliers.  RobustScaler uses median ± IQR and is robust to them.
+
+3.  Missing value strategy: forward-fill first (market holiday carry-forward
+    is the correct financial interpretation), then mean-impute any remaining
+    NaNs (should be <1% of values in practice).
+
+4.  All splits are time-aware (chronological).  No random shuffling ever.
+    This file only does the 80/20 baseline split; the pipeline also does a
+    hard 2018-split for Model B.
+
+5.  The raw CSV columns beyond ise2 are treated as INPUTS, not targets.
+    sp (S&P 500) is one of seven equal features, not the dominant signal.
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from sklearn.preprocessing import RobustScaler
 import json
+import warnings
+from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Column name constants (match CSV headers exactly)
-# ---------------------------------------------------------------------------
-RAW_COLS = ["date", "ISE", "ise2", "sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import RobustScaler
+
+warnings.filterwarnings("ignore")
+
+# ------------------------------------------------------------------ #
+# Column definitions
+# ------------------------------------------------------------------ #
+
+# Raw CSV columns from Group_5.csv
+RAW_DATE_COL = "date"          # date column name (varies by CSV)
+TARGET_COL   = "ise2"          # USD-based ISE return = our prediction target
+DROP_COLS    = ["ISE"]         # TL-based ISE — too correlated with target, causes leakage
+
+# The 7 global market features in the original dataset
 FEATURE_COLS = ["sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
-TARGET_COL = "ise2"  # ISE100 USD-based daily return — the ONLY target
+
+# Extended-mode additional columns (present only after fetch_extended.py)
+EXT_FEATURE_COLS = [
+    "try_usd_ret",    # USD/TRY daily log-return (key TL depreciation signal)
+    "cbrt_rate",      # CBRT overnight rate (unorthodox cuts signal crisis)
+    "cbrt_delta",     # 1-day change in CBRT rate
+    "cds_proxy",      # EM CDS spread proxy (turkey risk premium)
+]
 
 
-def load_raw(csv_path: str | Path) -> pd.DataFrame:
+# ------------------------------------------------------------------ #
+# Main preprocessing function
+# ------------------------------------------------------------------ #
+
+def run(
+    csv_path: Path,
+    out_dir: Path = None,
+    test_ratio: float = 0.20,
+) -> dict:
     """
-    Load Group_5.csv and return a clean DataFrame indexed by date.
-    Drops the TL-based ISE column immediately to avoid target leakage.
+    Load, clean, and scale the raw ISE dataset.
+
+    Returns
+    -------
+    dict with keys:
+      df          — cleaned + scaled DataFrame (index = date)
+      df_unscaled — cleaned but unscaled DataFrame (for inspection)
+      scaler      — fitted RobustScaler (persist to inverse-transform preds)
+      feature_cols— list of feature column names after cleaning
+      meta        — provenance dict (written to preprocessing_meta.json)
     """
-    df = pd.read_csv(csv_path)
+    print(f"[preprocessing] Loading {csv_path.name}")
+    df = _load_csv(csv_path)
+    print(f"[preprocessing] Raw shape: {df.shape}  "
+          f"({df.index[0].date()} → {df.index[-1].date()})")
 
-    # Normalise column names (strip whitespace, lower-case non-date cols)
-    df.columns = df.columns.str.strip()
-    # Rename to standard names if CSV uses slightly different casing
-    rename_map = {
-        col: col.lower() for col in df.columns if col.lower() in
-        ["ise", "ise2", "sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
-    }
-    rename_map.update({"Date": "date", "DATE": "date"})
-    df = df.rename(columns=rename_map)
+    df = _drop_leakage_cols(df)
+    df = _fill_missing(df)
+    feature_cols = _active_feature_cols(df)
 
-    # Parse date
-    df["date"] = pd.to_datetime(df["date"], dayfirst=True, errors="coerce")
-    df = df.dropna(subset=["date"]).sort_values("date").reset_index(drop=True)
-    df = df.set_index("date")
+    print(f"[preprocessing] Features: {feature_cols}")
+    print(f"[preprocessing] Target  : {TARGET_COL}")
+    print(f"[preprocessing] NaN after fill: {df.isnull().sum().sum()}")
 
-    # Drop TL-denominated ISE (not the target; keeping it causes leakage)
-    if "ise" in df.columns:
-        df = df.drop(columns=["ise"])
+    df_unscaled = df.copy()
 
-    # Keep only the columns we care about
-    keep = [TARGET_COL] + FEATURE_COLS
-    df = df[[c for c in keep if c in df.columns]]
-
-    print(f"[preprocessing] Loaded {len(df)} rows  |  {df.index[0].date()} → {df.index[-1].date()}")
-    return df
-
-
-def clean(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Handle missing values:
-    1. Forward-fill (market holidays / data gaps carry previous close)
-    2. Backward-fill for leading NaNs
-    3. Column-mean for any residual NaNs
-    """
-    df = df.copy()
-    original_nulls = df.isnull().sum().sum()
-    df = df.ffill().bfill()
-    df = df.fillna(df.mean())
-    remaining = df.isnull().sum().sum()
-    print(f"[preprocessing] Nulls before: {original_nulls}  |  after: {remaining}")
-    return df
-
-
-def split_train_test(df: pd.DataFrame, test_ratio: float = 0.20):
-    """
-    Chronological 80/20 split — NO shuffling.
-    Returns (df_train, df_test).
-    """
-    n = len(df)
-    split_idx = int(n * (1 - test_ratio))
-    df_train = df.iloc[:split_idx].copy()
-    df_test  = df.iloc[split_idx:].copy()
-    print(f"[preprocessing] Train: {len(df_train)} rows  ({df_train.index[0].date()} → {df_train.index[-1].date()})")
-    print(f"[preprocessing] Test : {len(df_test)} rows   ({df_test.index[0].date()} → {df_test.index[-1].date()})")
-    return df_train, df_test
-
-
-def scale_features(df_train: pd.DataFrame, df_test: pd.DataFrame):
-    """
-    Fit RobustScaler on training set; apply to both train and test.
-    Returns (X_train_scaled, X_test_scaled, y_train, y_test, scaler).
-    Scaler is fit ONLY on training features — no lookahead.
-    """
+    # Scale features + target together (RobustScaler)
     scaler = RobustScaler()
+    all_numeric = feature_cols + [TARGET_COL]
+    df[all_numeric] = scaler.fit_transform(df[all_numeric])
 
-    X_train_raw = df_train[FEATURE_COLS]
-    X_test_raw  = df_test[FEATURE_COLS]
-    y_train = df_train[TARGET_COL].copy()
-    y_test  = df_test[TARGET_COL].copy()
-
-    X_train_scaled = pd.DataFrame(
-        scaler.fit_transform(X_train_raw),
-        columns=FEATURE_COLS,
-        index=df_train.index
-    )
-    X_test_scaled = pd.DataFrame(
-        scaler.transform(X_test_raw),
-        columns=FEATURE_COLS,
-        index=df_test.index
-    )
-
-    print(f"[preprocessing] RobustScaler fitted on {len(X_train_scaled)} training rows")
-    return X_train_scaled, X_test_scaled, y_train, y_test, scaler
-
-
-def run(csv_path: str | Path, out_dir: str | Path = "../src/data") -> dict:
-    """
-    Full preprocessing pipeline for Model A (2009-11 dataset only).
-    Returns a dict with all arrays needed by models.py.
-    Also writes cleaned_data_a.json for the dashboard.
-    """
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    df = load_raw(csv_path)
-    df = clean(df)
-    df_train, df_test = split_train_test(df)
-    X_train, X_test, y_train, y_test, scaler = scale_features(df_train, df_test)
-
-    # Export cleaned data JSON for dashboard
-    export = {
-        "meta": {
-            "source": "Group_5.csv",
-            "target": TARGET_COL,
-            "features": FEATURE_COLS,
-            "n_total": len(df),
-            "n_train": len(df_train),
-            "n_test": len(df_test),
-            "train_start": str(df_train.index[0].date()),
-            "train_end": str(df_train.index[-1].date()),
-            "test_start": str(df_test.index[0].date()),
-            "test_end": str(df_test.index[-1].date()),
+    meta = {
+        "csv": str(csv_path.name),
+        "n_rows": len(df),
+        "n_features": len(feature_cols),
+        "feature_cols": feature_cols,
+        "target_col": TARGET_COL,
+        "dropped_cols": DROP_COLS,
+        "scaler": "RobustScaler",
+        "date_range": [str(df.index[0].date()), str(df.index[-1].date())],
+        "target_stats": {
+            "mean":  float(df_unscaled[TARGET_COL].mean()),
+            "std":   float(df_unscaled[TARGET_COL].std()),
+            "min":   float(df_unscaled[TARGET_COL].min()),
+            "max":   float(df_unscaled[TARGET_COL].max()),
+            "kurtosis": float(df_unscaled[TARGET_COL].kurtosis()),
+            "skewness":  float(df_unscaled[TARGET_COL].skew()),
         },
-        "ise2_series": [
-            {"date": str(d.date()), "value": float(v)}
-            for d, v in df[TARGET_COL].items()
-        ]
     }
-    with open(out_dir / "cleaned_data_a.json", "w") as f:
-        json.dump(export, f, indent=2)
-    print(f"[preprocessing] Exported cleaned_data_a.json")
+
+    if out_dir:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        with open(out_dir / "preprocessing_meta.json", "w") as f:
+            json.dump(meta, f, indent=2)
+        print(f"[preprocessing] Wrote preprocessing_meta.json")
+
+    print(f"[preprocessing] ✓ Done  |  "
+          f"train ≈80%: {int(len(df)*0.8)}  test ≈20%: {int(len(df)*0.2)}")
 
     return {
-        "df": df,
-        "df_train": df_train,
-        "df_test": df_test,
-        "X_train": X_train,
-        "X_test": X_test,
-        "y_train": y_train,
-        "y_test": y_test,
-        "scaler": scaler,
+        "df":           df,
+        "df_unscaled":  df_unscaled,
+        "scaler":       scaler,
+        "feature_cols": feature_cols,
+        "meta":         meta,
     }
 
 
-if __name__ == "__main__":
-    result = run("../data/Group_5.csv")
-    print(result["X_train"].describe())
+# ------------------------------------------------------------------ #
+# Internal helpers
+# ------------------------------------------------------------------ #
+
+def _load_csv(csv_path: Path) -> pd.DataFrame:
+    """
+    Load CSV robustly.  Handles:
+    - 'date' or first column as index
+    - Various date formats (ISO, US month/day/year)
+    - Extra whitespace in column names
+    """
+    df = pd.read_csv(csv_path)
+    df.columns = [c.strip().lower() for c in df.columns]
+
+    # Find the date column
+    date_col = None
+    for candidate in ["date", "fecha", "datum", df.columns[0]]:
+        if candidate in df.columns:
+            date_col = candidate
+            break
+
+    df[date_col] = pd.to_datetime(df[date_col], infer_datetime_format=True)
+    df = df.set_index(date_col).sort_index()
+
+    # Normalise column names: lowercase + strip
+    df.columns = [c.strip().lower() for c in df.columns]
+
+    # Convert all columns to numeric (non-numeric become NaN)
+    df = df.apply(pd.to_numeric, errors="coerce")
+    return df
+
+
+def _drop_leakage_cols(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop ISE (TL-based) — it is derived from ise2 × exchange rate."""
+    to_drop = [c for c in DROP_COLS if c.lower() in df.columns]
+    if to_drop:
+        df = df.drop(columns=[c.lower() for c in to_drop])
+        print(f"[preprocessing] Dropped leakage columns: {to_drop}")
+    # Also drop any near-duplicate columns (correlation > 0.99 with ise2)
+    if TARGET_COL in df.columns:
+        high_corr = [
+            c for c in df.columns
+            if c != TARGET_COL and abs(df[c].corr(df[TARGET_COL])) > 0.99
+        ]
+        if high_corr:
+            df = df.drop(columns=high_corr)
+            print(f"[preprocessing] Dropped near-duplicate columns: {high_corr}")
+    return df
+
+
+def _fill_missing(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Forward-fill first (correct interpretation for market holiday carry-forward),
+    then mean-impute any remaining NaNs.
+    """
+    n_before = df.isnull().sum().sum()
+    df = df.ffill()
+    n_after_ffill = df.isnull().sum().sum()
+    if n_after_ffill > 0:
+        df = df.fillna(df.mean())
+    n_after = df.isnull().sum().sum()
+    if n_before > 0:
+        print(f"[preprocessing] NaN fill: {n_before} → {n_after_ffill} (ffill) → {n_after} (mean)")
+    return df
+
+
+def _active_feature_cols(df: pd.DataFrame) -> list:
+    """
+    Return which of the known feature columns are actually in the DataFrame.
+    Includes extended features if present (from fetch_extended.py output).
+    """
+    all_possible = FEATURE_COLS + EXT_FEATURE_COLS
+    return [c for c in all_possible if c in df.columns]

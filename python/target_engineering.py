@@ -1,111 +1,152 @@
 """
 target_engineering.py — Turkey ISE2 Pipeline (turkey branch)
 
-Builds BOTH target types used across the pipeline:
+Creates the binary crisis_label used for classification models, and
+provides Turkey Crisis metadata for dashboard annotations.
 
-1. Regression target   : raw ise2 daily return (already in dataset)
-   Used by: OLS, Ridge, Random Forest (regressor), XGBoost (regressor)
+crisis_label definition
+------------------------
+A day is labelled as a crisis day (1) if at any point in the next
+`forward_window` trading days, the ISE2 return falls below -2 standard
+deviations (computed on a rolling 60-day window).
 
-2. Classification target : binary crisis label
-   Definition: a "crisis day" is a day where the forward 20-day cumulative
-   ISE2 return drops below -2 standard deviations of the full rolling 60-day
-   return distribution.  This is regime-aware — it adapts to the
-   volatility environment rather than using a fixed threshold.
+This is a FORWARD-LOOKING label from the prediction standpoint — i.e.,
+"given today's features, will a stress event occur in the next N days?"
+This framing is appropriate for early-warning system models.
 
-   Concretely:
-     crisis_label_t = 1  if  sum(ise2[t+1:t+21]) < mu_60 - 2*sigma_60
-                     0  otherwise
+Why -2 sigma (rolling)?
+- -2 sigma captures the bottom ~2.5% of the return distribution
+- Rolling 60d window adapts to changing market regimes
+- Daily returns are fat-tailed; a fixed threshold would miss regime-dependent crises
+- Base rate ~4-8%, which is sufficient for classifier training with class_weight balancing
 
-   Used by: Random Forest (classifier), XGBoost (classifier),
-            and for the Fragility Score (probability output * 100)
-
-Turkey-specific crisis dates for validation annotation:
-  2018-08: TL currency crisis (USD/TRY peak)
-  2021-12: Surprise rate cuts → TL collapse
-  2023-02: Earthquake + economic shock
-  2024-01: Disinflation shock
+Turkey Crisis windows (hard-coded for annotation, NOT used in feature creation)
+---------------------------------------------------------------------------------
+These are reference dates for dashboard visualisation only.  The model
+learns from patterns, not from these labels directly.
 """
 
-import pandas as pd
+import warnings
 import numpy as np
+import pandas as pd
 
-# Known Turkey crisis windows for dashboard annotation
+warnings.filterwarnings("ignore")
+
+# ------------------------------------------------------------------ #
+# Turkey crisis window annotations
+# Used for: dashboard shaded bands, meta.crisis_windows in JSON output
+# ------------------------------------------------------------------ #
+
 TURKEY_CRISIS_WINDOWS = [
-    {"label": "2018 Currency Crisis",    "start": "2018-03-01", "end": "2018-12-31", "severity": "severe"},
-    {"label": "COVID Shock",             "start": "2020-02-01", "end": "2020-06-30", "severity": "moderate"},
-    {"label": "2021 Rate Cut Shock",     "start": "2021-09-01", "end": "2022-01-31", "severity": "severe"},
-    {"label": "2023 Earthquake Shock",   "start": "2023-02-01", "end": "2023-05-31", "severity": "moderate"},
-    {"label": "2024 Disinflation Shock", "start": "2024-01-01", "end": "2024-04-30", "severity": "mild"},
+    {
+        "id":    "2018_currency_crisis",
+        "label": "TL Currency Crisis",
+        "start": "2018-08-01",
+        "end":   "2018-11-30",
+        "desc":  "TRY lost 45% vs USD in 2018 amid US sanctions, "
+                 "Erdogan's anti-rate-hike stance, and current account deficit.",
+    },
+    {
+        "id":    "2021_rate_cut_shock",
+        "label": "CBRT Rate Cut Shock",
+        "start": "2021-09-01",
+        "end":   "2022-02-28",
+        "desc":  "CBRT cut rates 500bp while inflation exceeded 80%, causing "
+                 "TRY collapse and ISE USD returns to crater despite nominal gains.",
+    },
+    {
+        "id":    "2023_earthquake_aftermath",
+        "label": "Earthquake + Election Uncertainty",
+        "start": "2023-02-01",
+        "end":   "2023-06-30",
+        "desc":  "February 2023 earthquake (46,000 deaths, $34B damage) "
+                 "combined with May 2023 election uncertainty.",
+    },
+    {
+        "id":    "2024_continued_tightening",
+        "label": "Post-Election Orthodox Tightening",
+        "start": "2023-06-01",
+        "end":   "2024-12-31",
+        "desc":  "Return to orthodox monetary policy (rates raised to 50%) "
+                 "stabilises TRY but squeezes equity valuations.",
+    },
 ]
 
 
-def build_regression_target(df: pd.DataFrame) -> pd.Series:
-    """Return the raw ise2 series as the regression target."""
-    return df["ise2"].copy()
+# ------------------------------------------------------------------ #
+# Label creator
+# ------------------------------------------------------------------ #
 
-
-def build_crisis_label(
-    ise2: pd.Series,
+def attach_labels(
+    df: pd.DataFrame,
     forward_window: int = 20,
-    sigma_multiplier: float = 2.0,
+    sigma_threshold: float = 2.0,
     rolling_window: int = 60,
-) -> pd.Series:
+) -> pd.DataFrame:
     """
-    Binary crisis label based on forward cumulative ISE2 return.
+    Attach a binary crisis_label column to the DataFrame.
 
     Parameters
     ----------
-    ise2            : Raw daily ISE2 return series (NOT cumulative).
-    forward_window  : Days ahead to sum returns (default 20 trading days ≈ 1 month).
-    sigma_multiplier: How many std deviations below rolling mean = "crisis".
-    rolling_window  : Window for rolling mean/std baseline.
+    df              : DataFrame with ise2 column
+    forward_window  : number of future trading days to look ahead (default 20 ≋ 1 month)
+    sigma_threshold : how many rolling sigma below mean counts as crisis (default 2.0)
+    rolling_window  : window for rolling mean + std computation (default 60 days)
 
     Returns
     -------
-    pd.Series of int (0/1), same index as ise2.
-    Last `forward_window` rows will be NaN and should be dropped before training.
-    """
-    # Forward cumulative return over `forward_window` days
-    fwd_cum = ise2.rolling(forward_window).sum().shift(-forward_window)
-
-    # Rolling baseline (mean and std of forward return distribution)
-    roll_mean = fwd_cum.rolling(rolling_window, min_periods=20).mean()
-    roll_std  = fwd_cum.rolling(rolling_window, min_periods=20).std()
-
-    # Crisis if forward return is more than sigma_multiplier std devs below mean
-    threshold = roll_mean - sigma_multiplier * roll_std
-    label = (fwd_cum < threshold).astype(float)
-    label[fwd_cum.isna()] = np.nan
-
-    n_crisis = int(label.dropna().sum())
-    n_total  = int(label.dropna().count())
-    pct = n_crisis / n_total * 100 if n_total else 0
-    print(
-        f"[target_engineering] Crisis labels: {n_crisis}/{n_total}  ({pct:.1f}%)  "
-        f"| forward={forward_window}d  sigma={sigma_multiplier}x"
-    )
-    return label
-
-
-def attach_labels(df: pd.DataFrame, forward_window: int = 20) -> pd.DataFrame:
-    """
-    Add 'crisis_label' column to df in-place.
-    Rows where label is NaN (tail of series) are dropped.
+    DataFrame with new `crisis_label` column (int 0/1).
+    The last `forward_window` rows will be labelled 0 (no future data).
     """
     df = df.copy()
-    df["crisis_label"] = build_crisis_label(df["ise2"], forward_window=forward_window)
-    before = len(df)
-    df = df.dropna(subset=["crisis_label"])
-    df["crisis_label"] = df["crisis_label"].astype(int)
-    print(f"[target_engineering] Dropped {before - len(df)} tail rows (unlabelled future window)")
+
+    ise2 = df["ise2"]
+
+    # Rolling stats on the UNSHIFTED series (uses past data only per row)
+    rolling_mean = ise2.rolling(rolling_window, min_periods=20).mean()
+    rolling_std  = ise2.rolling(rolling_window, min_periods=20).std()
+
+    # Crisis threshold: mean - sigma_threshold * std
+    crisis_floor = rolling_mean - sigma_threshold * rolling_std
+
+    # A day is a 'stress day' if ise2 falls below the crisis floor
+    is_stress = (ise2 < crisis_floor).astype(int)
+
+    # Forward-looking label: 1 if any stress day occurs in next forward_window days
+    # Use a rolling max on the reversed series to look forward without leakage
+    label = (
+        is_stress
+        .iloc[::-1]
+        .rolling(forward_window, min_periods=1)
+        .max()
+        .iloc[::-1]
+        .astype(int)
+    )
+
+    # Zero out the last forward_window rows (no valid future window)
+    label.iloc[-forward_window:] = 0
+
+    df["crisis_label"] = label.values
+
+    base_rate = label.mean()
+    print(f"[target_eng] crisis_label base rate: {base_rate:.2%}  "
+          f"(forward_window={forward_window}d, threshold=-{sigma_threshold}σ rolling {rolling_window}d)")
+
     return df
 
 
-def crisis_stats(label: pd.Series) -> dict:
-    """Return a stats dict for dashboard metadata."""
-    vc = label.value_counts()
+def crisis_stats(y_series: pd.Series) -> dict:
+    """
+    Summary statistics about the crisis label distribution.
+    Used for the dashboard 'dataset overview' panel.
+    """
+    total   = len(y_series)
+    n_crisis = int(y_series.sum())
+    n_normal = total - n_crisis
     return {
-        "n_crisis":  int(vc.get(1, 0)),
-        "n_normal":  int(vc.get(0, 0)),
-        "crisis_pct": float(vc.get(1, 0) / len(label) * 100),
+        "total_days":   total,
+        "crisis_days":  n_crisis,
+        "normal_days":  n_normal,
+        "base_rate":    float(n_crisis / total) if total > 0 else 0.0,
+        "imbalance_ratio": float(n_normal / n_crisis) if n_crisis > 0 else None,
     }
