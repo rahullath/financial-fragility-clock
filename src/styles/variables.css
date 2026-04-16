@@ -1,132 +1,110 @@
 /*
- * FRAGILITY CLOCK — Design tokens
- * Derived from design.md: warm editorial palette, Minsky regime colours,
- * light default with tasteful dark option via [data-theme="dark"]
+ * KRAKEN DESIGN SYSTEM — Financial Fragility Clock
+ * Art direction: financial data terminal → dark, precise, authoritative
+ * Palette: deep navy-black surfaces, indigo-purple primary, red crisis accent
+ * Typography: Inter (UI) + JetBrains Mono (data/numbers)
+ * Density: dense — dashboard context, data-heavy
  */
 
-:root, [data-theme="light"] {
-  /* Surfaces */
-  --c-bg:             #fafaf8;
-  --c-surface:        #ffffff;
-  --c-surface-raised: #f4f3ef;
-  --c-surface-inset:  #efede8;
-  --c-border:         #e2dfd8;
-  --c-border-strong:  #c8c4bc;
-  --c-divider:        #ece9e3;
+:root {
+  /* ── Surfaces ────────────────────────────────────────────── */
+  --k-bg:              #0C0E14;
+  --k-surface:         #131620;
+  --k-surface-raised:  #1A1D2E;
+  --k-surface-overlay: #1F2235;
+  --k-border:          #252840;
+  --k-border-subtle:   #1C1F32;
+  --k-divider:         #1E2136;
 
-  /* Text */
-  --c-text:           #1c1b19;
-  --c-text-muted:     #706e68;
-  --c-text-faint:     #aaa89f;
-  --c-text-inverse:   #fafaf8;
+  /* ── Text ────────────────────────────────────────────────── */
+  --k-text:            #E8EAF6;
+  --k-text-muted:      #9094B8;
+  --k-text-faint:      #4A4E72;
+  --k-text-inverse:    #0C0E14;
 
-  /* Accent — warm slate-teal (navigation, links, interactive) */
-  --c-accent:         #2563A8;
-  --c-accent-hover:   #1d4f8a;
-  --c-accent-dim:     rgba(37, 99, 168, 0.1);
+  /* ── Primary accent (Kraken Indigo) ─────────────────────── */
+  --k-primary:         #5C6BC0;
+  --k-primary-hover:   #7986CB;
+  --k-primary-active:  #3F51B5;
+  --k-primary-dim:     rgba(92, 107, 192, 0.15);
+  --k-primary-glow:    rgba(92, 107, 192, 0.08);
 
-  /* ── Minsky regime colours (from design.md exactly) ── */
-  --c-hedge:          #2d6a4f;
-  --c-hedge-bg:       #edf7f1;
-  --c-hedge-border:   #b7dfc9;
+  /* ── Crisis / Danger (Turkey Red) ───────────────────────── */
+  --k-crisis:          #EF5350;
+  --k-crisis-hover:    #E53935;
+  --k-crisis-dim:      rgba(239, 83, 80, 0.12);
+  --k-crisis-band:     rgba(239, 83, 80, 0.08);
 
-  --c-speculative:    #a16207;
-  --c-speculative-raw:#e9a800;
-  --c-speculative-bg: #fefce8;
-  --c-speculative-border: #fde68a;
+  /* ── Warning / Stress (Amber) ───────────────────────────── */
+  --k-warning:         #FFA726;
+  --k-warning-dim:     rgba(255, 167, 38, 0.12);
 
-  --c-ponzi:          #b91c1c;
-  --c-ponzi-raw:      #c1121f;
-  --c-ponzi-bg:       #fef2f2;
-  --c-ponzi-border:   #fecaca;
+  /* ── Success / Stable (Green) ───────────────────────────── */
+  --k-success:         #4CAF50;
+  --k-success-dim:     rgba(76, 175, 80, 0.12);
 
-  /* Chart palette — 8 indices, warm-readable */
-  --c-ise:        #2563A8;  /* ISE² target — accent blue */
-  --c-sp:         #0891b2;  /* S&P — cyan  */
-  --c-dax:        #d97706;  /* DAX — amber */
-  --c-ftse:       #059669;  /* FTSE — emerald */
-  --c-nikkei:     #7c3aed;  /* Nikkei — purple */
-  --c-bovespa:    #be185d;  /* Bovespa — rose */
-  --c-eu:         #0284c7;  /* EU — sky */
-  --c-em:         #16a34a;  /* EM — green */
+  /* ── Chart palette (7 indices + ISE) ────────────────────── */
+  --k-chart-ise:       #7986CB;   /* ISE² — primary target, indigo */
+  --k-chart-sp:        #4FC3F7;   /* S&P 500 — sky blue */
+  --k-chart-dax:       #FFD54F;   /* DAX — amber */
+  --k-chart-ftse:      #81C784;   /* FTSE — green */
+  --k-chart-nikkei:    #FF8A65;   /* Nikkei — coral */
+  --k-chart-bovespa:   #CE93D8;   /* Bovespa — lavender */
+  --k-chart-eu:        #4DD0E1;   /* EU — cyan */
+  --k-chart-em:        #A5D6A7;   /* EM — mint */
 
-  /* Typography */
-  --font-sans:    'Inter', 'Helvetica Neue', sans-serif;
-  --font-serif:   'Lora', 'Georgia', serif;
-  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
+  /* ── Typography ─────────────────────────────────────────── */
+  --k-font-ui:         'Inter', 'Helvetica Neue', sans-serif;
+  --k-font-data:       'JetBrains Mono', 'IBM Plex Mono', 'Fira Code', monospace;
 
-  /* Type scale */
-  --text-xs:   0.6875rem;  /* 11px */
-  --text-sm:   0.75rem;    /* 12px */
-  --text-base: 0.875rem;   /* 14px */
-  --text-md:   1rem;       /* 16px */
-  --text-lg:   1.125rem;   /* 18px */
-  --text-xl:   1.375rem;   /* 22px */
-  --text-2xl:  1.75rem;    /* 28px */
-  --text-3xl:  2.25rem;    /* 36px */
+  /* ── Type scale ─────────────────────────────────────────── */
+  --k-text-xs:         0.6875rem;  /* 11px — axis labels, tiny badges */
+  --k-text-sm:         0.75rem;    /* 12px — table cells, metadata */
+  --k-text-base:       0.875rem;   /* 14px — body, sidebar items */
+  --k-text-md:         1rem;       /* 16px — section headings */
+  --k-text-lg:         1.125rem;   /* 18px — page titles */
+  --k-text-xl:         1.5rem;     /* 24px — hero stat numbers */
+  --k-text-2xl:        2rem;       /* 32px — KPI big numbers */
 
-  /* Spacing */
-  --sp-1:  0.25rem;
-  --sp-2:  0.5rem;
-  --sp-3:  0.75rem;
-  --sp-4:  1rem;
-  --sp-5:  1.25rem;
-  --sp-6:  1.5rem;
-  --sp-8:  2rem;
-  --sp-10: 2.5rem;
-  --sp-12: 3rem;
-  --sp-16: 4rem;
-  --sp-20: 5rem;
+  /* ── Spacing (4px base) ─────────────────────────────────── */
+  --k-space-1:  0.25rem;   /* 4px */
+  --k-space-2:  0.5rem;    /* 8px */
+  --k-space-3:  0.75rem;   /* 12px */
+  --k-space-4:  1rem;      /* 16px */
+  --k-space-5:  1.25rem;   /* 20px */
+  --k-space-6:  1.5rem;    /* 24px */
+  --k-space-8:  2rem;      /* 32px */
+  --k-space-10: 2.5rem;    /* 40px */
+  --k-space-12: 3rem;      /* 48px */
+  --k-space-16: 4rem;      /* 64px */
 
-  /* Layout */
-  --nav-height:   56px;
-  --content-max:  1240px;
-  --content-text: 760px;
+  /* ── Layout ─────────────────────────────────────────────── */
+  --k-sidebar-width:        220px;
+  --k-sidebar-collapsed:    56px;
+  --k-topbar-height:        48px;
+  --k-content-max:          1400px;
 
-  /* Radius */
-  --r-sm:   4px;
-  --r-md:   8px;
-  --r-lg:   12px;
-  --r-xl:   16px;
-  --r-full: 9999px;
+  /* ── Radius ─────────────────────────────────────────────── */
+  --k-radius-sm:   3px;
+  --k-radius-md:   6px;
+  --k-radius-lg:   10px;
+  --k-radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0,0,0,.06);
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04);
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --k-shadow-sm:  0 1px 3px rgba(0,0,0,0.4);
+  --k-shadow-md:  0 4px 16px rgba(0,0,0,0.5);
+  --k-shadow-lg:  0 12px 40px rgba(0,0,0,0.6);
+  --k-shadow-panel: 0 0 0 1px var(--k-border), 0 4px 20px rgba(0,0,0,0.4);
 
-  /* Transitions */
-  --ease: 160ms cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-slow: 320ms cubic-bezier(0.16, 1, 0.3, 1);
-}
+  /* ── Transitions ─────────────────────────────────────────── */
+  --k-transition:      150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --k-transition-slow: 300ms cubic-bezier(0.16, 1, 0.3, 1);
 
-[data-theme="dark"] {
-  --c-bg:             #141412;
-  --c-surface:        #1c1b18;
-  --c-surface-raised: #232219;
-  --c-surface-inset:  #19180f;
-  --c-border:         #2e2d28;
-  --c-border-strong:  #45443d;
-  --c-divider:        #252420;
-  --c-text:           #e8e6df;
-  --c-text-muted:     #8a8880;
-  --c-text-faint:     #4a4840;
-  --c-text-inverse:   #141412;
-  --c-accent:         #60a5fa;
-  --c-accent-hover:   #93c5fd;
-  --c-accent-dim:     rgba(96,165,250,0.12);
-  --c-hedge:          #4ade80;
-  --c-hedge-bg:       #052e16;
-  --c-hedge-border:   #14532d;
-  --c-speculative:    #fbbf24;
-  --c-speculative-bg: #1c1003;
-  --c-speculative-border: #451a03;
-  --c-ponzi:          #f87171;
-  --c-ponzi-bg:       #1c0303;
-  --c-ponzi-border:   #450a0a;
-  --shadow-xs: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-sm: 0 1px 4px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+  /* ── Regime colours (for timeline bands) ─────────────────── */
+  --k-regime-stable:  #1B3A2D;  /* dark green bg */
+  --k-regime-stress:  #3A2E0F;  /* dark amber bg */
+  --k-regime-crisis:  #3A1212;  /* dark red bg */
+  --k-regime-stable-text:  #4CAF50;
+  --k-regime-stress-text:  #FFA726;
+  --k-regime-crisis-text:  #EF5350;
 }

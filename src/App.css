@@ -1,20 +1,14 @@
-@import './styles/base.css';
-@import './styles/components.css';
+/* App.css is intentionally minimal — all tokens come from main.tsx imports.
+   Grid utilities only. */
 
-#root {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
+.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
 
-.page {
-  flex: 1;
-  padding: var(--sp-8) var(--sp-6);
-  max-width: var(--content-max);
-  width: 100%;
-  margin: 0 auto;
-}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.grid-6040 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.grid-7030 { display: grid; grid-template-columns: 7fr 3fr; gap: 16px; }
 
-@media (max-width: 640px) {
-  .page { padding: var(--sp-5) var(--sp-4); }
+@media (max-width: 900px) {
+  .grid-2,.grid-3,.grid-4,.grid-6040,.grid-7030 { grid-template-columns: 1fr; }
 }
