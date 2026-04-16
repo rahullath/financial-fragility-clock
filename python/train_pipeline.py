@@ -167,14 +167,14 @@ def run_model_a(csv_path: Path = CSV_PATH_A) -> dict:
     df_train, df_test = _time_split(df_labeled, test_ratio=0.20)
 
     feat_cols = get_feature_names(df_labeled)
-    feat_cols = [c for c in feat_cols if c != "crisis_label"]
+    feat_cols = [c for c in feat_cols if c != "crash_label"]
 
     X_train = df_train[feat_cols]
     X_test  = df_test[feat_cols]
     y_reg_train = df_train["ise2"]
     y_reg_test  = df_test["ise2"]
-    y_clf_train = df_train["crisis_label"]
-    y_clf_test  = df_test["crisis_label"]
+    y_clf_train = df_train["crash_label"]
+    y_clf_test  = df_test["crash_label"]
 
     print(f"\nModel A — {len(feat_cols)} features")
     print(f"Train: {len(df_train)} rows  |  Test: {len(df_test)} rows")
@@ -275,7 +275,7 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
           f"Test (crisis window): {len(df_test)} rows")
 
     feat_cols = get_feature_names(df_labeled)
-    feat_cols = [c for c in feat_cols if c != "crisis_label"]
+    feat_cols = [c for c in feat_cols if c != "crash_label"]
     feat_cols = [c for c in feat_cols
                  if c in df_train.columns and c in df_test.columns]
 
@@ -283,8 +283,8 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
     X_test  = df_test[feat_cols]
     y_reg_train = df_train["ise2"]
     y_reg_test  = df_test["ise2"]
-    y_clf_train = df_train["crisis_label"]
-    y_clf_test  = df_test["crisis_label"]
+    y_clf_train = df_train["crash_label"]
+    y_clf_test  = df_test["crash_label"]
 
     print(f"\nModel B — {len(feat_cols)} features")
     print(f"Crisis ratio — train: {y_clf_train.mean():.2%}  test: {y_clf_test.mean():.2%}")
