@@ -1,264 +1,302 @@
 """
 fetch_extended.py — Turkey ISE2 Pipeline (turkey branch)
 
-Downloads extended dataset (2005-01-01 → today) for Model B.
-Combines:
-  - BIST100 (^XU100 via yfinance) converted to USD via TRY/USD rate
-  - Global indices: same 7 as Model A  (^GSPC, ^GDAXI, ^FTSE, ^N225, ^BVSP, FEZ, EEM)
-  - TRY/USD exchange rate  (TRYUSD=X)
-  - Turkey macro: CBRT policy rate + CPI  from FRED API
-    FRED series:
-      IRSTCI01TRM156N  — Turkey overnight rate (monthly, interpolated to daily)
-      TURCPICORMINMEI  — Turkey CPI MoM
+Downloads and assembles the extended dataset for Model B.
 
-Env vars (loaded from .env locally, Vercel env in production):
-  FRED_API_KEY  — required for FRED macro data
+Covers 2005-01-01 to present (typically 2025 or 2026 depending on data availability).
 
-Outputs
--------
-  python/data/extended_dataset.csv
-  src/data/extended_meta.json
+Data sources
+------------
+1.  yfinance (free, no key required)
+    Tickers used:
+      XU100.IS      — Borsa Istanbul 100 Index (TRY terms)
+      TRY=X         — USD/TRY spot rate (to convert ISE to USD returns)
+      ^GSPC         — S&P 500 (sp)
+      ^GDAXI        — DAX (dax)
+      ^FTSE         — FTSE 100 (ftse)
+      ^N225         — Nikkei 225 (nikkei)
+      ^BVSP         — Bovespa (bovespa)
+      EEM           — iShares MSCI Emerging Markets ETF (em)
+      VGK           — Vanguard FTSE Europe ETF (eu)
+
+2.  FRED via fredapi (optional, graceful fallback if not installed)
+    Series used:
+      IRTCN0L01STQ  — Turkey Central Bank rate (quarterly, interpolated to daily)
+      TURCPIALLMINMEI — Turkey CPI YoY (monthly, interpolated to daily)
+
+Output
+------
+python/data/extended_dataset.csv
+  Columns: date (index), ise2, sp, dax, ftse, nikkei, bovespa, eu, em,
+           try_usd_ret, cbrt_rate, cbrt_delta, cpi_yoy
+  All return columns are log returns (np.log(p/p.shift(1)))
+  Approximately 5000 rows (2005-2026)
 
 Usage
 -----
+  pip install yfinance pandas numpy
+  pip install fredapi   # optional — for CBRT rates
   python fetch_extended.py
-  # or from train_pipeline.py which calls fetch_extended.run()
-
-Notes on ISE / BIST100
-----------------------
-yfinance does NOT have a direct ISE USD-denominated series.
-We reconstruct it:
-  bist100_usd_ret = bist100_tl_pct_change + try_usd_pct_change
-This is the log-return approximation; sufficiently accurate for daily returns.
-
-Note: Group_5.csv already has ise2 computed this way for 2009-11.
-For the extended set we replicate the same methodology.
 """
 
-import os
-import json
+import sys
+import warnings
 from pathlib import Path
 from datetime import datetime
 
-import pandas as pd
 import numpy as np
-import yfinance as yf
+import pandas as pd
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # dotenv optional; Vercel injects env vars directly
-
-FRED_API_KEY = os.getenv("FRED_API_KEY", "")
-
-# ---------------------------------------------------------------------------
-# Ticker mappings
-# ---------------------------------------------------------------------------
-INDEX_TICKERS = {
-    "sp":      "^GSPC",
-    "dax":     "^GDAXI",
-    "ftse":    "^FTSE",
-    "nikkei":  "^N225",
-    "bovespa": "^BVSP",
-    "eu":      "FEZ",
-    "em":      "EEM",
-}
-BIST100_TICKER  = "XU100.IS"  # BIST100 in TRY
-TRY_USD_TICKER  = "TRYUSD=X"  # TRY per 1 USD (inverted → we want USD per TRY)
+warnings.filterwarnings("ignore")
 
 START_DATE = "2005-01-01"
 END_DATE   = datetime.today().strftime("%Y-%m-%d")
 
-OUT_DIR    = Path(__file__).parent / "data"
-DATA_DIR   = Path(__file__).parent.parent / "src" / "data"
+OUT_DIR = Path(__file__).parent / "data"
+OUT_CSV = OUT_DIR / "extended_dataset.csv"
+
+# yfinance ticker → output column name
+TICKER_MAP = {
+    "XU100.IS": "_xu100_try",   # raw TRY-denominated ISE100
+    "TRY=X":    "_tryusd",       # USD per TRY (inverted below for USD/TRY)
+    "^GSPC":    "sp",
+    "^GDAXI":   "dax",
+    "^FTSE":    "ftse",
+    "^N225":    "nikkei",
+    "^BVSP":    "bovespa",
+    "EEM":      "em",
+    "VGK":      "eu",
+}
 
 
-def _fetch_close(ticker: str, start: str, end: str) -> pd.Series:
-    """Download adjusted close price for a single ticker."""
+def main():
     try:
-        raw = yf.download(ticker, start=start, end=end, progress=False, auto_adjust=True)
-        if raw.empty:
-            print(f"  [WARN] No data for {ticker}")
-            return pd.Series(dtype=float, name=ticker)
-        # yfinance may return MultiIndex columns
-        if isinstance(raw.columns, pd.MultiIndex):
-            raw.columns = raw.columns.droplevel(1)
-        close = raw["Close"].squeeze()
-        close.name = ticker
-        return close
-    except Exception as e:
-        print(f"  [ERROR] {ticker}: {e}")
-        return pd.Series(dtype=float, name=ticker)
+        import yfinance as yf
+    except ImportError:
+        print("[fetch] ERROR: yfinance not installed.")
+        print("[fetch] Run: pip install yfinance")
+        sys.exit(1)
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    print(f"[fetch] Downloading {len(TICKER_MAP)} tickers ({START_DATE} → {END_DATE})...")
+
+    # ---------------------------------------------------------------- #
+    # 1. Download all yfinance tickers
+    # ---------------------------------------------------------------- #
+    tickers = list(TICKER_MAP.keys())
+    raw = yf.download(
+        tickers,
+        start=START_DATE,
+        end=END_DATE,
+        auto_adjust=True,
+        progress=False,
+        threads=True,
+    )
+
+    # Extract adjusted close prices
+    if isinstance(raw.columns, pd.MultiIndex):
+        prices = raw["Close"].rename(columns=TICKER_MAP)
+    else:
+        prices = raw[["Close"]].rename(columns={"Close": list(TICKER_MAP.values())[0]})
+
+    print(f"[fetch] Downloaded shape: {prices.shape}")
+
+    # ---------------------------------------------------------------- #
+    # 2. Construct ise2 (ISE in USD terms)
+    # ---------------------------------------------------------------- #
+    # TRY=X in yfinance is USD per TRY (i.e., how many USD per 1 TRY)
+    # To get USD/TRY (how many TRY per 1 USD), we invert it
+    # ISE in USD = XU100 TRY price / USD-per-TRY rate
+    #            = XU100_TRY * (1 / tryusd_price)
+    #            = XU100_TRY * tryusd_inverted
+
+    if "_xu100_try" in prices.columns and "_tryusd" in prices.columns:
+        xu100 = prices["_xu100_try"]
+        tryusd = prices["_tryusd"]  # USD per TRY
+        ise_usd_price = xu100 * tryusd  # ISE price in USD
+        prices["ise2"] = np.log(ise_usd_price / ise_usd_price.shift(1))
+        print(f"[fetch] Constructed ise2 from XU100.IS * TRY=X  "
+              f"(NaN: {prices['ise2'].isna().sum()})")
+
+        # TRY/USD log return (USD per TRY — positive = TRY appreciating)
+        prices["try_usd_ret"] = np.log(tryusd / tryusd.shift(1))
+    else:
+        print("[fetch] WARNING: XU100.IS or TRY=X missing — ise2 not available")
+        if "_xu100_try" in prices.columns:
+            prices["ise2"] = np.log(prices["_xu100_try"] / prices["_xu100_try"].shift(1))
+        prices["try_usd_ret"] = np.nan
+
+    # Drop the raw construction columns
+    prices = prices.drop(columns=[c for c in ["_xu100_try", "_tryusd"] if c in prices.columns])
+
+    # ---------------------------------------------------------------- #
+    # 3. Compute log returns for all index columns
+    # ---------------------------------------------------------------- #
+    index_cols = [c for c in ["sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+                  if c in prices.columns]
+    for col in index_cols:
+        prices[col] = np.log(prices[col] / prices[col].shift(1))
+
+    print(f"[fetch] Log returns computed for: {index_cols}")
+
+    # ---------------------------------------------------------------- #
+    # 4. FRED data (optional — CBRT rate + Turkey CPI)
+    # ---------------------------------------------------------------- #
+    cbrt_daily = _fetch_cbrt_fred(prices.index)
+    if cbrt_daily is not None:
+        prices = prices.join(cbrt_daily, how="left")
+        print("[fetch] CBRT rate data joined from FRED")
+    else:
+        prices["cbrt_rate"]  = np.nan
+        prices["cbrt_delta"] = np.nan
+        prices["cpi_yoy"]    = np.nan
+        print("[fetch] CBRT/CPI data unavailable (fredapi not installed or FRED offline)")
+        print("[fetch] cbrt_rate / cbrt_delta / cpi_yoy will be NaN — that\'s OK for Model B")
+
+    # ---------------------------------------------------------------- #
+    # 5. CDS proxy — approximate Turkey credit risk via iShares HY ETF spread
+    # ---------------------------------------------------------------- #
+    prices["cds_proxy"] = _fetch_cds_proxy(prices.index, yf)
+
+    # ---------------------------------------------------------------- #
+    # 6. Align, clean, save
+    # ---------------------------------------------------------------- #
+    # Business days only
+    prices = prices[prices.index.dayofweek < 5].copy()
+    # Drop first row (NaN from log-return shift)
+    prices = prices.iloc[1:]
+    # Forward-fill, then drop rows where ise2 is missing
+    prices = prices.ffill()
+    prices = prices.dropna(subset=["ise2"])
+
+    # Reorder columns: ise2 first, then global indices, then extended
+    lead_cols = ["ise2"] + index_cols
+    ext_cols  = [c for c in ["try_usd_ret", "cbrt_rate", "cbrt_delta", "cpi_yoy", "cds_proxy"]
+                 if c in prices.columns]
+    prices = prices[lead_cols + ext_cols]
+
+    prices.index.name = "date"
+    prices.to_csv(OUT_CSV)
+
+    print(f"\n[fetch] ✓ Saved {OUT_CSV.name}")
+    print(f"[fetch] Shape: {prices.shape}")
+    print(f"[fetch] Date range: {prices.index[0].date()} → {prices.index[-1].date()}")
+    print(f"[fetch] Columns: {list(prices.columns)}")
+    print(f"[fetch] NaN summary:")
+    nan_summary = prices.isna().sum()
+    for col, n in nan_summary[nan_summary > 0].items():
+        pct = n / len(prices) * 100
+        print(f"  {col}: {n} ({pct:.1f}%)")
+    print("[fetch] Done. Run: python train_pipeline.py --model b")
 
 
-def fetch_global_indices(start: str = START_DATE, end: str = END_DATE) -> pd.DataFrame:
-    """Download all 7 global index returns."""
-    print("[fetch_extended] Downloading global indices...")
-    frames = {}
-    for name, ticker in INDEX_TICKERS.items():
-        price = _fetch_close(ticker, start, end)
-        if not price.empty:
-            frames[name] = price.pct_change()
-            print(f"  {name}: {len(price)} days")
-    df = pd.DataFrame(frames)
-    df.index = pd.to_datetime(df.index)
-    return df
+# ------------------------------------------------------------------ #
+# FRED helpers
+# ------------------------------------------------------------------ #
 
-
-def fetch_bist100_usd(start: str = START_DATE, end: str = END_DATE) -> pd.Series:
+def _fetch_cbrt_fred(date_index: pd.DatetimeIndex):
     """
-    Reconstruct ISE2-equivalent (BIST100 return in USD terms).
-    Formula: bist100_usd_ret ≈ bist100_tl_ret + try_usd_ret
-    (log-return additive approximation; matches Group_5.csv methodology)
+    Fetch Turkey central bank rate and CPI from FRED.
+    Returns a DataFrame with cbrt_rate, cbrt_delta, cpi_yoy aligned to date_index.
+    Returns None if fredapi not available or FRED is offline.
+
+    Note: FRED requires a free API key (https://fred.stlouisfed.org/docs/api/api_key.html)
+    Set it as environment variable: export FRED_API_KEY="your_key_here"
+    Or pass it as FRED_API_KEY in a .env file.
     """
-    print("[fetch_extended] Downloading BIST100 (XU100.IS) + TRY/USD...")
-    bist_tl  = _fetch_close(BIST100_TICKER, start, end).pct_change()
-    try_usd  = _fetch_close(TRY_USD_TICKER, start, end).pct_change()
-
-    # Align on common dates
-    aligned = pd.concat([bist_tl, try_usd], axis=1).dropna()
-    aligned.columns = ["bist_tl_ret", "try_usd_ret"]
-
-    # USD return = TL return + TRY/USD change
-    ise2_usd = aligned["bist_tl_ret"] + aligned["try_usd_ret"]
-    ise2_usd.name = "ise2"
-    print(f"  BIST100 USD series: {len(ise2_usd)} days  ({ise2_usd.index[0].date()} → {ise2_usd.index[-1].date()})")
-    return ise2_usd, aligned["try_usd_ret"]
-
-
-def fetch_fred_macro(start: str = START_DATE, end: str = END_DATE) -> pd.DataFrame:
-    """
-    Fetch Turkey macro indicators from FRED.
-    Requires FRED_API_KEY environment variable.
-    Returns daily-interpolated DataFrame with columns:
-      cbrt_rate   — CBRT overnight policy rate (%)
-      cpi_mom     — Turkey CPI month-on-month change (%)
-    Falls back to empty DataFrame if API key missing.
-    """
-    if not FRED_API_KEY:
-        print("[fetch_extended] FRED_API_KEY not set — skipping macro data")
-        return pd.DataFrame()
-
     try:
         from fredapi import Fred
-        fred = Fred(api_key=FRED_API_KEY)
+        import os
     except ImportError:
-        print("[fetch_extended] fredapi not installed — pip install fredapi")
-        return pd.DataFrame()
+        return None
 
-    print("[fetch_extended] Fetching FRED macro series...")
-    frames = {}
+    api_key = _get_fred_key()
+    if not api_key:
+        print("[fetch] FRED_API_KEY not set — skipping CBRT data")
+        print("[fetch] To enable: export FRED_API_KEY=your_key (free at fred.stlouisfed.org)")
+        return None
 
-    # CBRT overnight rate (monthly → interpolate to daily)
     try:
-        cbrt = fred.get_series("IRSTCI01TRM156N", observation_start=start, observation_end=end)
-        cbrt_daily = cbrt.resample("D").interpolate(method="linear")
-        frames["cbrt_rate"] = cbrt_daily
-        print(f"  CBRT rate: {len(cbrt)} monthly obs → interpolated")
-    except Exception as e:
-        print(f"  [WARN] CBRT rate fetch failed: {e}")
+        fred = Fred(api_key=api_key)
+        df_parts = {}
 
-    # Turkey CPI MoM
+        # Turkey CB rate (short-term) — use INTDSRTRM193N (monthly) or best available
+        # Alternative: IRTCN0L01STQ (quarterly)
+        for series_id in ["INTDSRTRM193N", "IRTCN0L01STQ"]:
+            try:
+                s = fred.get_series(series_id,
+                                    observation_start=date_index[0],
+                                    observation_end=date_index[-1])
+                df_parts["cbrt_rate"] = s.resample("B").ffill()
+                print(f"[fetch] CBRT rate: {series_id} ({len(s)} obs)")
+                break
+            except Exception:
+                continue
+
+        # Turkey CPI YoY
+        try:
+            cpi = fred.get_series("TURCPIALLMINMEI",
+                                  observation_start=date_index[0],
+                                  observation_end=date_index[-1])
+            df_parts["cpi_yoy"] = cpi.resample("B").ffill()
+            print(f"[fetch] CPI YoY: TURCPIALLMINMEI ({len(cpi)} obs)")
+        except Exception:
+            pass
+
+        if not df_parts:
+            return None
+
+        result = pd.DataFrame(df_parts, index=date_index)
+        for col in df_parts:
+            result[col] = result[col].reindex(date_index).ffill()
+
+        if "cbrt_rate" in result.columns:
+            result["cbrt_delta"] = result["cbrt_rate"].diff(1)
+
+        return result
+
+    except Exception as e:
+        print(f"[fetch] FRED error: {e}")
+        return None
+
+
+def _get_fred_key() -> str:
+    import os
+    key = os.environ.get("FRED_API_KEY", "")
+    if key:
+        return key
+    # Try .env file
+    env_path = Path(__file__).parent.parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text().splitlines():
+            if line.startswith("FRED_API_KEY="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
+def _fetch_cds_proxy(date_index: pd.DatetimeIndex, yf) -> pd.Series:
+    """
+    Approximate Turkey CDS using the HYG (iShares HY ETF) spread.
+    Not a perfect proxy but captures EM credit risk sentiment.
+    Returns NaN series if download fails.
+    """
     try:
-        cpi = fred.get_series("TURCPICORMINMEI", observation_start=start, observation_end=end)
-        cpi_daily = cpi.resample("D").interpolate(method="linear")
-        frames["cpi_mom"] = cpi_daily
-        print(f"  CPI MoM: {len(cpi)} monthly obs → interpolated")
+        hyg = yf.download("HYG", start=str(date_index[0].date()),
+                          end=str(date_index[-1].date()),
+                          auto_adjust=True, progress=False)
+        if hyg.empty:
+            return pd.Series(np.nan, index=date_index, name="cds_proxy")
+        close = hyg["Close"].reindex(date_index).ffill()
+        # Use inverted log-return as spread proxy (HYG price falls when spreads widen)
+        proxy = -np.log(close / close.shift(1))
+        proxy.name = "cds_proxy"
+        print(f"[fetch] CDS proxy (HYG) downloaded ({proxy.notna().sum()} obs)")
+        return proxy
     except Exception as e:
-        print(f"  [WARN] CPI MoM fetch failed: {e}")
-
-    if not frames:
-        return pd.DataFrame()
-
-    df_macro = pd.DataFrame(frames)
-    df_macro.index = pd.to_datetime(df_macro.index)
-    return df_macro
-
-
-def build_extended_dataset(
-    start: str = START_DATE,
-    end:   str = END_DATE,
-) -> pd.DataFrame:
-    """
-    Assemble the full extended dataset.
-    Joins all series on business-day date index, forward-fills gaps.
-    Returns DataFrame ready for feature_engineering.build().
-    """
-    indices      = fetch_global_indices(start, end)
-    ise2_usd, try_usd_ret = fetch_bist100_usd(start, end)
-    macro        = fetch_fred_macro(start, end)
-
-    df = indices.copy()
-    df["ise2"]       = ise2_usd
-    df["try_usd_ret"] = try_usd_ret
-
-    if not macro.empty:
-        # Align macro to market dates
-        df = df.join(macro, how="left")
-        df["cbrt_rate"] = df.get("cbrt_rate", pd.Series(dtype=float, index=df.index)).ffill()
-        df["cpi_mom"]   = df.get("cpi_mom",   pd.Series(dtype=float, index=df.index)).ffill()
-        # Derive delta (rate change is more informative than level)
-        if "cbrt_rate" in df.columns:
-            df["cbrt_rate_delta"] = df["cbrt_rate"].diff()
-
-    # Forward-fill and drop any remaining NaN rows
-    df = df.ffill().dropna(subset=["ise2"] + list(INDEX_TICKERS.keys()))
-    df = df.sort_index()
-
-    print(
-        f"[fetch_extended] Extended dataset: {len(df)} rows  "
-        f"| {df.index[0].date()} → {df.index[-1].date()}"
-    )
-    print(f"  Columns: {list(df.columns)}")
-    return df
-
-
-def run(
-    start:    str = START_DATE,
-    end:      str = END_DATE,
-    out_dir:  Path = OUT_DIR,
-    data_dir: Path = DATA_DIR,
-) -> pd.DataFrame:
-    """
-    Build, save, and return the extended dataset.
-    Writes:
-      python/data/extended_dataset.csv
-      src/data/extended_meta.json
-    """
-    out_dir.mkdir(parents=True, exist_ok=True)
-    data_dir.mkdir(parents=True, exist_ok=True)
-
-    df = build_extended_dataset(start, end)
-
-    # Save CSV
-    csv_path = out_dir / "extended_dataset.csv"
-    df.to_csv(csv_path)
-    print(f"[fetch_extended] Saved → {csv_path}")
-
-    # Save metadata JSON for dashboard
-    meta = {
-        "source":       "yfinance + FRED",
-        "start":        str(df.index[0].date()),
-        "end":          str(df.index[-1].date()),
-        "n_rows":       len(df),
-        "columns":      list(df.columns),
-        "has_macro":    "cbrt_rate" in df.columns,
-        "crisis_windows": [
-            {"label": "2008 GFC",              "start": "2008-09-01", "end": "2009-03-31"},
-            {"label": "2018 Currency Crisis",  "start": "2018-03-01", "end": "2018-12-31"},
-            {"label": "COVID Shock",           "start": "2020-02-01", "end": "2020-06-30"},
-            {"label": "2021 Rate Cut Shock",   "start": "2021-09-01", "end": "2022-01-31"},
-            {"label": "2023 Earthquake",       "start": "2023-02-01", "end": "2023-05-31"},
-        ]
-    }
-    with open(data_dir / "extended_meta.json", "w") as f:
-        json.dump(meta, f, indent=2)
-    print(f"[fetch_extended] Saved → {data_dir / 'extended_meta.json'}")
-
-    return df
+        print(f"[fetch] CDS proxy unavailable: {e}")
+        return pd.Series(np.nan, index=date_index, name="cds_proxy")
 
 
 if __name__ == "__main__":
-    df = run()
-    print(df.tail())
+    main()
