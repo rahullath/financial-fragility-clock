@@ -1,124 +1,233 @@
-/*
- * DoomsdayClock.css — Kraken design system
- * The clock face stays dark (intentional: it IS a clock face)
- * Kraken Purple (#7132f5) replaces indigo as the brand colour
- * on rings, glow, and interactive elements around the face.
+/**
+ * DoomsdayClock.css — Kraken design system v2
+ * Uses --k-* tokens from variables.css exclusively.
+ * Dark panel, regime glow ring, sharp instrument aesthetic.
  */
 
+/* ── Outer wrapper ─────────────────────────────────────────────────────────── */
 .doomsday-clock {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--k-space-8) var(--k-space-6);
-  /* Background: dark card that contrasts the white page — intentional */
-  background: #0d0d14;
-  border-radius: var(--k-radius-lg);
+  background: var(--k-surface);
   border: 1px solid var(--k-border);
-  box-shadow: var(--k-shadow-panel);
-  overflow: hidden;
-  user-select: none;
+  border-radius: var(--k-radius-lg);
+  padding: var(--k-space-12) var(--k-space-10) var(--k-space-16);
+  width: 100%;
+  position: relative;
+  overflow: visible;
+  transition: border-color var(--k-transition-slow);
 }
 
-/* Purple outer glow ring — Kraken brand */
+/* Subtle top gradient line using primary purple */
+.doomsday-clock::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--k-primary) 40%,
+    var(--k-primary) 60%,
+    transparent
+  );
+  opacity: 0.5;
+  border-radius: var(--k-radius-full);
+}
+
+/* ── SVG clock face ─────────────────────────────────────────────────────────── */
+.doomsday-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 24px var(--k-primary-glow));
+  transition: filter var(--k-transition-slow);
+}
+
+.doomsday-svg .clock-needle-group {
+  transition: transform 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── Score display ──────────────────────────────────────────────────────────── */
+.doomsday-score-label {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--k-text-faint);
+  margin-top: var(--k-space-8);
+  margin-bottom: var(--k-space-3);
+}
+
+.doomsday-score-value {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-2xl);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--k-text);
+  letter-spacing: -0.02em;
+  transition: color var(--k-transition-slow);
+}
+
+.doomsday-time-display {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-sm);
+  font-weight: 400;
+  color: var(--k-text-muted);
+  margin-top: var(--k-space-3);
+  letter-spacing: 0.04em;
+}
+
+/* ── Regime pill ────────────────────────────────────────────────────────────── */
+.doomsday-regime {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-space-4);
+  margin-top: var(--k-space-8);
+  padding: var(--k-space-4) var(--k-space-8);
+  border-radius: var(--k-radius-full);
+  background: var(--k-surface-raised);
+  border: 1px solid var(--k-border);
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  transition: color var(--k-transition-slow), border-color var(--k-transition-slow),
+    background var(--k-transition-slow);
+}
+
+.doomsday-regime-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--k-transition-slow), box-shadow var(--k-transition-slow);
+}
+
+/* ── Regime glow ring (positioned behind SVG) ──────────────────────────────── */
 .clock-glow-ring {
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    ellipse 60% 40% at 50% 30%,
-    rgba(113, 50, 245, 0.12) 0%,
-    transparent 70%
-  );
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateY(-8px);
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
   pointer-events: none;
-  transition: opacity var(--k-transition-slow);
-}
-
-/* Pulse animation driven by --fragility-score CSS variable */
-@property --fragility-score {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0;
+  transition: background var(--k-transition-slow);
+  z-index: 0;
 }
 
 .doomsday-svg {
-  width: 100%;
-  max-width: 320px;
-  display: block;
-  filter: drop-shadow(0 2px 12px rgba(113, 50, 245, 0.15));
+  position: relative;
+  z-index: 1;
 }
 
-/* Time display below the clock face */
-.doomsday-time {
-  margin-top: var(--k-space-8);
-  font-family: var(--k-font-display);
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  color: #ffffff;
-  text-align: center;
-  line-height: 1.1;
-}
-
-/* Regime label */
-.doomsday-regime {
-  margin-top: var(--k-space-3);
+/* ── Date chip ──────────────────────────────────────────────────────────────── */
+.doomsday-date {
   font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  color: var(--k-text-faint);
+  margin-top: var(--k-space-6);
+  letter-spacing: 0.06em;
+}
+
+/* ── Layman overlay trigger ─────────────────────────────────────────────────── */
+.doomsday-explain-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--k-space-4);
+  margin-top: var(--k-space-8);
+  padding: var(--k-space-4) var(--k-space-8);
+  background: var(--k-primary-subtle);
+  border: 1px solid var(--k-primary-dim);
+  border-radius: var(--k-radius-btn);
+  font-family: var(--k-font-ui);
   font-size: var(--k-text-sm);
   font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-align: center;
-  opacity: 0.9;
+  color: var(--k-primary);
+  cursor: pointer;
+  transition: background var(--k-transition), border-color var(--k-transition),
+    color var(--k-transition);
 }
 
-/* Historical analogue panel */
+.doomsday-explain-btn:hover {
+  background: var(--k-primary-dim);
+  border-color: var(--k-primary);
+  color: var(--k-primary-hover);
+}
+
+/* ── Historical analogue panel ──────────────────────────────────────────────── */
 .doomsday-analogue {
-  margin-top: var(--k-space-8);
+  margin-top: var(--k-space-12);
   width: 100%;
-  padding: var(--k-space-8) var(--k-space-8);
+  background: var(--k-surface-raised);
+  border: 1px solid var(--k-border-subtle);
   border-radius: var(--k-radius-md);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  padding: var(--k-space-8) var(--k-space-10);
+  transition: border-color var(--k-transition-slow);
 }
 
 .doomsday-analogue-period {
   display: flex;
   align-items: baseline;
-  gap: var(--k-space-6);
-  margin-bottom: var(--k-space-3);
+  gap: var(--k-space-4);
+  margin-bottom: var(--k-space-5);
+  flex-wrap: wrap;
 }
 
 .doomsday-analogue-label {
-  font-size: var(--k-text-sm);
-  color: rgba(255,255,255,0.4);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--k-text-faint);
+  white-space: nowrap;
 }
 
 .doomsday-analogue-value {
   font-family: var(--k-font-data);
-  font-size: var(--k-text-md);
+  font-size: var(--k-text-base);
   font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color var(--k-transition-slow);
 }
 
 .doomsday-analogue-event {
-  font-size: var(--k-text-md);
-  color: rgba(255,255,255,0.7);
-  margin-bottom: 4px;
-  line-height: 1.4;
+  font-family: var(--k-font-ui);
+  font-size: var(--k-text-base);
+  color: var(--k-text-muted);
+  line-height: 1.55;
+  margin-bottom: var(--k-space-5);
 }
 
 .doomsday-analogue-consequence {
+  font-family: var(--k-font-data);
   font-size: var(--k-text-sm);
-  color: rgba(255,255,255,0.45);
-  line-height: 1.4;
+  color: var(--k-text-faint);
+  line-height: 1.55;
+  letter-spacing: 0.02em;
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .doomsday-clock { padding: var(--k-space-6) var(--k-space-3); }
-  .doomsday-svg   { max-width: 260px; }
-  .doomsday-time  { font-size: 1.4rem; }
+/* ── Regime-specific border/glow overrides ──────────────────────────────────── */
+/* Applied via inline style on the wrapper + .doomsday-analogue */
+/* Regime colours come from REGIME_CFG in the TSX — these rules handle glow states */
+
+.doomsday-clock[data-regime='PONZI'] {
+  box-shadow: 0 0 0 1px var(--k-crisis-dim), var(--k-shadow-md);
+}
+
+.doomsday-clock[data-regime='SPECULATIVE'] {
+  box-shadow: 0 0 0 1px var(--k-warning-dim), var(--k-shadow-md);
+}
+
+.doomsday-clock[data-regime='HEDGE'] {
+  box-shadow: 0 0 0 1px var(--k-success-dim), var(--k-shadow-md);
 }

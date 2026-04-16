@@ -1,0 +1,57 @@
+/**
+ * panels.patch.css — dead-variable bridge
+ *
+ * The original DoomsdayClock.css + component stubs referenced CSS vars from
+ * an old design system (--bg-*, --text-*, --font-mono, --radius) that were
+ * never defined in the current variables.css. This file maps every dead var
+ * to its correct --k-* equivalent so every panel renders correctly.
+ *
+ * Import order in main.tsx (or App.css):
+ *   1. variables.css   ← defines --k-* tokens
+ *   2. panels.patch.css  ← aliases dead vars → --k-*  (this file)
+ *   3. base.css, components.css, etc.
+ */
+
+:root {
+  /* Surface aliases */
+  --bg-surface:          var(--k-surface);
+  --bg-elevated:         var(--k-surface-raised);
+  --bg-overlay:          var(--k-surface-overlay);
+  --bg-border:           var(--k-border);
+  --bg-border-subtle:    var(--k-border-subtle);
+  --bg-divider:          var(--k-divider);
+
+  /* Text aliases */
+  --text-primary:        var(--k-text);
+  --text-secondary:      var(--k-text-muted);
+  --text-faint:          var(--k-text-faint);
+  --text-inverse:        var(--k-text-inverse);
+
+  /* Font aliases */
+  --font-mono:           var(--k-font-data);
+  --font-body:           var(--k-font-ui);
+  --font-display:        var(--k-font-display);
+
+  /* Radius aliases */
+  --radius:              var(--k-radius-lg);
+  --radius-sm:           var(--k-radius-sm);
+  --radius-md:           var(--k-radius-md);
+  --radius-full:         var(--k-radius-full);
+
+  /* Colour aliases */
+  --color-primary:       var(--k-primary);
+  --color-primary-dim:   var(--k-primary-dim);
+  --color-crisis:        var(--k-crisis);
+  --color-warning:       var(--k-warning);
+  --color-success:       var(--k-success);
+
+  /* Shadow aliases */
+  --shadow-sm:           var(--k-shadow-sm);
+  --shadow-md:           var(--k-shadow-md);
+  --shadow-lg:           var(--k-shadow-lg);
+  --shadow-panel:        var(--k-shadow-panel);
+
+  /* Transition aliases */
+  --transition:          var(--k-transition);
+  --transition-slow:     var(--k-transition-slow);
+}

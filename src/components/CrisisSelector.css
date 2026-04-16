@@ -1,1 +1,138 @@
-/* REPLACED — use --k-* tokens from variables.css */
+/**
+ * CrisisSelector.css — Kraken design system v2
+ * Uses --k-* tokens exclusively.
+ * Replaces old colored side-border AI pattern with premium card treatment.
+ */
+
+/* ── Container ──────────────────────────────────────────────────────────────── */
+.crisis-selector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-3);
+  width: 100%;
+}
+
+.crisis-selector-heading {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--k-text-faint);
+  margin-bottom: var(--k-space-4);
+  padding-bottom: var(--k-space-4);
+  border-bottom: 1px solid var(--k-divider);
+}
+
+/* ── Individual event card ──────────────────────────────────────────────────── */
+.crisis-event-card {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  gap: 0 var(--k-space-8);
+  padding: var(--k-space-8) var(--k-space-10) var(--k-space-8) 0;
+  background: transparent;
+  border: 1px solid var(--k-border-subtle);
+  border-radius: var(--k-radius-md);
+  cursor: pointer;
+  transition: background var(--k-transition), border-color var(--k-transition);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Severity stripe — left edge only, 3px wide */
+.crisis-event-card::before {
+  content: '';
+  grid-row: 1 / -1;
+  align-self: stretch;
+  width: 3px;
+  border-radius: var(--k-radius-sm) 0 0 var(--k-radius-sm);
+  background: var(--crisis-color, var(--k-border));
+  transition: background var(--k-transition-slow);
+}
+
+.crisis-event-card:hover {
+  background: var(--k-surface-raised);
+  border-color: var(--k-border);
+}
+
+.crisis-event-card.active {
+  background: var(--k-primary-dim);
+  border-color: var(--k-primary-dim);
+}
+
+.crisis-event-card.active::before {
+  background: var(--k-primary);
+}
+
+/* ── Card body ──────────────────────────────────────────────────────────────── */
+.crisis-event-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-space-2);
+  padding: var(--k-space-6) var(--k-space-8) var(--k-space-6) 0;
+  min-width: 0;
+}
+
+.crisis-event-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--k-space-6);
+  flex-wrap: wrap;
+}
+
+.crisis-event-date {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 500;
+  color: var(--k-text-faint);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.crisis-event-severity {
+  font-family: var(--k-font-data);
+  font-size: var(--k-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px var(--k-space-5);
+  border-radius: var(--k-radius-full);
+  background: var(--k-surface-overlay);
+  color: var(--crisis-color, var(--k-text-muted));
+  border: 1px solid currentColor;
+  opacity: 0.75;
+}
+
+.crisis-event-title {
+  font-family: var(--k-font-ui);
+  font-size: var(--k-text-md);
+  font-weight: 600;
+  color: var(--k-text);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crisis-event-desc {
+  font-family: var(--k-font-ui);
+  font-size: var(--k-text-base);
+  color: var(--k-text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .crisis-event-card {
+    padding-right: var(--k-space-8);
+  }
+
+  .crisis-event-title {
+    font-size: var(--k-text-base);
+    white-space: normal;
+  }
+}
