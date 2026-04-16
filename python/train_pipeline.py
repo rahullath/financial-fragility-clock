@@ -16,9 +16,13 @@ Usage
   python train_pipeline.py
 
 Outputs (all written to src/data/)
-  results_model_a.json   — Model A metrics, predictions, feature importance
-  results_model_b.json   — Model B metrics, predictions, feature importance
-  dashboard_data.json    — Combined payload for the React dashboard
+  results_model_a.json   — Model A full output
+  results_model_b.json   — Model B full output
+  dashboard_data.json    — Combined payload: always contains both model_a + model_b keys
+
+Note: --model a or --model b also writes dashboard_data.json.
+      The missing model's key is populated with the previous results_model_*.json
+      if available, or an empty {} shell if not yet run.
 """
 
 import argparse
@@ -42,11 +46,12 @@ from models import (
     train_xgboost_classifier,
     train_lstm,
     compare_models,
+    build_ensemble_fragility,
 )
 
-DATA_DIR    = Path(__file__).parent.parent / "src" / "data"
-CSV_PATH_A  = Path(__file__).parent.parent / "data" / "Group_5.csv"
-EXT_CSV     = Path(__file__).parent / "data" / "extended_dataset.csv"
+DATA_DIR   = Path(__file__).parent.parent / "src" / "data"
+CSV_PATH_A = Path(__file__).parent.parent / "data" / "Group_5.csv"
+EXT_CSV    = Path(__file__).parent / "data" / "extended_dataset.csv"
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +84,14 @@ def _save_json(data: dict, path: Path):
     print(f"[pipeline] Saved {path.name}  ({size_kb:.1f} KB)")
 
 
+def _load_json_safe(path: Path) -> dict:
+    """Load JSON from disk; return {} if file doesn't exist."""
+    if path.exists():
+        with open(path) as f:
+            return json.load(f)
+    return {}
+
+
 def _time_split(df: pd.DataFrame, test_ratio: float = 0.20):
     """Chronological split — returns (df_train, df_test)."""
     n = len(df)
@@ -91,6 +104,44 @@ def _ise2_series_for_dashboard(df: pd.DataFrame) -> list:
         {"date": str(d.date()), "value": float(v)}
         for d, v in df["ise2"].items()
     ]
+
+
+def _extract_dashboard_block(result: dict) -> dict:
+    """
+    Extract the subset of a model result needed for dashboard_data.json.
+    Strips large arrays (coefficients, y_pred per model) to keep the
+    combined dashboard file manageable.
+    """
+    rf_clf  = result.get("classification", {}).get("rf",      {})
+    xgb_clf = result.get("classification", {}).get("xgboost", {})
+
+    ensemble_fragility = build_ensemble_fragility(rf_clf, xgb_clf)
+
+    return {
+        "meta":           result.get("meta", {}),
+        "crisis_stats":   result.get("crisis_stats", {}),
+        "ise2_series":    result.get("ise2_series", []),
+        "predictions":    result.get("predictions", {}),
+        "reg_comparison": result.get("regression", {}).get("comparison", []),
+        "clf_comparison": result.get("classification", {}).get("comparison", []),
+        "feature_importance": {
+            "rf":      result.get("regression", {}).get("rf",      {}).get("feature_importance", []),
+            "xgboost": result.get("regression", {}).get("xgboost", {}).get("feature_importance", []),
+            "rf_clf":      rf_clf.get("feature_importance", []),
+            "xgboost_clf": xgb_clf.get("feature_importance", []),
+        },
+        "roc_curves": {
+            "rf":      rf_clf.get("test_metrics", {}).get("roc_curve", []),
+            "xgboost": xgb_clf.get("test_metrics", {}).get("roc_curve", []),
+        },
+        "fragility_scores": {
+            "dates":    result.get("predictions", {}).get("dates", []),
+            "rf":       rf_clf.get("fragility_scores", []),
+            "xgboost":  xgb_clf.get("fragility_scores", []),
+            "ensemble": ensemble_fragility,
+        },
+        "crisis_windows": result.get("meta", {}).get("crisis_windows", []),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +166,7 @@ def run_model_a(csv_path: Path = CSV_PATH_A) -> dict:
     # 4. Time-aware split
     df_train, df_test = _time_split(df_labeled, test_ratio=0.20)
 
-    feat_cols = get_feature_names(df_labeled)  # everything except ise2 + crisis_label
+    feat_cols = get_feature_names(df_labeled)
     feat_cols = [c for c in feat_cols if c != "crisis_label"]
 
     X_train = df_train[feat_cols]
@@ -125,61 +176,56 @@ def run_model_a(csv_path: Path = CSV_PATH_A) -> dict:
     y_clf_train = df_train["crisis_label"]
     y_clf_test  = df_test["crisis_label"]
 
-    print(f"\nModel A — feature count: {len(feat_cols)}")
+    print(f"\nModel A — {len(feat_cols)} features")
     print(f"Train: {len(df_train)} rows  |  Test: {len(df_test)} rows")
     print(f"Crisis ratio — train: {y_clf_train.mean():.2%}  test: {y_clf_test.mean():.2%}")
 
     # 5. Regression models
-    ols_res = train_ols(X_train, y_reg_train, X_test, y_reg_test)
-    ridge_res = train_ridge(X_train, y_reg_train, X_test, y_reg_test)
-    rf_reg_res = train_random_forest_regressor(X_train, y_reg_train, X_test, y_reg_test)
-    xgb_reg_res = train_xgboost_regressor(X_train, y_reg_train, X_test, y_reg_test)
-    lstm_reg_res = train_lstm(X_train, y_reg_train, X_test, y_reg_test, mode="regression", epochs=30)
-
+    ols_res      = train_ols(X_train, y_reg_train, X_test, y_reg_test)
+    ridge_res    = train_ridge(X_train, y_reg_train, X_test, y_reg_test)
+    rf_reg_res   = train_random_forest_regressor(X_train, y_reg_train, X_test, y_reg_test)
+    xgb_reg_res  = train_xgboost_regressor(X_train, y_reg_train, X_test, y_reg_test)
+    lstm_reg_res = train_lstm(X_train, y_reg_train, X_test, y_reg_test,
+                              mode="regression", epochs=60)
     reg_comparison = compare_models(
         [ols_res, ridge_res, rf_reg_res, xgb_reg_res, lstm_reg_res],
         mode="regression"
     )
 
-    # 6. Classification models (crisis prediction)
+    # 6. Classification models
     rf_clf_res  = train_random_forest_classifier(X_train, y_clf_train, X_test, y_clf_test)
     xgb_clf_res = train_xgboost_classifier(X_train, y_clf_train, X_test, y_clf_test)
+    clf_comparison = compare_models([rf_clf_res, xgb_clf_res], mode="classification")
 
-    clf_comparison = compare_models(
-        [rf_clf_res, xgb_clf_res],
-        mode="classification"
-    )
-
-    # 7. Build ISE2 actual vs predicted series for each model
+    # 7. Predictions series
     test_dates = [str(d.date()) for d in df_test.index]
-    y_actual   = y_reg_test.tolist()
-
     predictions_series = {
-        "dates": test_dates,
-        "actual": y_actual,
-        "ols": ols_res.get("y_pred", []),
-        "ridge": ridge_res.get("y_pred", []),
-        "rf": rf_reg_res.get("y_pred", []),
+        "dates":   test_dates,
+        "actual":  y_reg_test.tolist(),
+        "ols":     ols_res.get("y_pred", []),
+        "ridge":   ridge_res.get("y_pred", []),
+        "rf":      rf_reg_res.get("y_pred", []),
         "xgboost": xgb_reg_res.get("y_pred", []),
-        "lstm": lstm_reg_res.get("y_pred", []),
+        "lstm":    lstm_reg_res.get("y_pred", []),
+        "crisis_labels": y_clf_test.tolist(),
     }
 
     result = {
         "meta": {
             "model": "A",
-            "dataset": "Group_5.csv",
+            "dataset": "Group_5.csv (2009-11)",
             "train_start": str(df_train.index[0].date()),
             "train_end":   str(df_train.index[-1].date()),
             "test_start":  str(df_test.index[0].date()),
             "test_end":    str(df_test.index[-1].date()),
-            "n_train": len(df_train),
-            "n_test":  len(df_test),
+            "n_train":    len(df_train),
+            "n_test":     len(df_test),
             "n_features": len(feat_cols),
             "feature_names": feat_cols,
         },
-        "crisis_stats":     crisis_stats(y_clf_test),
-        "ise2_series":      _ise2_series_for_dashboard(df_labeled),
-        "predictions":      predictions_series,
+        "crisis_stats":  crisis_stats(y_clf_test),
+        "ise2_series":   _ise2_series_for_dashboard(df_labeled),
+        "predictions":   predictions_series,
         "regression": {
             "ols":      ols_res,
             "ridge":    ridge_res,
@@ -204,7 +250,7 @@ def run_model_a(csv_path: Path = CSV_PATH_A) -> dict:
 
 def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
     print("\n" + "=" * 60)
-    print("MODEL B  —  Extended 2005-2024 Dataset")
+    print("MODEL B  —  Extended 2005-2026 Dataset")
     print("=" * 60)
 
     if not ext_csv.exists():
@@ -214,23 +260,24 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
 
     df_raw = pd.read_csv(ext_csv, index_col=0, parse_dates=True).sort_index()
     df_raw = df_raw.ffill().dropna(subset=["ise2"])
-    print(f"[pipeline] Extended dataset: {len(df_raw)} rows  ({df_raw.index[0].date()} → {df_raw.index[-1].date()})")
+    print(f"[pipeline] Extended: {len(df_raw)} rows  "
+          f"({df_raw.index[0].date()} → {df_raw.index[-1].date()})")
 
-    # Feature engineering (handles extra columns like try_usd_ret, cbrt_rate_delta transparently)
-    df_eng = engineer_features(df_raw)
+    df_eng     = engineer_features(df_raw)
     df_labeled = attach_labels(df_eng, forward_window=20)
 
-    # Hold out 2018-01-01 → end as "Turkey Crisis" test window
+    # Hard split: train on pre-crisis era, test on Turkey Crisis 2018→present
     crisis_start = "2018-01-01"
-    df_train = df_labeled[df_labeled.index < crisis_start].copy()
+    df_train = df_labeled[df_labeled.index <  crisis_start].copy()
     df_test  = df_labeled[df_labeled.index >= crisis_start].copy()
 
-    print(f"[pipeline] Model B Train: {len(df_train)} rows  Test (crisis window): {len(df_test)} rows")
+    print(f"[pipeline] Train: {len(df_train)} rows  |  "
+          f"Test (crisis window): {len(df_test)} rows")
 
     feat_cols = get_feature_names(df_labeled)
     feat_cols = [c for c in feat_cols if c != "crisis_label"]
-    # Use only columns present in both train and test
-    feat_cols = [c for c in feat_cols if c in df_train.columns and c in df_test.columns]
+    feat_cols = [c for c in feat_cols
+                 if c in df_train.columns and c in df_test.columns]
 
     X_train = df_train[feat_cols]
     X_test  = df_test[feat_cols]
@@ -239,38 +286,36 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
     y_clf_train = df_train["crisis_label"]
     y_clf_test  = df_test["crisis_label"]
 
-    print(f"\nModel B — feature count: {len(feat_cols)}")
+    print(f"\nModel B — {len(feat_cols)} features")
     print(f"Crisis ratio — train: {y_clf_train.mean():.2%}  test: {y_clf_test.mean():.2%}")
 
-    # Regression models
-    ols_res     = train_ols(X_train, y_reg_train, X_test, y_reg_test)
-    ridge_res   = train_ridge(X_train, y_reg_train, X_test, y_reg_test)
-    rf_reg_res  = train_random_forest_regressor(X_train, y_reg_train, X_test, y_reg_test)
-    xgb_reg_res = train_xgboost_regressor(X_train, y_reg_train, X_test, y_reg_test)
-    lstm_reg_res = train_lstm(X_train, y_reg_train, X_test, y_reg_test, mode="regression", epochs=30)
-
+    # Regression
+    ols_res      = train_ols(X_train, y_reg_train, X_test, y_reg_test)
+    ridge_res    = train_ridge(X_train, y_reg_train, X_test, y_reg_test)
+    rf_reg_res   = train_random_forest_regressor(X_train, y_reg_train, X_test, y_reg_test)
+    xgb_reg_res  = train_xgboost_regressor(X_train, y_reg_train, X_test, y_reg_test)
+    lstm_reg_res = train_lstm(X_train, y_reg_train, X_test, y_reg_test,
+                              mode="regression", epochs=60)
     reg_comparison = compare_models(
         [ols_res, ridge_res, rf_reg_res, xgb_reg_res, lstm_reg_res],
         mode="regression"
     )
 
-    # Classification models
+    # Classification
     rf_clf_res  = train_random_forest_classifier(X_train, y_clf_train, X_test, y_clf_test)
     xgb_clf_res = train_xgboost_classifier(X_train, y_clf_train, X_test, y_clf_test)
-
     clf_comparison = compare_models([rf_clf_res, xgb_clf_res], mode="classification")
 
     test_dates = [str(d.date()) for d in df_test.index]
-    y_actual   = y_reg_test.tolist()
-
     predictions_series = {
         "dates":   test_dates,
-        "actual":  y_actual,
+        "actual":  y_reg_test.tolist(),
         "ols":     ols_res.get("y_pred", []),
         "ridge":   ridge_res.get("y_pred", []),
         "rf":      rf_reg_res.get("y_pred", []),
         "xgboost": xgb_reg_res.get("y_pred", []),
         "lstm":    lstm_reg_res.get("y_pred", []),
+        "crisis_labels": y_clf_test.tolist(),
     }
 
     result = {
@@ -287,9 +332,9 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
             "feature_names": feat_cols,
             "crisis_windows": TURKEY_CRISIS_WINDOWS,
         },
-        "crisis_stats":     crisis_stats(y_clf_test),
-        "ise2_series":      _ise2_series_for_dashboard(df_labeled),
-        "predictions":      predictions_series,
+        "crisis_stats":  crisis_stats(y_clf_test),
+        "ise2_series":   _ise2_series_for_dashboard(df_labeled),
+        "predictions":   predictions_series,
         "regression": {
             "ols":      ols_res,
             "ridge":    ridge_res,
@@ -309,70 +354,32 @@ def run_model_b(ext_csv: Path = EXT_CSV) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Dashboard combiner
+# Dashboard combiner — always produces both model_a + model_b keys
 # ---------------------------------------------------------------------------
 
 def build_dashboard_payload(result_a: dict, result_b: dict) -> dict:
     """
-    Merge Model A + Model B outputs into a single dashboard_data.json.
-    This is what the React frontend reads.
+    Merge Model A + Model B outputs into dashboard_data.json.
+    This is the single file the React frontend reads.
 
-    Dashboard chart data produced
-    ─────────────────────────────
-    1.  ISE2 timeseries (full)        — line chart, annotated with crisis windows
-    2.  Actual vs Predicted per model — multi-line chart, both models
-    3.  Regression comparison table   — R2 / RMSE / MAE per model × dataset
-    4.  Classification comparison     — ROC-AUC / F1 per model × dataset
-    5.  Feature importance bars       — RF + XGB, Model A vs B overlay
-    6.  ROC curves                    — RF + XGB, both datasets
-    7.  Fragility score timeline      — RF classifier probability over test window
-    8.  Crisis window annotations     — shaded bands on all timeseries charts
+    Always contains both 'model_a' and 'model_b' top-level keys.
+    If only one model was run, loads the other from disk (if available).
+
+    Dashboard chart data
+    --------------------
+    1.  ISE2 timeseries (full) — annotated with crisis windows
+    2.  Actual vs Predicted — multi-line chart (5 models, both datasets)
+    3.  Regression comparison — R2/RMSE/MAE per model × dataset
+    4.  Classification comparison — ROC-AUC/F1/Precision/Recall × dataset
+    5.  Feature importance — RF + XGB (regression + classification), A vs B
+    6.  ROC curves — RF + XGB, both datasets
+    7.  Fragility score — ensemble EMA5 score over test window
+    8.  Crisis window annotations — shaded bands for all timeseries
     """
     payload = {
         "generated_at": datetime.now().isoformat(),
-        "model_a": {
-            "meta":           result_a.get("meta", {}),
-            "crisis_stats":   result_a.get("crisis_stats", {}),
-            "ise2_series":    result_a.get("ise2_series", []),
-            "predictions":    result_a.get("predictions", {}),
-            "reg_comparison": result_a.get("regression", {}).get("comparison", []),
-            "clf_comparison": result_a.get("classification", {}).get("comparison", []),
-            "feature_importance": {
-                "rf":      result_a.get("regression", {}).get("rf", {}).get("feature_importance", {}),
-                "xgboost": result_a.get("regression", {}).get("xgboost", {}).get("feature_importance", {}),
-            },
-            "roc_curves": {
-                "rf":      result_a.get("classification", {}).get("rf", {}).get("test_metrics", {}).get("roc_curve", []),
-                "xgboost": result_a.get("classification", {}).get("xgboost", {}).get("test_metrics", {}).get("roc_curve", []),
-            },
-            "fragility_scores": {
-                "dates":   result_a.get("predictions", {}).get("dates", []),
-                "rf":      result_a.get("classification", {}).get("rf",      {}).get("fragility_scores", []),
-                "xgboost": result_a.get("classification", {}).get("xgboost", {}).get("fragility_scores", []),
-            }
-        },
-        "model_b": {
-            "meta":           result_b.get("meta", {}),
-            "crisis_stats":   result_b.get("crisis_stats", {}),
-            "ise2_series":    result_b.get("ise2_series", []),
-            "predictions":    result_b.get("predictions", {}),
-            "reg_comparison": result_b.get("regression", {}).get("comparison", []),
-            "clf_comparison": result_b.get("classification", {}).get("comparison", []),
-            "feature_importance": {
-                "rf":      result_b.get("regression", {}).get("rf",      {}).get("feature_importance", {}),
-                "xgboost": result_b.get("regression", {}).get("xgboost", {}).get("feature_importance", {}),
-            },
-            "roc_curves": {
-                "rf":      result_b.get("classification", {}).get("rf",      {}).get("test_metrics", {}).get("roc_curve", []),
-                "xgboost": result_b.get("classification", {}).get("xgboost", {}).get("test_metrics", {}).get("roc_curve", []),
-            },
-            "fragility_scores": {
-                "dates":   result_b.get("predictions", {}).get("dates", []),
-                "rf":      result_b.get("classification", {}).get("rf",      {}).get("fragility_scores", []),
-                "xgboost": result_b.get("classification", {}).get("xgboost", {}).get("fragility_scores", []),
-            },
-            "crisis_windows": result_b.get("meta", {}).get("crisis_windows", []),
-        }
+        "model_a": _extract_dashboard_block(result_a) if result_a else {},
+        "model_b": _extract_dashboard_block(result_b) if result_b else {},
     }
     _save_json(payload, DATA_DIR / "dashboard_data.json")
     return payload
@@ -394,16 +401,22 @@ if __name__ == "__main__":
 
     if args.model in ("a", "both"):
         result_a = run_model_a()
+    else:
+        # Load existing Model A results from disk so dashboard stays complete
+        result_a = _load_json_safe(DATA_DIR / "results_model_a.json")
+        if result_a:
+            print(f"[pipeline] Loaded existing results_model_a.json "
+                  f"(train: {result_a.get('meta', {}).get('train_end', '?')})")
 
     if args.model in ("b", "both"):
         result_b = run_model_b()
+    else:
+        # Load existing Model B results from disk
+        result_b = _load_json_safe(DATA_DIR / "results_model_b.json")
+        if result_b:
+            print(f"[pipeline] Loaded existing results_model_b.json "
+                  f"(train: {result_b.get('meta', {}).get('train_end', '?')})")
 
-    if result_a and result_b:
-        build_dashboard_payload(result_a, result_b)
-        print("\n[pipeline] ✓ dashboard_data.json ready")
-    elif result_a:
-        _save_json(result_a, DATA_DIR / "dashboard_data.json")
-    elif result_b:
-        _save_json(result_b, DATA_DIR / "dashboard_data.json")
-
+    build_dashboard_payload(result_a, result_b)
+    print("\n[pipeline] ✓ dashboard_data.json ready — model_a + model_b keys present")
     print("[pipeline] Done.")
