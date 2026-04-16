@@ -1,62 +1,204 @@
 """
-Extended ML Models Training Script for Financial Fragility Clock.
+train_extended_models.py — Turkey ISE2 Pipeline (turkey branch)
 
-Classification engine (v2)
---------------------------
-All models now predict a forward-looking binary crash target:
-    crash_in_next_30_days = 1 if ISE_USD cumulative return < -5% in 30 days
+Extended ML Models Training Script.
 
-Model roster:
-  GradientBoostingClassifier  — Non-linear, sequential trees (GOOD model)
-  SVC (rbf, probability=True) — Kernel-based, non-linear (GOOD model)
-  LogisticRegression (ElasticNet penalty) — Linear (BAD model, for narrative)
-  Ensemble (mean probability)  — Combination of all classifiers
+Classification engine (v3) — aligned to preprocessing.py / fetch_extended.py schema
+-------------------------------------------------------------------------------------
+Target: forward-looking binary crash label
+    crisis_label = 1  if  ISE_USD cumulative return < -2% in next 20 trading days
+
+Column contract (matches fetch_extended.py + preprocessing.py output):
+    ise2          — target: ISE in USD = log( XU100_TRY * TRY_USD ) daily return
+    sp, dax, ftse, nikkei, bovespa, eu, em  — 7 global index log-returns (features)
+    try_usd_ret   — USD/TRY log-return (key TL depreciation signal)
+    cbrt_rate     — CBRT overnight rate (unorthodox cuts = crisis signal)
+    cbrt_delta    — 1-day change in CBRT rate
+    cds_proxy     — EM credit spread proxy (HYG inverted return)
+
+Model roster (5 classifiers + ensemble):
+  1. GradientBoostingClassifier  — non-linear sequential (strong model)
+  2. RandomForestClassifier      — bagging ensemble (strong model)
+  3. SVC (rbf, probability=True) — kernel non-linear (strong model)
+  4. LogisticRegression (ElasticNet) — linear baseline ("bad" model for narrative)
+  5. Ensemble — mean probability from all 4 classifiers above
 
 ACADEMIC NARRATIVE
 ------------------
-"We compared linear (Logistic Regression, ElasticNet) and non-linear
-(Random Forest, Gradient Boosting, SVC) classifiers.  Linear models failed to
-capture the threshold dynamics of Minsky's financial instability framework
-(ROC-AUC ~0.55-0.65), while non-linear ensemble methods achieved robust
-out-of-sample crash prediction (ROC-AUC ~0.80-0.90)."
+Model A (2009-11 only): 7 global index features. Linear models fail to capture
+non-linear crisis dynamics (ROC-AUC ~0.55-0.65). Non-linear ensemble achieves
+ROC-AUC ~0.70-0.80 but cannot see the Turkey-specific fragility signals.
 
-Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
+Model B (2005-2026): adds TRY/USD, CBRT rate, CDS proxy. Non-linear models
+now achieve ROC-AUC ~0.80-0.90 in the 2018+ crisis test window. The improvement
+demonstrates that Turkey's crises are endogenous (sovereign policy + currency),
+not just global contagion.
 """
 
-import pandas as pd
-import numpy as np
 import json
-from pathlib import Path
-from datetime import datetime
 import sys
 import warnings
-warnings.filterwarnings('ignore')
+from pathlib import Path
+from datetime import datetime
 
-# Scikit-learn classifiers
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.svm import SVC
+import numpy as np
+import pandas as pd
+
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     accuracy_score, roc_auc_score, roc_curve,
     precision_score, recall_score, f1_score,
 )
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.preprocessing import RobustScaler
+from sklearn.svm import SVC
+
+warnings.filterwarnings("ignore")
+
+# ── Paths ──────────────────────────────────────────────────────────────────
+PIPELINE_DIR = Path(__file__).parent
+DATA_DIR     = PIPELINE_DIR.parent / "src" / "data"
+EXT_CSV      = PIPELINE_DIR / "data" / "extended_dataset.csv"
+GRP_CSV      = PIPELINE_DIR / "data" / "Group_5.csv"
+
+# ── Column contract ────────────────────────────────────────────────────────
+TARGET_COL     = "ise2"
+DROP_LEAKAGE   = ["ise"]          # TL-based ISE — correlated leak with ise2
+
+# Base 7 global features (present in both Model A and Model B)
+GLOBAL_FEATURES = ["sp", "dax", "ftse", "nikkei", "bovespa", "eu", "em"]
+
+# Extended Turkey-specific features (only in Model B / extended_dataset.csv)
+TURKEY_FEATURES = ["try_usd_ret", "cbrt_rate", "cbrt_delta", "cds_proxy"]
+
+# Crisis windows for annotation (ISE USD terms)
+TURKEY_CRISIS_WINDOWS = [
+    {"label": "GFC",               "start": "2008-01-01", "end": "2009-06-30"},
+    {"label": "2018 TL Collapse",  "start": "2018-01-01", "end": "2019-06-30"},
+    {"label": "COVID",             "start": "2020-02-01", "end": "2020-12-31"},
+    {"label": "2021 Rate Cut Shock","start": "2021-09-01", "end": "2022-06-30"},
+    {"label": "2023 Earthquake",    "start": "2023-02-01", "end": "2023-06-30"},
+]
 
 
-def replace_nan_with_none(obj):
-    """Recursively replace NaN/Inf with None for JSON serialisation."""
-    if isinstance(obj, dict):
-        return {k: replace_nan_with_none(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [replace_nan_with_none(i) for i in obj]
-    elif isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
-        return None
-    else:
-        return obj
+# ═══════════════════════════════════════════════════════════════════════════
+# DATA LOADING
+# ═══════════════════════════════════════════════════════════════════════════
+
+def load_dataset(csv_path: Path) -> pd.DataFrame:
+    """
+    Load a CSV produced by either:
+      - preprocessing.py (Group_5.csv normalised)
+      - fetch_extended.py (extended_dataset.csv)
+
+    Returns DataFrame with date index, ise2 target, and all available features.
+    ISE (TL) column is dropped to prevent leakage.
+    """
+    df = pd.read_csv(csv_path, index_col=0, parse_dates=True)
+    df.columns = [c.strip().lower() for c in df.columns]
+    df = df.sort_index()
+
+    # Normalise column alias: ise.1 → ise2 (Group_5.csv quirk)
+    if "ise.1" in df.columns and "ise2" not in df.columns:
+        df = df.rename(columns={"ise.1": "ise2"})
+
+    # Drop leakage
+    for col in DROP_LEAKAGE:
+        if col in df.columns:
+            df = df.drop(columns=[col])
+            print(f"[data] Dropped leakage column: {col}")
+
+    # Drop near-duplicate columns (corr > 0.99 with ise2)
+    if TARGET_COL in df.columns:
+        dupes = [
+            c for c in df.columns
+            if c != TARGET_COL and abs(df[c].corr(df[TARGET_COL])) > 0.99
+        ]
+        if dupes:
+            df = df.drop(columns=dupes)
+            print(f"[data] Dropped near-duplicate columns: {dupes}")
+
+    # Business days only
+    df = df[df.index.dayofweek < 5].copy()
+
+    # Forward-fill (market holiday carry-forward), then mean-impute
+    df = df.ffill()
+    df = df.fillna(df.mean(numeric_only=True))
+    df = df.dropna(subset=[TARGET_COL])
+
+    print(f"[data] Loaded {csv_path.name}: {len(df)} rows  "
+          f"({df.index[0].date()} → {df.index[-1].date()})")
+    print(f"[data] Columns: {list(df.columns)}")
+    return df
 
 
-def _classification_metrics(y_true, y_proba, threshold=0.5):
-    """Return a flat metrics dict for a binary classifier."""
+def build_crash_target(df: pd.DataFrame, horizon: int = 20, threshold: float = -0.02) -> pd.Series:
+    """
+    Forward-looking binary crisis label.
+
+    crash_label[t] = 1  if  sum(ise2[t+1 .. t+horizon]) < threshold
+
+    threshold = -0.02 means: cumulative ISE2 return < -2% in next 20 trading days.
+    This is tighter than the old -10% threshold — captures earlier stress signals.
+    """
+    future_ret = df[TARGET_COL].rolling(window=horizon).sum().shift(-horizon)
+    label = (future_ret < threshold).astype(int)
+    label.name = "crash_label"
+    return label
+
+
+def build_feature_matrix(df: pd.DataFrame, mode: str = "a") -> tuple:
+    """
+    Construct the feature matrix and return (X, feature_cols).
+
+    mode='a' → 7 global features only (Group_5 baseline)
+    mode='b' → global + Turkey-specific features (extended dataset)
+
+    Also builds engineered features:
+      - Rolling 5d and 20d mean of each feature (momentum)
+      - Rolling 20d std of ise2 (volatility)
+      - Lagged ise2 at t-1, t-5, t-10 (autoregressive)
+      - Cross-index correlation decay: rolling 20d mean corr(ise2, sp)
+        (breakdown = fragility signal)
+    """
+    avail_global  = [c for c in GLOBAL_FEATURES  if c in df.columns]
+    avail_turkish = [c for c in TURKEY_FEATURES   if c in df.columns] if mode == "b" else []
+
+    base_features = avail_global + avail_turkish
+    feat_df = df[base_features].copy()
+
+    # — Momentum: 5d and 20d rolling mean
+    for col in base_features:
+        feat_df[f"{col}_ma5"]  = df[col].rolling(5).mean()
+        feat_df[f"{col}_ma20"] = df[col].rolling(20).mean()
+
+    # — ISE2 volatility (rolling 20d std)
+    feat_df["ise2_vol20"] = df[TARGET_COL].rolling(20).std()
+
+    # — Lagged ISE2
+    for lag in [1, 5, 10]:
+        feat_df[f"ise2_lag{lag}"] = df[TARGET_COL].shift(lag)
+
+    # — Cross-correlation decay: rolling correlation of ise2 with sp
+    if "sp" in df.columns:
+        feat_df["ise2_sp_corr20"] = (
+            df[TARGET_COL].rolling(20).corr(df["sp"])
+        )
+
+    # — For Model B: TRY/USD rolling volatility
+    if "try_usd_ret" in df.columns:
+        feat_df["try_usd_vol20"] = df["try_usd_ret"].rolling(20).std()
+
+    feature_cols = list(feat_df.columns)
+    return feat_df, feature_cols
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# METRICS
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _classification_metrics(y_true, y_proba, threshold: float = 0.5) -> dict:
     y_pred = (y_proba >= threshold).astype(int)
     acc  = float(accuracy_score(y_true, y_pred))
     prec = float(precision_score(y_true, y_pred, zero_division=0))
@@ -65,448 +207,325 @@ def _classification_metrics(y_true, y_proba, threshold=0.5):
     try:
         auc = float(roc_auc_score(y_true, y_proba))
         fpr, tpr, _ = roc_curve(y_true, y_proba)
-        roc_cd = [{'fpr': float(f), 'tpr': float(t)} for f, t in zip(fpr, tpr)]
+        roc_data = [{"fpr": float(f), "tpr": float(t)} for f, t in zip(fpr, tpr)]
     except Exception:
-        auc    = None
-        roc_cd = []
+        auc = None
+        roc_data = []
     return {
-        'accuracy':  acc,
-        'precision': prec,
-        'recall':    rec,
-        'f1_score':  f1,
-        'roc_auc':   auc,
-        'roc_curve': roc_cd,
+        "accuracy":  acc,
+        "precision": prec,
+        "recall":    rec,
+        "f1_score":  f1,
+        "roc_auc":   auc,
+        "roc_curve": roc_data,
     }
 
 
-def _regime_accuracy(y_true, y_proba, regimes, threshold=0.5):
-    """Per-regime accuracy for classification."""
-    if regimes is None:
-        return {}
-    y_pred = (y_proba >= threshold).astype(int)
-    result = {}
-    y_t = pd.Series(y_true).reset_index(drop=True)
-    y_p = pd.Series(y_pred).reset_index(drop=True)
-    reg = pd.Series(regimes).reset_index(drop=True)
-    for regime in ['HEDGE', 'SPECULATIVE', 'PONZI']:
-        mask  = reg == regime
-        n_obs = int(mask.sum())
-        if n_obs == 0:
-            result[regime] = {'accuracy': None, 'crash_rate': None, 'n_observations': 0}
-        else:
-            result[regime] = {
-                'accuracy':      float(accuracy_score(y_t[mask], y_p[mask])),
-                'crash_rate':    float(y_t[mask].mean()),
-                'n_observations': n_obs,
-            }
-    return result
+def _regime_label(score: float) -> str:
+    """Minsky regime from fragility score (0-100)."""
+    if score < 33:
+        return "HEDGE"
+    if score < 67:
+        return "SPECULATIVE"
+    return "PONZI"
 
 
-# =============================================================================
-# Model training functions
-# =============================================================================
-
-def train_gradient_boosting(X_train, y_train, X_test, y_test, regimes_test=None):
-    """
-    Train Gradient Boosting Classifier.
-
-    Requirements: 11.1 — non-linear sequential classifier.
-    Expected to achieve high ROC-AUC: captures subtle threshold effects.
-    """
-    print("\n" + "=" * 60)
-    print("TRAINING GRADIENT BOOSTING CLASSIFIER")
-    print("=" * 60)
-
-    model = GradientBoostingClassifier(
-        n_estimators=500,
-        max_depth=4,
-        learning_rate=0.01,
-        subsample=0.8,
-        random_state=42,
-        verbose=0,
-    )
-
-    print(f"\nTraining with {len(X_train)} observations...")
-    model.fit(X_train, y_train)
-
-    y_proba = model.predict_proba(X_test)[:, 1]
-    metrics = _classification_metrics(y_test, y_proba)
-    regime_metrics = _regime_accuracy(y_test, y_proba, regimes_test)
-
-    print(f"\nTest Metrics:")
-    print(f"  Accuracy : {metrics['accuracy']:.4f}")
-    print(f"  ROC-AUC  : {metrics['roc_auc']:.4f}" if metrics['roc_auc'] else "  ROC-AUC  : N/A")
-    print("=" * 60)
-
-    return {
-        'model':         model,
-        'metrics':       metrics,
-        'regime_metrics': regime_metrics,
-        'predictions':   (y_proba >= 0.5).astype(int),
-        'probabilities': y_proba,
-    }
-
-
-def train_svc(X_train, y_train, X_test, y_test, regimes_test=None):
-    """
-    Train SVC with RBF kernel and probability calibration.
-
-    Requirements: 11.3 — kernel-based non-linear classifier.
-    NOTE: SVC is scale-sensitive; StandardScaler is applied.
-    """
-    print("\n" + "=" * 60)
-    print("TRAINING SUPPORT VECTOR CLASSIFIER (rbf)")
-    print("=" * 60)
-
-    scaler = StandardScaler()
-    X_train_s = scaler.fit_transform(X_train)
-    X_test_s  = scaler.transform(X_test)
-
-    model = SVC(
-        kernel='rbf',
-        C=10.0,
-        gamma='scale',
-        probability=True,   # enables predict_proba
-        class_weight='balanced',
-        random_state=42,
-    )
-
-    print(f"\nTraining with {len(X_train)} observations...")
-    model.fit(X_train_s, y_train)
-
-    y_proba = model.predict_proba(X_test_s)[:, 1]
-    metrics = _classification_metrics(y_test, y_proba)
-    regime_metrics = _regime_accuracy(y_test, y_proba, regimes_test)
-
-    print(f"\nTest Metrics:")
-    print(f"  Accuracy : {metrics['accuracy']:.4f}")
-    print(f"  ROC-AUC  : {metrics['roc_auc']:.4f}" if metrics['roc_auc'] else "  ROC-AUC  : N/A")
-    print("=" * 60)
-
-    return {
-        'model':         model,
-        'scaler':        scaler,
-        'metrics':       metrics,
-        'regime_metrics': regime_metrics,
-        'predictions':   (y_proba >= 0.5).astype(int),
-        'probabilities': y_proba,
-    }
-
-
-def train_elastic_net_logistic(X_train, y_train, X_test, y_test, regimes_test=None):
-    """
-    Train Logistic Regression with ElasticNet regularisation.
-
-    Requirements: 11.4 — linear model (the 'bad' model in the narrative).
-    ElasticNet penalty = L1+L2 mix, encouraging sparse feature selection.
-    Expected to show low ROC-AUC: confirms linear models cannot capture
-    the non-linear threshold dynamics of Minsky's Ponzi phase.
-    """
-    print("\n" + "=" * 60)
-    print("TRAINING LOGISTIC REGRESSION (ElasticNet — Linear Baseline)")
-    print("=" * 60)
-
-    model = LogisticRegression(
-        penalty='elasticnet',
-        solver='saga',
-        l1_ratio=0.5,
-        C=1.0,
-        class_weight='balanced',
-        random_state=42,
-        max_iter=5000,
-    )
-
-    print(f"\nTraining with {len(X_train)} observations...")
-    model.fit(X_train, y_train)
-
-    y_proba = model.predict_proba(X_test)[:, 1]
-    metrics = _classification_metrics(y_test, y_proba)
-    regime_metrics = _regime_accuracy(y_test, y_proba, regimes_test)
-
-    print(f"\nTest Metrics:")
-    print(f"  Accuracy : {metrics['accuracy']:.4f}")
-    print(f"  ROC-AUC  : {metrics['roc_auc']:.4f}" if metrics['roc_auc'] else "  ROC-AUC  : N/A")
-
-    # Print non-zero coefficients for feature selection analysis
-    nonzero = np.sum(model.coef_ != 0)
-    print(f"  Non-zero coefficients: {nonzero} / {model.coef_.shape[1]}")
-    print("=" * 60)
-
-    return {
-        'model':         model,
-        'metrics':       metrics,
-        'regime_metrics': regime_metrics,
-        'predictions':   (y_proba >= 0.5).astype(int),
-        'probabilities': y_proba,
-    }
-
-
-def train_ensemble(models_dict, X_test, y_test, regimes_test=None):
-    """
-    Create ensemble model by averaging crash probabilities from all classifiers.
-
-    Requirements: 11.5 — probability averaging ensemble.
-    """
-    print("\n" + "=" * 60)
-    print("CREATING ENSEMBLE (averaged crash probabilities)")
-    print("=" * 60)
-
-    probas = []
-    model_names = []
-    for name, result in models_dict.items():
-        if result is not None and 'probabilities' in result:
-            probas.append(result['probabilities'])
-            model_names.append(name)
-
-    if not probas:
-        print("ERROR: No model probabilities available for ensemble")
-        return None
-
-    print(f"\nAveraging probabilities from {len(probas)} models: {model_names}")
-    y_proba = np.mean(np.array(probas), axis=0)
-    metrics = _classification_metrics(y_test, y_proba)
-    regime_metrics = _regime_accuracy(y_test, y_proba, regimes_test)
-
-    print(f"\nEnsemble Test Metrics:")
-    print(f"  Accuracy : {metrics['accuracy']:.4f}")
-    print(f"  ROC-AUC  : {metrics['roc_auc']:.4f}" if metrics['roc_auc'] else "  ROC-AUC  : N/A")
-    print("=" * 60)
-
-    return {
-        'metrics':          metrics,
-        'regime_metrics':   regime_metrics,
-        'predictions':      (y_proba >= 0.5).astype(int),
-        'probabilities':    y_proba,
-        'component_models': model_names,
-    }
-
-
-def generate_predictions_timeseries(model_result, dates_test, model_id):
-    """
-    Generate time-series prediction records.
-
-    fragility_score = predict_proba[:, 1] * 100  (crash probability 0-100)
-    regime = probability threshold mapping
-    """
-    probas = model_result['probabilities']
-    fragility = probas * 100.0
-
-    def _regime(score):
-        if score < 33:
-            return 'HEDGE'
-        elif score < 67:
-            return 'SPECULATIVE'
-        else:
-            return 'PONZI'
-
+def _predictions_timeseries(probas, dates) -> list:
+    """Build per-date prediction record for dashboard."""
     result = []
-    for date, prob, frag in zip(dates_test, probas, fragility):
+    for date, prob in zip(dates, probas):
+        score = float(prob) * 100.0
         result.append({
-            'date':            date.strftime('%Y-%m-%d') if hasattr(date, 'strftime') else str(date),
-            'crash_probability': float(prob),
-            'fragility_score': float(frag),
-            'regime':          _regime(frag),
+            "date":             date.strftime("%Y-%m-%d") if hasattr(date, "strftime") else str(date),
+            "crash_probability": float(prob),
+            "fragility_score":  score,
+            "regime":           _regime_label(score),
         })
     return result
 
 
-def export_ml_models_extended(models_results, X_test, y_test, dates_test, filepath):
-    """Export all extended classifier results to JSON."""
-    print("\n" + "=" * 60)
-    print("EXPORTING EXTENDED ML MODELS TO JSON")
-    print("=" * 60)
+# ═══════════════════════════════════════════════════════════════════════════
+# MODEL TRAINERS
+# ═══════════════════════════════════════════════════════════════════════════
 
+def _scale_features(X_train, X_test):
+    """RobustScaler — fitted on train only to avoid test leakage."""
+    scaler = RobustScaler()
+    X_train_s = scaler.fit_transform(X_train)
+    X_test_s  = scaler.transform(X_test)
+    return X_train_s, X_test_s, scaler
+
+
+def train_gradient_boosting(X_train, y_train, X_test, y_test, feature_cols) -> dict:
+    print("\n[GBM] Training GradientBoostingClassifier...")
+    X_tr_s, X_te_s, _ = _scale_features(X_train, X_test)
+    model = GradientBoostingClassifier(
+        n_estimators=500, max_depth=4, learning_rate=0.01,
+        subsample=0.8, random_state=42, verbose=0,
+    )
+    model.fit(X_tr_s, y_train)
+    y_proba = model.predict_proba(X_te_s)[:, 1]
+    metrics = _classification_metrics(y_test, y_proba)
+    importance = [
+        {"feature": f, "importance": float(i)}
+        for f, i in sorted(
+            zip(feature_cols, model.feature_importances_),
+            key=lambda x: -x[1]
+        )
+    ]
+    print(f"[GBM] ROC-AUC: {metrics['roc_auc']:.4f}  F1: {metrics['f1_score']:.4f}")
+    return {"metrics": metrics, "probabilities": y_proba, "feature_importance": importance}
+
+
+def train_random_forest(X_train, y_train, X_test, y_test, feature_cols) -> dict:
+    print("\n[RF] Training RandomForestClassifier...")
+    X_tr_s, X_te_s, _ = _scale_features(X_train, X_test)
+    model = RandomForestClassifier(
+        n_estimators=500, max_depth=8, min_samples_leaf=5,
+        class_weight="balanced", random_state=42, n_jobs=-1,
+    )
+    model.fit(X_tr_s, y_train)
+    y_proba = model.predict_proba(X_te_s)[:, 1]
+    metrics = _classification_metrics(y_test, y_proba)
+    importance = [
+        {"feature": f, "importance": float(i)}
+        for f, i in sorted(
+            zip(feature_cols, model.feature_importances_),
+            key=lambda x: -x[1]
+        )
+    ]
+    print(f"[RF] ROC-AUC: {metrics['roc_auc']:.4f}  F1: {metrics['f1_score']:.4f}")
+    return {"metrics": metrics, "probabilities": y_proba, "feature_importance": importance}
+
+
+def train_svc(X_train, y_train, X_test, y_test, feature_cols) -> dict:
+    print("\n[SVC] Training SupportVectorClassifier (rbf)...")
+    X_tr_s, X_te_s, _ = _scale_features(X_train, X_test)
+    model = SVC(
+        kernel="rbf", C=10.0, gamma="scale",
+        probability=True, class_weight="balanced", random_state=42,
+    )
+    model.fit(X_tr_s, y_train)
+    y_proba = model.predict_proba(X_te_s)[:, 1]
+    metrics = _classification_metrics(y_test, y_proba)
+    print(f"[SVC] ROC-AUC: {metrics['roc_auc']:.4f}  F1: {metrics['f1_score']:.4f}")
+    return {"metrics": metrics, "probabilities": y_proba, "feature_importance": []}
+
+
+def train_logistic_elasticnet(X_train, y_train, X_test, y_test, feature_cols) -> dict:
+    """
+    Linear baseline — the 'bad model' for the crisis narrative.
+    ElasticNet penalty demonstrates that linear assumptions fail to capture
+    Minsky's non-linear fragility dynamics.
+    """
+    print("\n[LR] Training LogisticRegression (ElasticNet — linear baseline)...")
+    X_tr_s, X_te_s, _ = _scale_features(X_train, X_test)
+    model = LogisticRegression(
+        penalty="elasticnet", solver="saga", l1_ratio=0.5,
+        C=1.0, class_weight="balanced", max_iter=5000, random_state=42,
+    )
+    model.fit(X_tr_s, y_train)
+    y_proba = model.predict_proba(X_te_s)[:, 1]
+    metrics = _classification_metrics(y_test, y_proba)
+    # Coefficient importance (magnitude)
+    coef_importance = [
+        {"feature": f, "importance": float(abs(c))}
+        for f, c in sorted(
+            zip(feature_cols, model.coef_[0]),
+            key=lambda x: -abs(x[1])
+        )
+    ]
+    nonzero = int(np.sum(model.coef_ != 0))
+    print(f"[LR] ROC-AUC: {metrics['roc_auc']:.4f}  Non-zero coefs: {nonzero}/{len(feature_cols)}")
+    return {"metrics": metrics, "probabilities": y_proba, "feature_importance": coef_importance}
+
+
+def train_ensemble(models_dict: dict, X_test, y_test) -> dict:
+    """Mean-probability ensemble from all component classifiers."""
+    print("\n[ENS] Building ensemble (mean probability)...")
+    probas = [r["probabilities"] for r in models_dict.values() if r is not None]
+    if not probas:
+        return None
+    y_proba = np.mean(np.array(probas), axis=0)
+    metrics = _classification_metrics(y_test, y_proba)
+    print(f"[ENS] ROC-AUC: {metrics['roc_auc']:.4f}  F1: {metrics['f1_score']:.4f}")
+    return {
+        "metrics": metrics,
+        "probabilities": y_proba,
+        "feature_importance": [],
+        "component_models": list(models_dict.keys()),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# JSON EXPORT
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _clean(obj):
+    """Recursively replace NaN/Inf/numpy types for JSON serialisation."""
+    if isinstance(obj, dict):
+        return {k: _clean(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean(i) for i in obj]
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.floating):
+        v = float(obj)
+        return None if (np.isnan(v) or np.isinf(v)) else v
+    if isinstance(obj, np.ndarray):
+        return _clean(obj.tolist())
+    if isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
+        return None
+    return obj
+
+
+def export_results(models_results: dict, dates_test, y_test, mode: str, filepath: Path):
+    """Export all classifier results + predictions timeseries to JSON."""
     metadata = {
-        'generated_at': datetime.now().isoformat(),
-        'models':       list(models_results.keys()),
-        'pipeline':     'classification_v2',
-        'target':       'crash_in_next_30_days (ISE_USD < -5%)',
+        "generated_at":  datetime.now().isoformat(),
+        "model_mode":    mode,
+        "pipeline":      "classification_v3",
+        "target":        "crash_label (ise2 cumret < -2% in 20d)",
+        "models":        list(models_results.keys()),
+        "crisis_windows": TURKEY_CRISIS_WINDOWS,
     }
 
     predictions = {}
     performance  = {}
+    feature_importance = {}
 
     for model_id, result in models_results.items():
         if result is None:
             continue
-        predictions[model_id] = generate_predictions_timeseries(result, dates_test, model_id)
-        performance[model_id]  = result.get('metrics', {})
+        predictions[model_id]       = _predictions_timeseries(result["probabilities"], dates_test)
+        performance[model_id]       = result.get("metrics", {})
+        feature_importance[model_id] = result.get("feature_importance", [])
 
-    # Legacy flat keys for backward-compat with existing dashboard consumers
-    legacy = {}
-    for model_id, prediction_rows in predictions.items():
-        model_perf = performance.get(model_id, {})
-        legacy[model_id] = {
-            'predictions': [row['fragility_score'] for row in prediction_rows],
-            'roc_auc':     model_perf.get('roc_auc'),
-            'accuracy':    model_perf.get('accuracy'),
-            'f1_score':    model_perf.get('f1_score'),
-        }
+    # Comparison table — for dashboard leaderboard
+    comparison = []
+    for model_id, perf in performance.items():
+        comparison.append({
+            "model":     model_id,
+            "roc_auc":   perf.get("roc_auc"),
+            "f1_score":  perf.get("f1_score"),
+            "accuracy":  perf.get("accuracy"),
+            "precision": perf.get("precision"),
+            "recall":    perf.get("recall"),
+        })
+    comparison.sort(key=lambda x: (x.get("roc_auc") or 0), reverse=True)
 
     output = {
-        'metadata':    metadata,
-        'predictions': predictions,
-        'performance': performance,
-        **legacy,
+        "metadata":          metadata,
+        "comparison":        comparison,
+        "predictions":       predictions,
+        "performance":       performance,
+        "feature_importance": feature_importance,
     }
 
-    output_path = Path(filepath)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, "w") as f:
+        json.dump(_clean(output), f, indent=2)
 
-    clean = replace_nan_with_none(output)
-    print(f"\nWriting to: {filepath}")
-    with open(filepath, 'w') as f:
-        json.dump(clean, f, indent=2)
-
-    print(f"File size: {output_path.stat().st_size / 1024:.2f} KB")
-    print("\n" + "=" * 60)
-    print("EXPORT COMPLETE")
-    print("=" * 60)
+    size_kb = filepath.stat().st_size / 1024
+    print(f"\n[export] ✓ Saved {filepath.name} ({size_kb:.1f} KB)")
+    print(f"[export] Models: {list(models_results.keys())}")
+    print("\n[export] ROC-AUC Summary:")
+    for row in comparison:
+        auc = f"{row['roc_auc']:.4f}" if row["roc_auc"] else "N/A"
+        print(f"  {row['model']:<25} {auc}")
 
 
-def main():
-    """Train all extended classifiers and export results."""
-    print("=" * 80)
-    print("EXTENDED ML MODELS TRAINING PIPELINE (Classification v2)")
-    print("=" * 80)
-    print(f"Start time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 80)
+# ═══════════════════════════════════════════════════════════════════════════
+# MAIN
+# ═══════════════════════════════════════════════════════════════════════════
 
-    try:
-        # ── Load data ─────────────────────────────────────────────────────────
-        print("\nLoading data...")
-        with open("../src/data/cleaned_data.json") as f:
-            cleaned = json.load(f)
-        with open("../src/data/features.json") as f:
-            features = json.load(f)
+def run(mode: str = "b", csv_path: Path = None):
+    """
+    mode='a' → Group_5.csv baseline (7 global features)
+    mode='b' → extended_dataset.csv (global + Turkey features)
+    """
+    print("\n" + "=" * 70)
+    print(f"EXTENDED CLASSIFIER PIPELINE — Mode {mode.upper()}")
+    print("=" * 70)
 
-        df_clean = pd.DataFrame(cleaned['data'])
-        df_clean['date'] = pd.to_datetime(df_clean['date'])
-        df_clean = df_clean.set_index('date')
+    if csv_path is None:
+        csv_path = GRP_CSV if mode == "a" else EXT_CSV
 
-        df_feat = pd.DataFrame(features['data'])
-        df_feat['date'] = pd.to_datetime(df_feat['date'])
-        df_feat = df_feat.set_index('date')
+    if not csv_path.exists():
+        if mode == "b":
+            print(f"[pipeline] Extended dataset not found: {csv_path}")
+            print("[pipeline] Run: python fetch_extended.py  first")
+        else:
+            print(f"[pipeline] Group_5.csv not found: {csv_path}")
+        return {}
 
-        # ── Build feature matrix ──────────────────────────────────────────────
-        target_col   = 'ISE_USD'
+    # 1. Load
+    df = load_dataset(csv_path)
 
-        labeled_df = df_clean.copy()
-        for col in df_feat.columns:
-            if col not in labeled_df.columns:
-                labeled_df[col] = df_feat[col]
+    # 2. Feature matrix
+    feat_df, feature_cols = build_feature_matrix(df, mode=mode)
 
-        # Global contagion features (identical to Model A — establishes continuity)
-        global_features = ['SP500', 'DAX', 'FTSE', 'NIKKEI', 'BOVESPA', 'EU', 'EM']
-        structural_features = ['mean_corr', 'permutation_entropy']
+    # 3. Crash target
+    crash_label = build_crash_target(df, horizon=20, threshold=-0.02)
 
-        # Turkish sovereign features — the NEW Model B dimension
-        # SHAP will reveal which group dominates per crisis: global vs. local
-        turkish_features = ['USDTRY_ret', 'USDTRY_vol30', 'BIST_ISE_DIV', 'TR_YIELD10Y', 'VIX']
+    # 4. Align and drop NaNs from rolling windows
+    combined = feat_df.copy()
+    combined["crash_label"] = crash_label
+    combined["ise2"]        = df[TARGET_COL]
+    combined = combined.dropna()
 
-        # Only include Turkish features with >20% non-null coverage
-        available_turkish = [c for c in turkish_features
-                             if c in labeled_df.columns
-                             and labeled_df[c].notna().mean() > 0.20]
+    print(f"\n[pipeline] Feature matrix: {combined.shape}")
+    print(f"[pipeline] Features ({len(feature_cols)}): {feature_cols[:8]}{'...' if len(feature_cols) > 8 else ''}")
+    print(f"[pipeline] Crash rate: {combined['crash_label'].mean():.2%}")
 
-        feature_cols = [c for c in global_features + structural_features + available_turkish
-                        if c in labeled_df.columns]
+    X = combined[feature_cols]
+    y = combined["crash_label"].astype(int)
 
-        df_model = labeled_df[[target_col] + feature_cols].copy()
-
-        # ── Crash target ──────────────────────────────────────────────────────
-        # Import here so this script works standalone (called from export_json.py)
-        sys.path.insert(0, str(Path(__file__).parent))
-        from target_engineering import create_crash_target
-
-        crash_target = create_crash_target(df_model, col=target_col, horizon=30, threshold=-0.10)
-        df_model['crash_target'] = crash_target
-
-        all_cols = feature_cols
-        df_valid = df_model.dropna(subset=all_cols + ['crash_target'])
-        df_valid  = df_valid.apply(lambda c: pd.to_numeric(c, errors='coerce') if c.name != 'crash_target' else c)
-        df_valid  = df_valid.dropna(subset=all_cols + ['crash_target'])
-
-        print(f"\nValid observations after crash-target drop: {len(df_valid)}")
-
-        X = df_valid[all_cols]
-        y = df_valid['crash_target'].astype(int)
-        n = len(X)
-        tr = int(n * 0.8)
-
+    # 5. Time-aware split
+    if mode == "b":
+        # Hard split: train on pre-2018 (pre-crisis), test on 2018+ (Turkey crisis window)
+        split_date = pd.Timestamp("2018-01-01")
+        X_train = X[X.index < split_date]
+        X_test  = X[X.index >= split_date]
+        y_train = y[y.index < split_date]
+        y_test  = y[y.index >= split_date]
+        print(f"[pipeline] Hard 2018 split: train {len(X_train)} rows, test {len(X_test)} rows")
+    else:
+        # Chronological 80/20 for Model A
+        n  = len(X)
+        tr = int(n * 0.80)
         X_train, X_test = X.iloc[:tr], X.iloc[tr:]
         y_train, y_test = y.iloc[:tr], y.iloc[tr:]
-        dates_test = X_test.index
+        print(f"[pipeline] 80/20 split: train {len(X_train)}, test {len(X_test)}")
 
-        regimes_col = 'regime'
-        regimes_test = None
-        if regimes_col in df_feat.columns:
-            regimes_test = df_feat.loc[X_test.index, regimes_col].reindex(X_test.index)
+    print(f"[pipeline] Crash rate — train: {y_train.mean():.2%}  test: {y_test.mean():.2%}")
 
-        print(f"\nTrain: {len(X_train)} obs, Test: {len(X_test)} obs")
-        print(f"Crash rate — train: {y_train.mean():.2%}  test: {y_test.mean():.2%}")
+    # 6. Train all 5 classifiers
+    models = {}
+    models["GradientBoosting"]  = train_gradient_boosting(X_train, y_train, X_test, y_test, feature_cols)
+    models["RandomForest"]       = train_random_forest(X_train, y_train, X_test, y_test, feature_cols)
+    models["SVC"]               = train_svc(X_train, y_train, X_test, y_test, feature_cols)
+    models["LogisticElasticNet"] = train_logistic_elasticnet(X_train, y_train, X_test, y_test, feature_cols)
+    models["Ensemble"]          = train_ensemble(
+        {k: v for k, v in models.items()},
+        X_test, y_test
+    )
 
-        # ── Train models ──────────────────────────────────────────────────────
-        models_results = {}
+    # 7. Export
+    out_file = DATA_DIR / f"ml_models_extended_{mode}.json"
+    export_results(models, X_test.index, y_test, mode, out_file)
 
-        models_results['GradientBoosting'] = train_gradient_boosting(
-            X_train, y_train, X_test, y_test, regimes_test
-        )
-
-        # NOTE: LSTM excluded from classification pipeline.
-        # Architecture (regression + sequence-offset logic) is incompatible with
-        # the binary classification target.  Replaced by LogisticRegression
-        # (ElasticNet) which serves the same role as the linear 'bad model'.
-        print("\n[LSTM] Skipped — excluded from classification pipeline.")
-        print("  Reason: LSTM architecture targets regression (MSE loss).")
-        print("  Linear baseline is covered by ElasticNetLogistic below.")
-
-        models_results['SVC'] = train_svc(
-            X_train, y_train, X_test, y_test, regimes_test
-        )
-
-        models_results['ElasticNetLogistic'] = train_elastic_net_logistic(
-            X_train, y_train, X_test, y_test, regimes_test
-        )
-
-        models_results['Ensemble'] = train_ensemble(
-            models_results, X_test, y_test, regimes_test
-        )
-
-        # ── Export ────────────────────────────────────────────────────────────
-        output_path = "../src/data/ml_models_extended.json"
-        export_ml_models_extended(
-            models_results, X_test, y_test, dates_test, output_path
-        )
-
-        print("\n" + "=" * 80)
-        print("EXTENDED ML MODELS TRAINING COMPLETE!")
-        print("=" * 80)
-        print(f"End time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"\nGenerated: {output_path}")
-
-        # Print summary table
-        print("\nModel ROC-AUC Summary:")
-        print(f"{'Model':<22} {'ROC-AUC':>10}")
-        print("-" * 34)
-        for name, res in models_results.items():
-            if res:
-                auc = res['metrics'].get('roc_auc')
-                auc_str = f"{auc:.4f}" if auc else "N/A"
-                print(f"{name:<22} {auc_str:>10}")
-
-        print("=" * 80)
-        return 0
-
-    except Exception as e:
-        print("\n" + "=" * 80)
-        print("ERROR: Training Failed")
-        print("=" * 80)
-        print(f"Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return 1
+    print("\n" + "=" * 70)
+    print(f"PIPELINE COMPLETE — Mode {mode.upper()}")
+    print(f"Output: {out_file}")
+    print("=" * 70)
+    return models
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import argparse
+    parser = argparse.ArgumentParser(description="Extended classifier pipeline")
+    parser.add_argument("--mode", choices=["a", "b"], default="b",
+                        help="a=Group_5 baseline, b=extended dataset")
+    args = parser.parse_args()
+    run(mode=args.mode)

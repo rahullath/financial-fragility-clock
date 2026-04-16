@@ -1,152 +1,151 @@
 """
 target_engineering.py — Turkey ISE2 Pipeline (turkey branch)
 
-Creates the binary crisis_label used for classification models, and
-provides Turkey Crisis metadata for dashboard annotations.
+Builds forward-looking crisis labels for classification models.
 
-crisis_label definition
-------------------------
-A day is labelled as a crisis day (1) if at any point in the next
-`forward_window` trading days, the ISE2 return falls below -2 standard
-deviations (computed on a rolling 60-day window).
+Design
+------
+- Target: ise2 (ISE in USD = log( BIST100_TRY * TRY/USD ) daily return)
+- Crisis label: 1 if cumulative ise2 return < threshold in next `horizon` days
+- Default: horizon=20, threshold=-0.02 (-2% cumulative)
 
-This is a FORWARD-LOOKING label from the prediction standpoint — i.e.,
-"given today's features, will a stress event occur in the next N days?"
-This framing is appropriate for early-warning system models.
+This is intentionally tighter than naive -5% or -10% thresholds.
+The goal is to detect the ONSET of fragility (Minsky SPECULATIVE→PONZI
+transition), not wait for a full crash to be evident.
 
-Why -2 sigma (rolling)?
-- -2 sigma captures the bottom ~2.5% of the return distribution
-- Rolling 60d window adapts to changing market regimes
-- Daily returns are fat-tailed; a fixed threshold would miss regime-dependent crises
-- Base rate ~4-8%, which is sufficient for classifier training with class_weight balancing
-
-Turkey Crisis windows (hard-coded for annotation, NOT used in feature creation)
----------------------------------------------------------------------------------
-These are reference dates for dashboard visualisation only.  The model
-learns from patterns, not from these labels directly.
+Turkey Crisis Windows
+---------------------
+Used for annotation on dashboard charts and for per-window accuracy reporting.
 """
 
 import warnings
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-# ------------------------------------------------------------------ #
-# Turkey crisis window annotations
-# Used for: dashboard shaded bands, meta.crisis_windows in JSON output
-# ------------------------------------------------------------------ #
+# ── Target configuration ──────────────────────────────────────────────────
+DEFAULT_HORIZON   = 20     # trading days
+DEFAULT_THRESHOLD = -0.02  # cumulative log-return threshold
 
+# ── Turkey crisis windows (for dashboard annotations) ─────────────────────
 TURKEY_CRISIS_WINDOWS = [
-    {
-        "id":    "2018_currency_crisis",
-        "label": "TL Currency Crisis",
-        "start": "2018-08-01",
-        "end":   "2018-11-30",
-        "desc":  "TRY lost 45% vs USD in 2018 amid US sanctions, "
-                 "Erdogan's anti-rate-hike stance, and current account deficit.",
-    },
-    {
-        "id":    "2021_rate_cut_shock",
-        "label": "CBRT Rate Cut Shock",
-        "start": "2021-09-01",
-        "end":   "2022-02-28",
-        "desc":  "CBRT cut rates 500bp while inflation exceeded 80%, causing "
-                 "TRY collapse and ISE USD returns to crater despite nominal gains.",
-    },
-    {
-        "id":    "2023_earthquake_aftermath",
-        "label": "Earthquake + Election Uncertainty",
-        "start": "2023-02-01",
-        "end":   "2023-06-30",
-        "desc":  "February 2023 earthquake (46,000 deaths, $34B damage) "
-                 "combined with May 2023 election uncertainty.",
-    },
-    {
-        "id":    "2024_continued_tightening",
-        "label": "Post-Election Orthodox Tightening",
-        "start": "2023-06-01",
-        "end":   "2024-12-31",
-        "desc":  "Return to orthodox monetary policy (rates raised to 50%) "
-                 "stabilises TRY but squeezes equity valuations.",
-    },
+    {"label": "GFC",                "start": "2008-01-01", "end": "2009-06-30"},
+    {"label": "2013 Taper Tantrum", "start": "2013-05-01", "end": "2013-12-31"},
+    {"label": "2016 Coup Attempt",  "start": "2016-07-01", "end": "2016-12-31"},
+    {"label": "2018 TL Collapse",   "start": "2018-01-01", "end": "2019-06-30"},
+    {"label": "COVID",              "start": "2020-02-01", "end": "2020-12-31"},
+    {"label": "2021 Rate Cut Shock","start": "2021-09-01", "end": "2022-06-30"},
+    {"label": "2023 Earthquake",    "start": "2023-02-01", "end": "2023-06-30"},
 ]
 
 
-# ------------------------------------------------------------------ #
-# Label creator
-# ------------------------------------------------------------------ #
-
-def attach_labels(
+def create_crash_target(
     df: pd.DataFrame,
-    forward_window: int = 20,
-    sigma_threshold: float = 2.0,
-    rolling_window: int = 60,
-) -> pd.DataFrame:
+    col: str = "ise2",
+    horizon: int = DEFAULT_HORIZON,
+    threshold: float = DEFAULT_THRESHOLD,
+) -> pd.Series:
     """
-    Attach a binary crisis_label column to the DataFrame.
+    Create forward-looking binary crash target.
 
     Parameters
     ----------
-    df              : DataFrame with ise2 column
-    forward_window  : number of future trading days to look ahead (default 20 ≋ 1 month)
-    sigma_threshold : how many rolling sigma below mean counts as crisis (default 2.0)
-    rolling_window  : window for rolling mean + std computation (default 60 days)
+    df        : DataFrame with date index and ise2 column
+    col       : column name for ISE USD return (default: 'ise2')
+    horizon   : look-ahead window in trading days (default: 20)
+    threshold : cumulative log-return threshold (default: -0.02)
 
     Returns
     -------
-    DataFrame with new `crisis_label` column (int 0/1).
-    The last `forward_window` rows will be labelled 0 (no future data).
+    pd.Series of {0, 1} — 1 = crisis imminent, 0 = normal
+    Last `horizon` rows will be NaN (no future to look at)
+    """
+    future_ret = df[col].rolling(window=horizon).sum().shift(-horizon)
+    label = (future_ret < threshold).astype(float)  # float to preserve NaN
+    label[future_ret.isna()] = np.nan
+    label.name = "crash_label"
+    return label
+
+
+def attach_labels(
+    df: pd.DataFrame,
+    col: str = "ise2",
+    forward_window: int = DEFAULT_HORIZON,
+    threshold: float = DEFAULT_THRESHOLD,
+) -> pd.DataFrame:
+    """
+    Attach crash_label column to DataFrame in-place.
+    Drops rows where label is NaN (tail of series).
     """
     df = df.copy()
-
-    ise2 = df["ise2"]
-
-    # Rolling stats on the UNSHIFTED series (uses past data only per row)
-    rolling_mean = ise2.rolling(rolling_window, min_periods=20).mean()
-    rolling_std  = ise2.rolling(rolling_window, min_periods=20).std()
-
-    # Crisis threshold: mean - sigma_threshold * std
-    crisis_floor = rolling_mean - sigma_threshold * rolling_std
-
-    # A day is a 'stress day' if ise2 falls below the crisis floor
-    is_stress = (ise2 < crisis_floor).astype(int)
-
-    # Forward-looking label: 1 if any stress day occurs in next forward_window days
-    # Use a rolling max on the reversed series to look forward without leakage
-    label = (
-        is_stress
-        .iloc[::-1]
-        .rolling(forward_window, min_periods=1)
-        .max()
-        .iloc[::-1]
-        .astype(int)
-    )
-
-    # Zero out the last forward_window rows (no valid future window)
-    label.iloc[-forward_window:] = 0
-
-    df["crisis_label"] = label.values
-
-    base_rate = label.mean()
-    print(f"[target_eng] crisis_label base rate: {base_rate:.2%}  "
-          f"(forward_window={forward_window}d, threshold=-{sigma_threshold}σ rolling {rolling_window}d)")
-
+    df["crash_label"] = create_crash_target(df, col=col, horizon=forward_window, threshold=threshold)
+    df = df.dropna(subset=["crash_label"])
+    df["crash_label"] = df["crash_label"].astype(int)
     return df
 
 
-def crisis_stats(y_series: pd.Series) -> dict:
+def crisis_stats(y: pd.Series) -> dict:
     """
     Summary statistics about the crisis label distribution.
-    Used for the dashboard 'dataset overview' panel.
+    Used by train_pipeline.py to populate dashboard metadata.
     """
-    total   = len(y_series)
-    n_crisis = int(y_series.sum())
-    n_normal = total - n_crisis
+    n_total  = int(len(y))
+    n_crisis = int(y.sum())
+    n_normal = n_total - n_crisis
     return {
-        "total_days":   total,
-        "crisis_days":  n_crisis,
-        "normal_days":  n_normal,
-        "base_rate":    float(n_crisis / total) if total > 0 else 0.0,
-        "imbalance_ratio": float(n_normal / n_crisis) if n_crisis > 0 else None,
+        "n_total":        n_total,
+        "n_crisis":       n_crisis,
+        "n_normal":       n_normal,
+        "crisis_rate":    float(n_crisis / n_total) if n_total > 0 else 0.0,
+        "class_balance":  f"{n_normal}:{n_crisis} (normal:crisis)",
     }
+
+
+def label_crisis_windows(
+    df: pd.DataFrame,
+    windows: Optional[list] = None,
+) -> pd.Series:
+    """
+    Create a string-label series marking each date with its crisis window name.
+    Returns 'Normal' for dates outside all crisis windows.
+
+    Used for per-regime accuracy breakdown in the dashboard.
+    """
+    if windows is None:
+        windows = TURKEY_CRISIS_WINDOWS
+
+    labels = pd.Series("Normal", index=df.index, name="crisis_window")
+    for w in windows:
+        mask = (df.index >= w["start"]) & (df.index <= w["end"])
+        labels[mask] = w["label"]
+    return labels
+
+
+def minsky_regime(
+    fragility_score: pd.Series,
+    hedge_upper: float = 33.0,
+    ponzi_lower: float = 67.0,
+) -> pd.Series:
+    """
+    Map a fragility score (0-100) to a Minsky regime label.
+
+    0-33    → HEDGE        (stable, self-sustaining)
+    33-67   → SPECULATIVE  (borrowing to service debt)
+    67-100  → PONZI        (borrowing to repay principal — crisis zone)
+
+    Threshold values are configurable.
+    """
+    conditions = [
+        fragility_score < hedge_upper,
+        (fragility_score >= hedge_upper) & (fragility_score < ponzi_lower),
+    ]
+    choices = ["HEDGE", "SPECULATIVE"]
+    regime = pd.Series(
+        np.select(conditions, choices, default="PONZI"),
+        index=fragility_score.index,
+        name="minsky_regime",
+    )
+    return regime
