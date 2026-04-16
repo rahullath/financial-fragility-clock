@@ -1,108 +1,14 @@
-/*
- * App.css — global layout grid only
- * Component styles live in styles/components.css
- * Token source: styles/variables.css
- */
+/* App.css is intentionally minimal — all tokens come from main.tsx imports.
+   Grid utilities only. */
 
-@import './styles/base.css';
-@import './styles/components.css';
+.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
 
-/* App root */
-#root {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Page content area (used inside Layout) */
-.page-content {
-  flex: 1;
-  padding: var(--k-space-6);
-  max-width: var(--k-content-max);
-  width: 100%;
-  margin: 0 auto;
-}
-
-/* Grid utilities */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--k-space-4);
-}
-
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--k-space-4);
-}
-
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--k-space-4);
-}
-
-.grid-6040 {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: var(--k-space-4);
-}
-
-.grid-7030 {
-  display: grid;
-  grid-template-columns: 7fr 3fr;
-  gap: var(--k-space-4);
-}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+.grid-6040 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.grid-7030 { display: grid; grid-template-columns: 7fr 3fr; gap: 16px; }
 
 @media (max-width: 900px) {
-  .grid-2, .grid-3, .grid-4, .grid-6040, .grid-7030 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Flex utils */
-.flex-row   { display: flex; flex-direction: row; align-items: center; }
-.flex-col   { display: flex; flex-direction: column; }
-.flex-gap-2 { gap: var(--k-space-2); }
-.flex-gap-4 { gap: var(--k-space-4); }
-.gap-4      { gap: var(--k-space-4); }
-
-/* Page header */
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--k-space-6);
-  gap: var(--k-space-4);
-  flex-wrap: wrap;
-}
-
-.page-header-left h1 {
-  font-size: var(--k-text-lg);
-  font-weight: 700;
-  color: var(--k-text);
-  line-height: 1.2;
-}
-
-.page-header-left p {
-  font-size: var(--k-text-sm);
-  color: var(--k-text-muted);
-  margin-top: var(--k-space-1);
-}
-
-/* Stat strip row */
-.stat-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--k-space-3);
-  margin-bottom: var(--k-space-6);
-}
-
-@media (max-width: 768px) {
-  .stat-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .page-content {
-    padding: var(--k-space-4);
-  }
+  .grid-2,.grid-3,.grid-4,.grid-6040,.grid-7030 { grid-template-columns: 1fr; }
 }
