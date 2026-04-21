@@ -73,8 +73,15 @@ export const DateProvider: React.FC<DateProviderProps> = ({ children }) => {
     return row ? new Date(row.date as string) : dateRange[0];
   })();
 
+  const defaultDate = (() => {
+    const target = new Date('2022-12-03');
+    const [min, max] = dateRange;
+    if (target >= min && target <= max) return target;
+    return firstValidDate;
+  })();
+
   const [selectedDate, setSelectedDateInternal] =
-    useState<Date>(firstValidDate);
+    useState<Date>(defaultDate);
 
   // When the model changes, clamp selectedDate to the new range
   useEffect(() => {
